@@ -43,7 +43,7 @@ async function submitLeave() {
   const data = {
     action: "submitLeave",
 
-    workplace: "더큰코리아",
+    workplace: "주식회사 더큰코리아",
 
     name: name,
 
