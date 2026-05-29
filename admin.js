@@ -10,7 +10,7 @@ async function loadRequests() {
 
   if (!password) {
     alert("관리자 비밀번호를 입력하세요.");
-    return;
+    return;s
   }
 
   try {
