@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  />
+
+  <title>더큰코리아 연월차 신청</title>
+
+  <link rel="stylesheet" href="style.css" />
+
+  <meta name="theme-color" content="#7b1e1e" />
+</head>
+
+<body>
+
+<div class="wrap">
+
+  <div class="hero">
+    <div class="hero-sub">THE BIG KOREA</div>
+    <h1>연월차 신청</h1>
+    <p>더큰코리아 직원용 연월차 시스템</p>
+  </div>
+
+  <div class="card">
+
+    <div class="store-box">
+      더큰코리아
+    </div>
+
+    <label>이름</label>
+    <input
+      type="text"
+      id="name"
+      placeholder="이름 입력"
+    />
+
+    <label>연락처</label>
+    <input
+      type="text"
+      id="phone"
+      placeholder="01012345678"
+    />
+
+    <label>휴가구분</label>
+    <select id="leaveType">
+      <option value="">선택하세요</option>
+      <option value="연차">연차</option>
+      <option value="월차">월차</option>
+      <option value="오전 반차">오전 반차</option>
+      <option value="오후 반차">오후 반차</option>
+      <option value="병가">병가</option>
+      <option value="기타">기타</option>
+    </select>
+
+    <label>시작일</label>
+    <input type="date" id="startDate" />
+
+    <label>종료일</label>
+    <input type="date" id="endDate" />
+
+    <label>사용일수</label>
+    <input
+      type="number"
+      id="days"
+      step="0.5"
+      placeholder="예: 1 또는 0.5"
+    />
+
+    <label>사유</label>
+    <textarea
+      id="reason"
+      placeholder="사유 입력"
+    ></textarea>
+
+    <button
+      class="submit-btn"
+      onclick="submitLeave()"
+    >
+      신청하기
+    </button>
+
+  </div>
+
+  <div class="bottom-link">
+    <a href="admin.html">
+      관리자 승인 페이지
+    </a>
+  </div>
+
+</div>
+
+<script src="script.js"></script>
+
+</body>
+</html>
