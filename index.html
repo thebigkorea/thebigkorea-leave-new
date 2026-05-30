@@ -1,98 +1,27 @@
 <!doctype html>
-<html lang="ko">
-<head>
-  <meta charset="utf-8" />
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1, viewport-fit=cover"
-  />
+<html lang="ko"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/><title>더큰코리아 연월차관리</title><link rel="manifest" href="manifest.json"/><link rel="stylesheet" href="style.css"/><meta name="theme-color" content="#7b1e1e"/></head>
+<body><main class="app">
+<section class="hero"><div class="brand">더큰코리아</div><h1>연월차 신청</h1><p>더큰코리아 본사 직원용</p></section>
+<section class="tabs"><button class="tab active" onclick="showTab('apply')">신청</button><button class="tab" onclick="showTab('register')">직원등록</button><button class="tab" onclick="showTab('history')">내역조회</button></section>
 
-  <title>더큰코리아 연월차 신청</title>
+<section id="applyTab" class="card">
+<label>매장</label><select id="store"><option>더큰코리아 본사</option></select>
+<label>이름</label><input id="name" placeholder="예: 홍길동"/>
+<label>연락처</label><input id="phone" placeholder="010-0000-0000" inputmode="tel"/>
+<button class="secondary" onclick="checkBalance()">잔여 연월차 확인</button><div id="balanceBox" class="balance-box"></div>
+<label>휴가 종류</label><select id="leaveType"><option value="">선택하세요</option><option>연차</option><option>월차</option><option>오전 반차</option><option>오후 반차</option><option>경조휴가</option><option>병가</option></select>
+<div class="grid2"><div><label>시작일</label><input id="startDate" type="date"/></div><div><label>종료일</label><input id="endDate" type="date"/></div></div>
+<label>사용일수</label><input id="days" type="number" step="0.5" placeholder="예: 1 또는 0.5"/>
+<label>사유</label><textarea id="reason" placeholder="간단히 입력하세요"></textarea>
+<button class="primary" onclick="submitLeave()">신청하기</button><div id="result" class="result"></div></section>
 
-  <link rel="stylesheet" href="style.css" />
+<section id="registerTab" class="card hidden"><h2>직원 등록</h2><p class="notice">최초 1회 등록하면 입사일 기준으로 연차가 자동 계산됩니다.</p>
+<label>매장</label><select id="regStore"><option>더큰코리아 본사</option></select>
+<label>이름</label><input id="regName" placeholder="예: 홍길동"/>
+<label>연락처</label><input id="regPhone" placeholder="010-0000-0000" inputmode="tel"/>
+<label>입사일</label><input id="hireDate" type="date"/>
+<button class="primary" onclick="registerEmployee()">직원 등록 / 수정</button><div id="registerResult" class="result"></div></section>
 
-  <meta name="theme-color" content="#7b1e1e" />
-</head>
-
-<body>
-
-<div class="wrap">
-
-  <div class="hero">
-    <div class="hero-sub">THE BIG KOREA</div>
-    <h1>연월차 신청</h1>
-    <p>더큰코리아 직원용 연월차 시스템</p>
-  </div>
-
-  <div class="card">
-
-    <div class="store-box">
-      더큰코리아
-    </div>
-
-    <label>이름</label>
-    <input
-      type="text"
-      id="name"
-      placeholder="이름 입력"
-    />
-
-    <label>연락처</label>
-    <input
-      type="text"
-      id="phone"
-      placeholder="01012345678"
-    />
-
-    <label>휴가구분</label>
-    <select id="leaveType">
-      <option value="">선택하세요</option>
-      <option value="연차">연차</option>
-      <option value="월차">월차</option>
-      <option value="오전 반차">오전 반차</option>
-      <option value="오후 반차">오후 반차</option>
-      <option value="병가">병가</option>
-      <option value="기타">기타</option>
-    </select>
-
-    <label>시작일</label>
-    <input type="date" id="startDate" />
-
-    <label>종료일</label>
-    <input type="date" id="endDate" />
-
-    <label>사용일수</label>
-    <input
-      type="number"
-      id="days"
-      step="0.5"
-      placeholder="예: 1 또는 0.5"
-    />
-
-    <label>사유</label>
-    <textarea
-      id="reason"
-      placeholder="사유 입력"
-    ></textarea>
-
-    <button
-      class="submit-btn"
-      onclick="submitLeave()"
-    >
-      신청하기
-    </button>
-
-  </div>
-
-  <div class="bottom-link">
-    <a href="admin.html">
-      관리자 승인 페이지
-    </a>
-  </div>
-
-</div>
-
-<script src="script.js"></script>
-
-</body>
-</html>
+<section id="historyTab" class="card small hidden"><h2>내 신청 내역</h2><p class="notice">신청 탭에 이름과 연락처를 입력한 뒤 조회하세요.</p><button class="secondary" onclick="loadMyRequests()">조회하기</button><div id="myList" class="list"></div></section>
+<section class="footer-link"><a href="admin.html">관리자 승인 페이지</a></section>
+</main><script src="script.js"></script></body></html>

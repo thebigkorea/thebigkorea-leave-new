@@ -1,0 +1,16 @@
+{
+  "name": "한국의집 연월차관리",
+  "short_name": "연월차관리",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f7f1ea",
+  "theme_color": "#7b1e1e",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

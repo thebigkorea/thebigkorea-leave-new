@@ -1,0 +1,1 @@
+v2 적용 파일입니다. CODE_GS.txt는 Apps Script에 전체 교체, 나머지 파일은 GitHub 저장소에 덮어쓰기 하세요.
