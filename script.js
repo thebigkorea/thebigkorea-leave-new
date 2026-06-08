@@ -179,7 +179,7 @@ async function submitLeave() {
       });
 
   } catch (e) {
-    show("result", "전송 중 오류가 발생했습니다.");
+  show("result", e.message || "전송 중 오류가 발생했습니다.");
 
   } finally {
     if (btn) {
