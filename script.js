@@ -422,8 +422,18 @@ function calculateDays() {
 
   const start = $("startDate").value;
   const end = $("endDate").value;
+  const type = $("leaveType").value;
 
   if (!start || !end) return;
+
+  if (
+    type === "오전 반차" ||
+    type === "오후 반차" ||
+    type === "반차"
+  ) {
+    $("days").value = 0.5;
+    return;
+  }
 
   const s = new Date(start);
   const e = new Date(end);
@@ -434,11 +444,7 @@ function calculateDays() {
   $("days").value = diff > 0 ? diff : 1;
 }
 
-["startDate","endDate"].forEach(id => {
-
+["startDate", "endDate", "leaveType"].forEach(id => {
   const el = $(id);
-
-  if(el){
-    el.addEventListener("change", calculateDays);
-  }
+  if (el) el.addEventListener("change", calculateDays);
 });
