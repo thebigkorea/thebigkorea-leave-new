@@ -323,7 +323,17 @@ async function loadAdminList() {
       return;
     }
 
-    list.innerHTML = data.rows.map(renderAdminItem).join("");
+   const pendingRows = data.rows.filter(r => {
+  const status = getVal(r, ["상태", "status"]);
+  return status === "대기";
+});
+
+if (!pendingRows.length) {
+  list.innerHTML = `<div class="item">승인 대기 신청이 없습니다.</div>`;
+  return;
+}
+
+list.innerHTML = pendingRows.map(renderAdminItem).join("");
 
   } catch (e) {
     show("adminResult", "신청 목록 조회 중 오류가 발생했습니다.");
