@@ -413,3 +413,32 @@ async function processRequest(id, action) {
     show("adminResult", "처리 중 오류가 발생했습니다.");
   }
 }
+
+/* =========================
+   연월차 일수 자동 계산
+========================= */
+
+function calculateDays() {
+
+  const start = $("startDate").value;
+  const end = $("endDate").value;
+
+  if (!start || !end) return;
+
+  const s = new Date(start);
+  const e = new Date(end);
+
+  const diff =
+    Math.floor((e - s) / (1000 * 60 * 60 * 24)) + 1;
+
+  $("days").value = diff > 0 ? diff : 1;
+}
+
+["startDate","endDate"].forEach(id => {
+
+  const el = $(id);
+
+  if(el){
+    el.addEventListener("change", calculateDays);
+  }
+});
