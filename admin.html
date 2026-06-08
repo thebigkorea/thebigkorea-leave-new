@@ -1,5 +1,52 @@
-<!doctype html><html lang="ko"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/><title>더큰코리아 연월차 관리자</title><link rel="manifest" href="manifest.json"/><link rel="stylesheet" href="style.css"/><meta name="theme-color" content="#7b1e1e"/></head>
-<body><main class="app"><section class="hero admin"><div class="brand">더큰코리아</div><h1>관리자 승인</h1><p>연월차 신청 승인 / 반려</p></section>
-<section class="card"><label>관리자 비밀번호</label><input id="password" type="password" placeholder="비밀번호 입력"/><button class="primary" onclick="loadAdminList()">신청 목록 불러오기</button><div id="adminResult" class="result"></div></section>
-<section class="card small"><h2>신청 목록</h2><div id="adminList" class="list"></div></section>
-<section class="footer-link"><a href="index.html">직원 신청 페이지로 이동</a></section></main><script src="script.js"></script></body></html>
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <title>더큰코리아 연월차 관리자</title>
+  <link rel="manifest" href="manifest.json"/>
+  <link rel="stylesheet" href="style.css"/>
+  <meta name="theme-color" content="#7b1e1e"/>
+</head>
+
+<body>
+  <main class="app">
+
+    <section class="hero admin">
+      <div class="brand">더큰코리아</div>
+      <h1>관리자 승인</h1>
+      <p>연월차 신청 승인 / 반려</p>
+    </section>
+
+    <section class="card">
+      <label>관리자 비밀번호</label>
+
+      <input
+        id="password"
+        type="password"
+        placeholder="비밀번호 입력"
+        autocomplete="new-password"
+        value=""
+      />
+
+      <button class="primary" onclick="loadAdminList()">
+        신청 목록 불러오기
+      </button>
+
+      <div id="adminResult" class="result"></div>
+    </section>
+
+    <section class="card small">
+      <h2>신청 목록</h2>
+      <div id="adminList" class="list"></div>
+    </section>
+
+    <section class="footer-link">
+      <a href="index.html">직원 신청 페이지로 이동</a>
+    </section>
+
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>

@@ -10,6 +10,18 @@ function $(id) {
   return document.getElementById(id);
 }
 
+window.addEventListener("DOMContentLoaded", () => {
+  const pw = $("password");
+  if (pw) pw.value = "";
+});
+
+function getVal(r, keys) {
+  for (const k of keys) {
+    if (r && r[k] !== undefined && r[k] !== "") return r[k];
+  }
+  return "-";
+}
+
 function show(id, msg) {
   const el = $(id);
   if (!el) return;
@@ -173,48 +185,54 @@ async function submitLeave() {
   }
 }
 
-async function checkBalance() {
+async function checkBalance(){
+  const btn = document.querySelector(".secondary");
+  const oldText = btn ? btn.textContent : "";
+
   const name = $("name").value.trim();
   const phone = $("phone").value.trim();
   const box = $("balanceBox");
 
-  if (!name || !phone) {
-    return show("result", "이름과 연락처를 입력한 뒤 조회하세요.");
+  if(!name || !phone){
+    return show("result","이름과 연락처를 입력한 뒤 조회하세요.");
   }
 
-  try {
-    const data = await jsonp({
-      action: "balance",
-      name,
-      phone
-    });
-
-    if (!data.ok) {
-      return show("result", data.message || "조회 실패");
+  try{
+    if(btn){
+      btn.disabled = true;
+      btn.textContent = "조회중...";
     }
+
+    const data = await jsonp({action:"balance", name, phone});
+
+    if(!data.ok) return show("result", data.message || "조회 실패");
 
     const b = data.balance;
 
-    if (!b.registered) {
-      box.innerHTML =
-        "직원 등록 정보가 없습니다.<br>직원등록 탭에서 입사일을 먼저 등록하세요.";
+    if(!b.registered){
+      box.innerHTML = "직원 등록 정보가 없습니다.<br>직원등록 탭에서 입사일을 먼저 등록하세요.";
       box.classList.add("show");
       syncRegisterFields();
       return;
     }
 
     box.innerHTML =
-      `입사일: ${b.hireDate}<br>` +
-      `근속기간: ${b.workYears}년 ${b.workMonths}개월<br>` +
-      `발생 연월차: ${b.base}일<br>` +
-      `승인 사용: ${b.used}일<br>` +
-      `승인대기: ${b.pending}일<br>` +
-      `현재 잔여: ${b.remain}일`;
+      `입사일: ${b.hireDate}<br>
+       근속기간: ${b.workYears}년 ${b.workMonths}개월<br>
+       발생 연월차: ${b.base}일<br>
+       승인 사용: ${b.used}일<br>
+       승인대기: ${b.pending}일<br>
+       현재 잔여: ${b.remain}일`;
 
     box.classList.add("show");
 
-  } catch (e) {
-    show("result", "잔여 연월차 조회 중 오류가 발생했습니다.");
+  }catch(e){
+    show("result","잔여 연월차 조회 중 오류가 발생했습니다.");
+  }finally{
+    if(btn){
+      btn.disabled = false;
+      btn.textContent = oldText || "잔여 연월차 확인";
+    }
   }
 }
 
@@ -322,38 +340,41 @@ async function loadAdminList() {
   }
 }
 
-function renderAdminItem(r) {
-  const id = r["ID"] || "";
-  const status = r["상태"] || "대기";
-  const disabled =
-    status !== "대기" ? "style='display:none'" : "";
+function renderAdminItem(r){
+  const id = getVal(r, ["ID", "id"]);
+  const name = getVal(r, ["이름", "name"]);
+  const leaveType = getVal(r, ["휴가종류", "leaveType"]);
+  const status = getVal(r, ["상태", "status"]);
+  const store = getVal(r, ["매장", "store"]);
+  const phone = getVal(r, ["연락처", "phone"]);
+  const startDate = getVal(r, ["시작일", "startDate"]);
+  const endDate = getVal(r, ["종료일", "endDate"]);
+  const days = getVal(r, ["사용일수", "days"]);
+  const reason = getVal(r, ["사유", "reason"]);
+  const createdAt = getVal(r, ["신청일시", "createdAt"]);
+  const memo = getVal(r, ["관리자메모", "adminMemo"]);
+
+  const disabled = status !== "대기" ? "style='display:none'" : "";
 
   return `
     <div class="item">
       <div class="item-title">
-        ${r["이름"] || "-"} / ${r["휴가종류"] || "-"} ${statusBadge(status)}
+        ${name} / ${leaveType} ${statusBadge(status)}
       </div>
 
       <div class="item-meta">
-        매장: ${r["매장"] || "-"}<br>
-        연락처: ${r["연락처"] || "-"}<br>
-        기간: ${r["시작일"] || "-"} ~ ${r["종료일"] || "-"}<br>
-        사용일수: ${r["사용일수"] || "-"}일<br>
-        사유: ${r["사유"] || "-"}<br>
-        신청일시: ${r["신청일시"] || "-"}<br>
-        관리자메모: ${r["관리자메모"] || "-"}
+        매장: ${store}<br>
+        연락처: ${phone}<br>
+        기간: ${startDate} ~ ${endDate}<br>
+        사용일수: ${days}일<br>
+        사유: ${reason}<br>
+        신청일시: ${createdAt}<br>
+        관리자메모: ${memo}
       </div>
 
       <div class="admin-actions" ${disabled}>
-        <button class="primary"
-          onclick="processRequest('${id}','approve')">
-          승인
-        </button>
-
-        <button class="reject"
-          onclick="processRequest('${id}','reject')">
-          반려
-        </button>
+        <button class="primary" onclick="processRequest('${id}','approve')">승인</button>
+        <button class="reject" onclick="processRequest('${id}','reject')">반려</button>
       </div>
     </div>
   `;
