@@ -17,7 +17,9 @@ window.addEventListener("DOMContentLoaded", () => {
 
 function getVal(r, keys) {
   for (const k of keys) {
-    if (r && r[k] !== undefined && r[k] !== "") return r[k];
+    if (r && r[k] !== undefined && r[k] !== null && r[k] !== "") {
+      return r[k];
+    }
   }
   return "-";
 }
@@ -35,25 +37,16 @@ function showTab(tab) {
     if (b) b.classList.toggle("hidden", n !== tab);
   });
 
-  document.querySelectorAll(".tab")
-    .forEach(b => b.classList.remove("active"));
+  document.querySelectorAll(".tab").forEach(b => b.classList.remove("active"));
 
-  const i =
-    tab === "apply" ? 0 :
-    tab === "register" ? 1 : 2;
-
+  const i = tab === "apply" ? 0 : tab === "register" ? 1 : 2;
   const btn = document.querySelectorAll(".tab")[i];
   if (btn) btn.classList.add("active");
 }
 
 function syncRegisterFields() {
-  if ($("regName") && $("name")) {
-    $("regName").value = $("name").value.trim();
-  }
-
-  if ($("regPhone") && $("phone")) {
-    $("regPhone").value = $("phone").value.trim();
-  }
+  if ($("regName") && $("name")) $("regName").value = $("name").value.trim();
+  if ($("regPhone") && $("phone")) $("regPhone").value = $("phone").value.trim();
 }
 
 async function postNoCors(data) {
@@ -69,8 +62,7 @@ async function postNoCors(data) {
 
 function jsonp(params) {
   return new Promise((resolve, reject) => {
-    const callback =
-      "cb_" + Date.now() + "_" + Math.floor(Math.random() * 10000);
+    const callback = "cb_" + Date.now() + "_" + Math.floor(Math.random() * 10000);
 
     window[callback] = data => {
       resolve(data);
@@ -122,7 +114,6 @@ async function registerEmployee() {
 
   } catch (e) {
     show("registerResult", "등록 중 오류가 발생했습니다.");
-
   } finally {
     if (btn) {
       btn.disabled = false;
@@ -146,14 +137,7 @@ async function submitLeave() {
     reason: $("reason").value.trim()
   };
 
-  if (
-    !data.name ||
-    !data.phone ||
-    !data.leaveType ||
-    !data.startDate ||
-    !data.endDate ||
-    !data.days
-  ) {
+  if (!data.name || !data.phone || !data.leaveType || !data.startDate || !data.endDate || !data.days) {
     return show("result", "필수 항목을 확인하세요.");
   }
 
@@ -167,20 +151,16 @@ async function submitLeave() {
 
     const res = await jsonp(data);
 
-    if (!res.ok) {
-      throw new Error(res.message || "신청 실패");
-    }
+    if (!res.ok) throw new Error(res.message || "신청 실패");
 
     show("result", "신청이 접수되었습니다. 관리자 승인 후 반영됩니다.");
 
-    ["leaveType", "startDate", "endDate", "days", "reason"]
-      .forEach(id => {
-        if ($(id)) $(id).value = "";
-      });
+    ["leaveType", "startDate", "endDate", "days", "reason"].forEach(id => {
+      if ($(id)) $(id).value = "";
+    });
 
   } catch (e) {
-  show("result", e.message || "전송 중 오류가 발생했습니다.");
-
+    show("result", e.message || "전송 중 오류가 발생했습니다.");
   } finally {
     if (btn) {
       btn.disabled = false;
@@ -189,7 +169,7 @@ async function submitLeave() {
   }
 }
 
-async function checkBalance(){
+async function checkBalance() {
   const btn = document.querySelector(".secondary");
   const oldText = btn ? btn.textContent : "";
 
@@ -197,23 +177,23 @@ async function checkBalance(){
   const phone = $("phone").value.trim();
   const box = $("balanceBox");
 
-  if(!name || !phone){
-    return show("result","이름과 연락처를 입력한 뒤 조회하세요.");
+  if (!name || !phone) {
+    return show("result", "이름과 연락처를 입력한 뒤 조회하세요.");
   }
 
-  try{
-    if(btn){
+  try {
+    if (btn) {
       btn.disabled = true;
       btn.textContent = "조회중...";
     }
 
-    const data = await jsonp({action:"balance", name, phone});
+    const data = await jsonp({ action: "balance", name, phone });
 
-    if(!data.ok) return show("result", data.message || "조회 실패");
+    if (!data.ok) return show("result", data.message || "조회 실패");
 
     const b = data.balance;
 
-    if(!b.registered){
+    if (!b.registered) {
       box.innerHTML = "직원 등록 정보가 없습니다.<br>직원등록 탭에서 입사일을 먼저 등록하세요.";
       box.classList.add("show");
       syncRegisterFields();
@@ -230,10 +210,10 @@ async function checkBalance(){
 
     box.classList.add("show");
 
-  }catch(e){
-    show("result","잔여 연월차 조회 중 오류가 발생했습니다.");
-  }finally{
-    if(btn){
+  } catch (e) {
+    show("result", "잔여 연월차 조회 중 오류가 발생했습니다.");
+  } finally {
+    if (btn) {
       btn.disabled = false;
       btn.textContent = oldText || "잔여 연월차 확인";
     }
@@ -268,12 +248,10 @@ async function loadMyRequests() {
       return;
     }
 
-    list.innerHTML =
-      data.rows.map(renderItem).join("");
+    list.innerHTML = data.rows.map(renderItem).join("");
 
   } catch (e) {
-    list.innerHTML =
-      `<div class="item">조회 중 오류가 발생했습니다.</div>`;
+    list.innerHTML = `<div class="item">조회 중 오류가 발생했습니다.</div>`;
   }
 }
 
@@ -290,18 +268,27 @@ function statusBadge(s) {
 }
 
 function renderItem(r) {
+  const name = getVal(r, ["직원명", "이름", "name"]);
+  const leaveType = getVal(r, ["휴가구분", "휴가종류", "leaveType"]);
+  const status = getVal(r, ["상태", "status"]);
+  const startDate = getVal(r, ["시작일", "startDate"]);
+  const endDate = getVal(r, ["종료일", "endDate"]);
+  const days = getVal(r, ["일수", "사용일수", "days"]);
+  const reason = getVal(r, ["사유", "reason"]);
+  const memo = getVal(r, ["관리자메모", "adminMemo"]);
+
   return `
     <div class="item">
       <div class="item-title">
-        ${r["휴가종류"] || "-"} ${statusBadge(r["상태"])}
+        ${leaveType} ${statusBadge(status)}
       </div>
 
       <div class="item-meta">
-        신청자: ${r["이름"] || "-"}<br>
-        기간: ${r["시작일"] || "-"} ~ ${r["종료일"] || "-"}<br>
-        사용일수: ${r["사용일수"] || "-"}일<br>
-        사유: ${r["사유"] || "-"}<br>
-        관리자메모: ${r["관리자메모"] || "-"}
+        신청자: ${name}<br>
+        기간: ${startDate} ~ ${endDate}<br>
+        사용일수: ${days}일<br>
+        사유: ${reason}<br>
+        관리자메모: ${memo}
       </div>
     </div>
   `;
@@ -336,26 +323,26 @@ async function loadAdminList() {
       return;
     }
 
-    list.innerHTML =
-      data.rows.map(renderAdminItem).join("");
+    list.innerHTML = data.rows.map(renderAdminItem).join("");
 
   } catch (e) {
     show("adminResult", "신청 목록 조회 중 오류가 발생했습니다.");
   }
 }
 
-function renderAdminItem(r){
-  const id = getVal(r, ["ID", "id"]);
-  const name = getVal(r, ["이름", "name"]);
-  const leaveType = getVal(r, ["휴가종류", "leaveType"]);
-  const status = getVal(r, ["상태", "status"]);
-  const store = getVal(r, ["매장", "store"]);
-  const phone = getVal(r, ["연락처", "phone"]);
+function renderAdminItem(r) {
+  const id = getVal(r, ["신청ID", "ID", "id"]);
+
+  const store = getVal(r, ["소속", "매장", "store", "branch", "dept"]);
+  const name = getVal(r, ["직원명", "이름", "name", "employeeName", "staffName"]);
+  const phone = getVal(r, ["휴대폰", "연락처", "phone", "mobile"]);
+  const leaveType = getVal(r, ["휴가구분", "휴가종류", "leaveType", "type"]);
   const startDate = getVal(r, ["시작일", "startDate"]);
   const endDate = getVal(r, ["종료일", "endDate"]);
-  const days = getVal(r, ["사용일수", "days"]);
+  const days = getVal(r, ["일수", "사용일수", "days"]);
   const reason = getVal(r, ["사유", "reason"]);
-  const createdAt = getVal(r, ["신청일시", "createdAt"]);
+  const status = getVal(r, ["상태", "status"]);
+  const createdAt = getVal(r, ["신청일", "신청일시", "createdAt"]);
   const memo = getVal(r, ["관리자메모", "adminMemo"]);
 
   const disabled = status !== "대기" ? "style='display:none'" : "";
@@ -387,7 +374,7 @@ function renderAdminItem(r){
 async function processRequest(id, action) {
   const password = $("password").value.trim();
 
-  if (!id) {
+  if (!id || id === "-") {
     return show("adminResult", "신청 ID가 없습니다.");
   }
 
