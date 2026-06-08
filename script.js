@@ -165,7 +165,11 @@ async function submitLeave() {
 
     show("result", "신청을 접수하고 있습니다...");
 
-    await postNoCors(data);
+    const res = await jsonp(data);
+
+    if (!res.ok) {
+      throw new Error(res.message || "신청 실패");
+    }
 
     show("result", "신청이 접수되었습니다. 관리자 승인 후 반영됩니다.");
 
