@@ -574,3 +574,106 @@ async function submitCompUse(){
     $("compUseResult").innerHTML = "신청 오류가 발생했습니다.";
   }
 }
+async function loadCompAdminList() {
+  const password = $("password").value.trim();
+  const list = $("adminList");
+
+  if (!password) {
+    return show("adminResult", "관리자 비밀번호를 입력하세요.");
+  }
+
+  list.innerHTML = "미휴무 신청 목록을 불러오는 중입니다...";
+
+  try {
+    const data = await jsonp({
+      action: "compList",
+      password
+    });
+
+    if (!data.ok) {
+      show("adminResult", data.message || "조회 실패");
+      return;
+    }
+
+    const pendingRows = data.rows.filter(r => {
+      const status = getVal(r, ["상태", "status"]);
+      return status === "대기";
+    });
+
+    if (!pendingRows.length) {
+      list.innerHTML = `<div class="item">승인 대기 미휴무 신청이 없습니다.</div>`;
+      return;
+    }
+
+    list.innerHTML = pendingRows.map(renderCompAdminItem).join("");
+
+  } catch (e) {
+    show("adminResult", "미휴무 신청 목록 조회 중 오류가 발생했습니다.");
+  }
+}
+function renderCompAdminItem(r) {
+  const rowNo = getVal(r, ["rowNo"]);
+  const type = getVal(r, ["구분"]);
+  const store = getVal(r, ["매장"]);
+  const name = getVal(r, ["이름"]);
+  const phone = getVal(r, ["연락처"]);
+  const workDate = getVal(r, ["발생일"]);
+  const useDate = getVal(r, ["사용일"]);
+  const days = getVal(r, ["일수"]);
+  const reason = getVal(r, ["사유"]);
+  const status = getVal(r, ["상태"]);
+
+  const dateText = type === "발생" ? workDate : useDate;
+  const title = type === "발생" ? "추가근무 발생 승인" : "미휴무 사용 승인";
+
+  return `
+    <div class="item">
+      <div class="item-title">
+        ${name} / ${title} ${statusBadge(status)}
+      </div>
+
+      <div class="item-meta">
+        매장: ${store}<br>
+        연락처: ${phone}<br>
+        구분: ${type}<br>
+        날짜: ${dateText}<br>
+        일수: ${days}일<br>
+        사유: ${reason}
+      </div>
+
+      <div class="admin-actions">
+        <button class="primary" onclick="processCompRequest('${rowNo}','approve')">승인</button>
+        <button class="reject" onclick="processCompRequest('${rowNo}','reject')">반려</button>
+      </div>
+    </div>
+  `;
+}
+async function processCompRequest(rowNo, processType) {
+  const password = $("password").value.trim();
+
+  if (!rowNo || rowNo === "-") {
+    return show("adminResult", "처리할 행 번호가 없습니다.");
+  }
+
+  try {
+    show("adminResult", "미휴무 처리 중입니다...");
+
+    const data = await jsonp({
+      action: "compProcess",
+      password,
+      rowNo,
+      processType
+    });
+
+    if (!data.ok) {
+      show("adminResult", data.message || "처리 실패");
+      return;
+    }
+
+    show("adminResult", data.message || "처리되었습니다.");
+    setTimeout(loadCompAdminList, 800);
+
+  } catch (e) {
+    show("adminResult", "미휴무 처리 중 오류가 발생했습니다.");
+  }
+}

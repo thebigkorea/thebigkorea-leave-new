@@ -32,16 +32,22 @@
         value=""
       />
 
-      <button class="primary" onclick="loadAdminList()">
-        신청 목록 불러오기
-      </button>
+      <div class="grid2">
+  <button class="primary" onclick="loadAdminList()">
+    연월차 신청 불러오기
+  </button>
+
+  <button class="primary" onclick="loadCompAdminList()">
+    미휴무 신청 불러오기
+  </button>
+</div>
 
       <div id="adminResult" class="result"></div>
 
     </section>
 
     <section class="card small">
-      <h2>신청 목록</h2>
+      <h2>승인 대기 목록</h2>
       <div id="adminList" class="list"></div>
     </section>
 
@@ -51,6 +57,6 @@
 
   </main>
 
-  <script src="script.js?v=20260608-1"></script>
+  <script src="script.js?v=20260706-3"></script>
 </body>
 </html>
