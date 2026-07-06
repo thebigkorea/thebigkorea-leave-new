@@ -507,6 +507,8 @@ async function checkCompBalance(){
 
 async function submitExtraWork(){
 
+  const btn = document.querySelector("button[onclick='submitExtraWork()']");
+
   const data = {
     action: "extraWork",
     store: $("compStore").value,
@@ -522,9 +524,15 @@ async function submitExtraWork(){
     return;
   }
 
-  $("extraResult").innerHTML = "등록 중...";
+  $("extraResult").innerHTML = "추가근무 등록 처리 중입니다...";
 
   try{
+    if(btn){
+      btn.disabled = true;
+      btn.textContent = "등록 처리중...";
+      btn.style.opacity = "0.7";
+    }
+
     const res = await jsonp(data);
 
     if(!res.ok){
@@ -532,15 +540,23 @@ async function submitExtraWork(){
       return;
     }
 
-    $("extraResult").innerHTML = "추가근무가 등록되었습니다.";
+    $("extraResult").innerHTML = "추가근무가 승인대기로 등록되었습니다.";
     checkCompBalance();
 
   }catch(e){
     $("extraResult").innerHTML = "등록 오류가 발생했습니다.";
+  }finally{
+    if(btn){
+      btn.disabled = false;
+      btn.textContent = "추가근무 등록";
+      btn.style.opacity = "1";
+    }
   }
 }
 
 async function submitCompUse(){
+
+  const btn = document.querySelector("button[onclick='submitCompUse()']");
 
   const data = {
     action: "compUse",
@@ -557,9 +573,15 @@ async function submitCompUse(){
     return;
   }
 
-  $("compUseResult").innerHTML = "신청 중...";
+  $("compUseResult").innerHTML = "미휴무 사용신청 처리 중입니다...";
 
   try{
+    if(btn){
+      btn.disabled = true;
+      btn.textContent = "신청 처리중...";
+      btn.style.opacity = "0.7";
+    }
+
     const res = await jsonp(data);
 
     if(!res.ok){
@@ -567,13 +589,20 @@ async function submitCompUse(){
       return;
     }
 
-    $("compUseResult").innerHTML = "미휴무 사용신청이 완료되었습니다.";
+    $("compUseResult").innerHTML = "미휴무 사용신청이 승인대기로 접수되었습니다.";
     checkCompBalance();
 
   }catch(e){
     $("compUseResult").innerHTML = "신청 오류가 발생했습니다.";
+  }finally{
+    if(btn){
+      btn.disabled = false;
+      btn.textContent = "미휴무 사용신청";
+      btn.style.opacity = "1";
+    }
   }
 }
+
 async function loadCompAdminList() {
   const password = $("password").value.trim();
   const list = $("adminList");
