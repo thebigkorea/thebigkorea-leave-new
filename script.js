@@ -31,17 +31,36 @@ function show(id, msg) {
   el.classList.add("show");
 }
 
-function showTab(tab) {
-  ["apply", "register", "history"].forEach(n => {
-    const b = $(n + "Tab");
-    if (b) b.classList.toggle("hidden", n !== tab);
+function showTab(tab){
+
+  document.getElementById("applyTab").classList.add("hidden");
+  document.getElementById("registerTab").classList.add("hidden");
+  document.getElementById("historyTab").classList.add("hidden");
+  document.getElementById("compTab").classList.add("hidden");
+
+  document.querySelectorAll(".tab").forEach(btn => {
+    btn.classList.remove("active");
   });
 
-  document.querySelectorAll(".tab").forEach(b => b.classList.remove("active"));
+  if(tab === "apply"){
+    document.getElementById("applyTab").classList.remove("hidden");
+    document.querySelectorAll(".tab")[0].classList.add("active");
+  }
 
-  const i = tab === "apply" ? 0 : tab === "register" ? 1 : 2;
-  const btn = document.querySelectorAll(".tab")[i];
-  if (btn) btn.classList.add("active");
+  if(tab === "register"){
+    document.getElementById("registerTab").classList.remove("hidden");
+    document.querySelectorAll(".tab")[1].classList.add("active");
+  }
+
+  if(tab === "history"){
+    document.getElementById("historyTab").classList.remove("hidden");
+    document.querySelectorAll(".tab")[2].classList.add("active");
+  }
+
+  if(tab === "comp"){
+    document.getElementById("compTab").classList.remove("hidden");
+    document.querySelectorAll(".tab")[3].classList.add("active");
+  }
 }
 
 function syncRegisterFields() {
@@ -448,3 +467,118 @@ function calculateDays() {
   const el = $(id);
   if (el) el.addEventListener("change", calculateDays);
 });
+function checkCompBalance(){
+
+  const store = document.getElementById("compStore").value;
+  const name = document.getElementById("compName").value.trim();
+  const phone = document.getElementById("compPhone").value.trim();
+
+  if(!name || !phone){
+    alert("이름과 연락처를 입력해주세요.");
+    return;
+  }
+
+  document.getElementById("compBalanceBox").innerHTML = "조회 중...";
+
+  google.script.run
+    .withSuccessHandler(function(res){
+
+      if(!res || !res.success){
+        document.getElementById("compBalanceBox").innerHTML =
+          res?.message || "잔여 미휴무를 조회하지 못했습니다.";
+        return;
+      }
+
+      document.getElementById("compBalanceBox").innerHTML =
+        `
+        <strong>발생 미휴무</strong> : ${res.earned || 0}일<br>
+        <strong>사용 미휴무</strong> : ${res.used || 0}일<br>
+        <strong>잔여 미휴무</strong> : ${res.balance || 0}일
+        `;
+    })
+    .withFailureHandler(function(err){
+      document.getElementById("compBalanceBox").innerHTML =
+        "조회 오류: " + (err.message || err);
+    })
+    .getCompLeaveBalance({
+      store,
+      name,
+      phone
+    });
+}
+function submitExtraWork(){
+
+  const data = {
+    store: document.getElementById("compStore").value,
+    name: document.getElementById("compName").value.trim(),
+    phone: document.getElementById("compPhone").value.trim(),
+    workDate: document.getElementById("extraWorkDate").value,
+    days: document.getElementById("extraDays").value,
+    reason: document.getElementById("extraReason").value.trim()
+  };
+
+  if(!data.name || !data.phone || !data.workDate || !data.days){
+    alert("이름, 연락처, 추가근무일, 발생일수를 입력해주세요.");
+    return;
+  }
+
+  document.getElementById("extraResult").innerHTML = "등록 중...";
+
+  google.script.run
+    .withSuccessHandler(function(res){
+
+      if(!res || !res.success){
+        document.getElementById("extraResult").innerHTML =
+          res?.message || "추가근무 등록에 실패했습니다.";
+        return;
+      }
+
+      document.getElementById("extraResult").innerHTML =
+        "추가근무가 등록되었습니다.";
+
+      checkCompBalance();
+    })
+    .withFailureHandler(function(err){
+      document.getElementById("extraResult").innerHTML =
+        "등록 오류: " + (err.message || err);
+    })
+    .registerExtraWork(data);
+}
+function submitCompUse(){
+
+  const data = {
+    store: document.getElementById("compStore").value,
+    name: document.getElementById("compName").value.trim(),
+    phone: document.getElementById("compPhone").value.trim(),
+    useDate: document.getElementById("compUseDate").value,
+    days: document.getElementById("compUseDays").value,
+    reason: document.getElementById("compUseReason").value.trim()
+  };
+
+  if(!data.name || !data.phone || !data.useDate || !data.days){
+    alert("이름, 연락처, 사용일, 사용일수를 입력해주세요.");
+    return;
+  }
+
+  document.getElementById("compUseResult").innerHTML = "신청 중...";
+
+  google.script.run
+    .withSuccessHandler(function(res){
+
+      if(!res || !res.success){
+        document.getElementById("compUseResult").innerHTML =
+          res?.message || "미휴무 사용신청에 실패했습니다.";
+        return;
+      }
+
+      document.getElementById("compUseResult").innerHTML =
+        "미휴무 사용신청이 완료되었습니다.";
+
+      checkCompBalance();
+    })
+    .withFailureHandler(function(err){
+      document.getElementById("compUseResult").innerHTML =
+        "신청 오류: " + (err.message || err);
+    })
+    .useCompLeave(data);
+}
