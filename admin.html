@@ -2,1067 +2,690 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1, viewport-fit=cover"
-  >
-
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>더큰코리아 연월차 관리자</title>
-
   <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="style.css">
-
-  <meta name="theme-color" content="#7b1e1e">
+  <meta name="theme-color" content="#651c1c">
 
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     :root {
-      --admin-primary: #7b1e1e;
-      --admin-primary-dark: #4b1717;
-      --admin-background: #f7f2eb;
-      --admin-card: #ffffff;
-      --admin-line: #ead9ca;
-      --admin-text: #2b1710;
-      --admin-muted: #806d63;
-      --admin-green: #159755;
-      --admin-red: #c53c34;
-      --admin-yellow: #d58b18;
-      --admin-blue: #386db0;
-      --admin-shadow: 0 12px 36px rgba(74, 39, 24, 0.08);
+      --primary:#741f1f;
+      --primary-dark:#4a1818;
+      --primary-soft:#f5eaea;
+      --background:#f7f2eb;
+      --card:#fff;
+      --line:#eadbca;
+      --text:#2b1710;
+      --muted:#856f63;
+      --green:#14984f;
+      --red:#c13c32;
+      --orange:#d47b19;
+      --blue:#356ab4;
+      --shadow:0 10px 35px rgba(76,42,25,.08);
     }
 
     body {
-      margin: 0;
-      background: var(--admin-background);
-      color: var(--admin-text);
-      font-family:
-        "Pretendard",
-        "Noto Sans KR",
-        "Apple SD Gothic Neo",
-        Arial,
-        sans-serif;
+      margin:0;
+      background:var(--background);
+      color:var(--text);
+      font-family:"Pretendard","Noto Sans KR","Apple SD Gothic Neo",Arial,sans-serif;
     }
 
-    button,
-    input,
-    select,
-    textarea {
-      font: inherit;
+    button,input,select,textarea { font:inherit; }
+    button { cursor:pointer; }
+
+    .app {
+      width:min(1240px,calc(100% - 32px));
+      margin:0 auto;
+      padding:24px 0 80px;
     }
 
-    button {
-      cursor: pointer;
+    .hero {
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-end;
+      gap:24px;
+      padding:30px 34px;
+      color:#fff;
+      border-radius:26px;
+      background:linear-gradient(135deg,#7a1f1f 0%,#4b1818 100%);
+      box-shadow:var(--shadow);
     }
 
-    .admin-app {
-      width: min(1240px, calc(100% - 32px));
-      margin: 0 auto;
-      padding: 24px 0 80px;
+    .brand {
+      margin-bottom:6px;
+      font-size:14px;
+      font-weight:800;
+      opacity:.8;
     }
 
-    /* 상단 헤더 */
-    .admin-hero {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-      gap: 24px;
-      padding: 32px 36px;
-      color: #fff;
-      border-radius: 26px;
-      background:
-        linear-gradient(
-          135deg,
-          #801f1f 0%,
-          #4b1717 100%
-        );
-      box-shadow: var(--admin-shadow);
+    .hero h1 {
+      margin:0;
+      font-size:clamp(28px,4vw,42px);
+      line-height:1.2;
     }
 
-    .admin-brand {
-      margin-bottom: 7px;
-      font-size: 14px;
-      font-weight: 900;
-      opacity: 0.82;
+    .hero p {
+      margin:10px 0 0;
+      opacity:.88;
     }
 
-    .admin-hero h1 {
-      margin: 0;
-      font-size: clamp(30px, 4vw, 43px);
-      line-height: 1.2;
+    .hero-actions {
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
     }
 
-    .admin-hero p {
-      margin: 11px 0 0;
-      line-height: 1.5;
-      opacity: 0.88;
+    .top-button {
+      min-height:44px;
+      padding:0 18px;
+      color:#fff;
+      font-weight:800;
+      border:1px solid rgba(255,255,255,.35);
+      border-radius:13px;
+      background:rgba(255,255,255,.12);
     }
 
-    .admin-hero-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 9px;
+    .tabs {
+      position:sticky;
+      top:0;
+      z-index:20;
+      display:grid;
+      grid-template-columns:repeat(5,minmax(110px,1fr));
+      gap:8px;
+      margin:18px 0;
+      padding:10px;
+      border:1px solid var(--line);
+      border-radius:18px;
+      background:rgba(247,242,235,.96);
+      backdrop-filter:blur(10px);
     }
 
-    .hero-button {
-      min-height: 44px;
-      padding: 0 18px;
-      color: #fff;
-      font-weight: 900;
-      border: 1px solid rgba(255, 255, 255, 0.35);
-      border-radius: 13px;
-      background: rgba(255, 255, 255, 0.1);
+    .tab {
+      min-height:48px;
+      padding:10px 12px;
+      color:#4d2c20;
+      font-weight:900;
+      border:0;
+      border-radius:13px;
+      background:#eee2d5;
     }
 
-    /* 비밀번호 */
-    .admin-login {
-      display: grid;
-      grid-template-columns: minmax(250px, 1fr) auto;
-      gap: 12px;
-      align-items: end;
-      margin-top: 18px;
-      padding: 20px 24px;
-      border: 1px solid var(--admin-line);
-      border-radius: 19px;
-      background: var(--admin-card);
-      box-shadow: var(--admin-shadow);
+    .tab.active {
+      color:#fff;
+      background:var(--primary);
     }
 
-    .admin-login-field label {
-      display: block;
-      margin-bottom: 8px;
-      font-size: 14px;
-      font-weight: 900;
-    }
+    .page { display:none; }
+    .page.active { display:block; }
 
-    .admin-login input {
-      width: 100%;
-      min-height: 49px;
-      padding: 12px 15px;
-      color: var(--admin-text);
-      border: 1px solid #decbbc;
-      border-radius: 13px;
-      outline: none;
-      background: #fff;
-    }
-
-    .admin-login input:focus {
-      border-color: var(--admin-primary);
-      box-shadow: 0 0 0 3px rgba(123, 30, 30, 0.1);
-    }
-
-    .admin-login-button {
-      min-width: 140px;
-      min-height: 49px;
-      padding: 0 20px;
-      color: #fff;
-      font-weight: 900;
-      border: 0;
-      border-radius: 13px;
-      background: var(--admin-primary);
-    }
-
-    /* 메뉴 탭 */
-    .admin-tabs {
-      position: sticky;
-      top: 0;
-      z-index: 20;
-      display: grid;
-      grid-template-columns: repeat(4, minmax(130px, 1fr));
-      gap: 8px;
-      margin: 18px 0;
-      padding: 10px;
-      border: 1px solid var(--admin-line);
-      border-radius: 18px;
-      background: rgba(247, 242, 235, 0.96);
-      backdrop-filter: blur(10px);
-    }
-
-    .admin-tab {
-      min-height: 50px;
-      padding: 10px 12px;
-      color: #4c2b20;
-      font-weight: 900;
-      border: 0;
-      border-radius: 13px;
-      background: #eee1d3;
-    }
-
-    .admin-tab.active {
-      color: #fff;
-      background: var(--admin-primary);
-    }
-
-    /* 통계 */
-    .admin-dashboard {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 14px;
-      margin-bottom: 18px;
+    .dashboard-grid {
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:14px;
+      margin-bottom:18px;
     }
 
     .stat-card {
-      padding: 22px;
-      border: 1px solid var(--admin-line);
-      border-radius: 20px;
-      background: var(--admin-card);
-      box-shadow: var(--admin-shadow);
+      padding:22px;
+      border:1px solid var(--line);
+      border-radius:20px;
+      background:var(--card);
+      box-shadow:var(--shadow);
     }
 
     .stat-label {
-      color: var(--admin-muted);
-      font-size: 14px;
-      font-weight: 900;
+      color:var(--muted);
+      font-size:14px;
+      font-weight:800;
     }
 
     .stat-value {
-      margin-top: 10px;
-      font-size: 34px;
-      font-weight: 950;
+      margin-top:10px;
+      font-size:34px;
+      font-weight:950;
     }
 
-    /* 공통 카드 */
-    .admin-section {
-      display: none;
-      padding: 24px;
-      border: 1px solid var(--admin-line);
-      border-radius: 22px;
-      background: var(--admin-card);
-      box-shadow: var(--admin-shadow);
+    .card {
+      padding:24px;
+      border:1px solid var(--line);
+      border-radius:22px;
+      background:var(--card);
+      box-shadow:var(--shadow);
     }
 
-    .admin-section.active {
-      display: block;
+    .card + .card { margin-top:18px; }
+
+    .card-header {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:14px;
+      margin-bottom:20px;
     }
 
-    .section-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 16px;
-      margin-bottom: 20px;
+    .card-header h2 { margin:0; }
+
+    .description {
+      margin:7px 0 0;
+      color:var(--muted);
+      line-height:1.6;
     }
 
-    .section-head h2 {
-      margin: 0;
-      font-size: 25px;
+    .admin-lock {
+      max-width:450px;
+      margin:45px auto;
+      text-align:center;
     }
 
-    .section-head p {
-      margin: 7px 0 0;
-      color: var(--admin-muted);
-      line-height: 1.55;
+    .field { margin-bottom:16px; }
+
+    .field label {
+      display:block;
+      margin-bottom:7px;
+      font-size:14px;
+      font-weight:900;
+    }
+
+    input,select,textarea {
+      width:100%;
+      min-height:48px;
+      padding:12px 14px;
+      color:var(--text);
+      border:1px solid #decdbd;
+      border-radius:13px;
+      outline:none;
+      background:#fff;
+    }
+
+    input:focus,select:focus,textarea:focus {
+      border-color:var(--primary);
+      box-shadow:0 0 0 3px rgba(116,31,31,.1);
+    }
+
+    .toolbar {
+      display:grid;
+      grid-template-columns:1.3fr 1fr 1fr 1fr auto;
+      gap:10px;
+      margin-bottom:16px;
+    }
+
+    .toolbar.comp-toolbar {
+      grid-template-columns:1.3fr 1fr auto;
     }
 
     .section-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 9px;
+      display:flex;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+      gap:8px;
     }
 
-    .admin-button {
-      min-height: 44px;
-      padding: 0 18px;
-      font-weight: 900;
-      border: 1px solid transparent;
-      border-radius: 12px;
+    .btn {
+      min-height:46px;
+      padding:0 18px;
+      font-weight:900;
+      border-radius:12px;
+      border:1px solid transparent;
     }
 
-    .button-primary {
-      color: #fff;
-      background: var(--admin-primary);
+    .btn-primary { color:#fff; background:var(--primary); }
+    .btn-secondary { color:var(--text); border-color:var(--line); background:#f0e5d8; }
+    .btn-green { color:#fff; background:var(--green); }
+    .btn-red { color:#fff; background:var(--red); }
+    .btn-outline { color:var(--primary); border-color:var(--primary); background:#fff; }
+    .btn-small { min-height:34px; padding:0 12px; font-size:13px; border-radius:9px; }
+
+    .table-wrap {
+      overflow:auto;
+      border:1px solid var(--line);
+      border-radius:15px;
     }
 
-    .button-light {
-      color: var(--admin-text);
-      border-color: var(--admin-line);
-      background: #f0e4d7;
+    table {
+      width:100%;
+      min-width:900px;
+      border-collapse:collapse;
+      background:#fff;
     }
 
-    .button-outline {
-      color: var(--admin-primary);
-      border-color: var(--admin-primary);
-      background: #fff;
+    th,td {
+      padding:13px 12px;
+      border-bottom:1px solid #eee2d8;
+      text-align:center;
+      white-space:nowrap;
     }
 
-    /* 기존 카드 목록 */
-    .list {
-      display: grid;
-      gap: 12px;
+    th {
+      position:sticky;
+      top:0;
+      z-index:3;
+      color:#fff;
+      font-size:13px;
+      background:#4b2920;
     }
 
-    .list .item {
-      padding: 18px;
-      border: 1px solid var(--admin-line);
-      border-radius: 15px;
-      background: #fffaf6;
-    }
+    tr:last-child td { border-bottom:0; }
+    tr:hover td { background:#fffaf6; }
 
-    .list .item-title {
-      margin-bottom: 10px;
-      font-size: 17px;
-      font-weight: 900;
-    }
-
-    .list .item-meta {
-      color: #654d42;
-      line-height: 1.75;
-    }
-
-    .admin-actions {
-      display: flex;
-      gap: 9px;
-      margin-top: 15px;
-    }
-
-    .admin-actions button {
-      min-height: 39px;
-      padding: 0 17px;
-      font-weight: 900;
-      border: 0;
-      border-radius: 10px;
-    }
-
-    .admin-actions .primary {
-      color: #fff;
-      background: var(--admin-green);
-    }
-
-    .admin-actions .reject {
-      color: #fff;
-      background: var(--admin-red);
+    .empty {
+      padding:50px 16px !important;
+      color:var(--muted);
     }
 
     .badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 58px;
-      min-height: 28px;
-      padding: 4px 10px;
-      font-size: 12px;
-      font-weight: 900;
-      border-radius: 999px;
+      display:inline-flex;
+      justify-content:center;
+      align-items:center;
+      min-width:58px;
+      min-height:29px;
+      padding:4px 10px;
+      font-size:12px;
+      font-weight:900;
+      border-radius:999px;
     }
 
-    .badge.ok {
-      color: #12633b;
-      background: #dff5e8;
-    }
+    .badge-wait { color:#8c5300; background:#fff0c9; }
+    .badge-approved { color:#116237; background:#dff5e8; }
+    .badge-rejected { color:#9b2723; background:#fbe2df; }
+    .badge-active { color:#205c9c; background:#e0ecfa; }
 
-    .badge.no {
-      color: #9d2924;
-      background: #fbe2df;
-    }
-
-    .badge.wait {
-      color: #8a5400;
-      background: #fff0c9;
-    }
-
-    /* 준비 화면 */
-    .placeholder {
-      padding: 55px 20px;
-      color: var(--admin-muted);
-      text-align: center;
-      border: 1px dashed #d9c5b7;
-      border-radius: 16px;
-      background: #fffaf6;
-    }
-
-    .placeholder strong {
-      display: block;
-      margin-bottom: 9px;
-      color: var(--admin-text);
-      font-size: 19px;
-    }
-
-    /* 결과 메시지 */
     .result {
-      display: none;
-      margin-top: 14px;
-      padding: 14px 16px;
-      line-height: 1.5;
-      border-radius: 12px;
+      display:none;
+      margin-top:15px;
+      padding:14px 16px;
+      line-height:1.5;
+      border-radius:12px;
     }
 
-    .result.show {
-      display: block;
-      color: #5e331f;
-      background: #f5e8dc;
+    .result.show { display:block; }
+    .result.success { color:#126235; background:#e5f6eb; }
+    .result.error { color:#a12724; background:#fce7e5; }
+
+    .admin-area { display:none; }
+    .admin-area.show { display:block; }
+
+    .modal {
+      position:fixed;
+      inset:0;
+      z-index:100;
+      display:none;
+      justify-content:center;
+      align-items:center;
+      padding:20px;
+      background:rgba(30,17,12,.55);
     }
 
-    /* 직원관리 */
-    .employee-toolbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 16px;
+    .modal.show { display:flex; }
+
+    .modal-box {
+      width:min(520px,100%);
+      max-height:90vh;
+      overflow:auto;
+      padding:24px;
+      border-radius:20px;
+      background:#fff;
+      box-shadow:0 24px 70px rgba(0,0,0,.25);
     }
 
-    .employee-search {
-      width: min(420px, 100%);
-      min-height: 46px;
-      padding: 11px 14px;
-      color: var(--admin-text);
-      border: 1px solid #decbbc;
-      border-radius: 12px;
-      outline: none;
-      background: #fff;
+    .modal-header {
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:20px;
     }
 
-    .employee-search:focus {
-      border-color: var(--admin-primary);
-      box-shadow: 0 0 0 3px rgba(123, 30, 30, 0.1);
+    .modal-header h3 { margin:0; }
+
+    .modal-close {
+      width:38px;
+      height:38px;
+      font-size:20px;
+      border:0;
+      border-radius:50%;
+      background:#eee3d8;
     }
 
-    .employee-table-wrap {
-      overflow-x: auto;
-      border: 1px solid var(--admin-line);
-      border-radius: 15px;
+    .detail-list {
+      display:grid;
+      grid-template-columns:110px 1fr;
+      gap:12px;
+      line-height:1.5;
     }
 
-    .employee-table {
-      width: 100%;
-      min-width: 800px;
-      border-collapse: collapse;
-      background: #fff;
+    .detail-list dt {
+      color:var(--muted);
+      font-weight:900;
     }
 
-    .employee-table th,
-    .employee-table td {
-      padding: 14px 12px;
-      text-align: center;
-      border-bottom: 1px solid #eee2d7;
+    .detail-list dd {
+      margin:0;
+      word-break:break-word;
     }
 
-    .employee-table th {
-      color: #fff;
-      font-size: 14px;
-      font-weight: 900;
-      background: var(--admin-primary-dark);
+    @media (max-width:900px) {
+      .dashboard-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+      .tabs { grid-template-columns:repeat(3,1fr); position:static; }
+      .toolbar,.toolbar.comp-toolbar { grid-template-columns:repeat(2,1fr); }
+      .hero { display:block; }
+      .hero-actions { margin-top:20px; }
     }
 
-    .employee-table tbody tr:last-child td {
-      border-bottom: 0;
-    }
-
-    .employee-table tbody tr:hover {
-      background: #fffaf6;
-    }
-
-    .employee-empty {
-      padding: 35px 15px !important;
-      color: var(--admin-muted);
-    }
-
-    .employee-status {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 56px;
-      min-height: 28px;
-      padding: 4px 10px;
-      font-size: 12px;
-      font-weight: 900;
-      border-radius: 999px;
-    }
-
-    .employee-status.active {
-      color: #12633b;
-      background: #dff5e8;
-    }
-
-    .employee-status.leave {
-      color: #8a5400;
-      background: #fff0c9;
-    }
-
-    .employee-status.retired {
-      color: #9d2924;
-      background: #fbe2df;
-    }
-
-    .employee-retire-button {
-      min-height: 36px;
-      padding: 0 14px;
-      color: #fff;
-      font-weight: 900;
-      border: 0;
-      border-radius: 9px;
-      background: var(--admin-red);
-    }
-
-    .employee-retire-button:disabled {
-      cursor: default;
-      opacity: 0.45;
-    }
-
-    .footer-link {
-      margin-top: 20px;
-      text-align: center;
-    }
-
-    .footer-link a {
-      color: var(--admin-primary);
-      font-weight: 900;
-      text-decoration: none;
-    }
-
-    @media (max-width: 900px) {
-      .admin-dashboard {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-
-      .admin-tabs {
-        grid-template-columns: repeat(2, 1fr);
-        position: static;
-      }
-
-      .admin-hero {
-        display: block;
-      }
-
-      .admin-hero-actions {
-        margin-top: 20px;
-      }
-    }
-
-    @media (max-width: 600px) {
-      .admin-app {
-        width: min(100% - 20px, 1240px);
-        padding-top: 10px;
-      }
-
-      .admin-hero {
-        padding: 25px 20px;
-        border-radius: 20px;
-      }
-
-      .admin-login {
-        grid-template-columns: 1fr;
-        padding: 18px;
-      }
-
-      .admin-login-button {
-        width: 100%;
-      }
-
-      .admin-dashboard {
-        grid-template-columns: 1fr 1fr;
-      }
-
-      .admin-section {
-        padding: 18px;
-      }
-
-      .section-head {
-        display: block;
-      }
-
-      .section-actions {
-        margin-top: 14px;
-      }
-
-      .section-actions .admin-button {
-        width: 100%;
-      }
+    @media (max-width:580px) {
+      .app { width:min(100% - 20px,1240px); padding-top:10px; }
+      .hero { padding:24px 20px; border-radius:20px; }
+      .tabs { grid-template-columns:repeat(2,1fr); }
+      .card { padding:18px; border-radius:18px; }
+      .dashboard-grid,.toolbar,.toolbar.comp-toolbar { grid-template-columns:1fr; }
+      .section-actions { justify-content:stretch; }
+      .section-actions .btn { width:100%; }
     }
   </style>
 </head>
 
 <body>
+<main class="app">
 
-<main class="admin-app">
-
-  <!-- 상단 -->
-  <section class="admin-hero">
+  <section class="hero">
     <div>
-      <div class="admin-brand">
-        더큰코리아
-      </div>
-
+      <div class="brand">더큰코리아 본사</div>
       <h1>연월차 관리자</h1>
-
-      <p>
-        연월차 · 미휴무 · 직원 · 원장을 한 곳에서 통합 관리합니다.
-      </p>
+      <p>연월차 승인·미휴무 승인·직원관리·연월차 원장을 통합 관리합니다.</p>
     </div>
 
-    <div class="admin-hero-actions">
-      <button
-        class="hero-button"
-        onclick="location.href='index.html'"
-      >
-        직원 신청 페이지
-      </button>
-
-      <button
-        class="hero-button"
-        onclick="loadCurrentAdminTab()"
-      >
-        현재 화면 새로고침
-      </button>
+    <div class="hero-actions">
+      <button class="top-button" onclick="location.href='index.html'">직원 신청 페이지</button>
+      <button class="top-button" onclick="loadCurrentPage()">현재 화면 새로고침</button>
     </div>
   </section>
 
-
-  <!-- 비밀번호 -->
-  <section class="admin-login">
-
-    <div class="admin-login-field">
-      <label for="password">
-        관리자 비밀번호
-      </label>
-
-      <input
-        id="password"
-        type="password"
-        placeholder="관리자 비밀번호 입력"
-        autocomplete="new-password"
-        value=""
-        onkeydown="
-          if(event.key === 'Enter'){
-            loadCurrentAdminTab();
-          }
-        "
-      >
-    </div>
-
-    <button
-      class="admin-login-button"
-      onclick="loadCurrentAdminTab()"
-    >
-      조회하기
-    </button>
-
-    <div
-      id="adminResult"
-      class="result"
-      style="grid-column:1/-1;"
-    ></div>
-
-  </section>
-
-
-  <!-- 메뉴 -->
-  <nav class="admin-tabs">
-
-    <button
-      class="admin-tab active"
-      data-tab="leave"
-      onclick="showAdminTab('leave')"
-    >
-      연월차 승인
-    </button>
-
-    <button
-      class="admin-tab"
-      data-tab="comp"
-      onclick="showAdminTab('comp')"
-    >
-      미휴무 승인
-    </button>
-
-    <button
-      class="admin-tab"
-      data-tab="employee"
-      onclick="showAdminTab('employee')"
-    >
-      직원관리
-    </button>
-
-    <button
-      class="admin-tab"
-      data-tab="ledger"
-      onclick="showAdminTab('ledger')"
-    >
-      연월차 원장
-    </button>
-
+  <nav class="tabs">
+    <button class="tab active" data-page="dashboard" onclick="openPage('dashboard')">대시보드</button>
+    <button class="tab" data-page="leave" onclick="openPage('leave')">연월차 승인</button>
+    <button class="tab" data-page="comp" onclick="openPage('comp')">미휴무 승인</button>
+    <button class="tab" data-page="employees" onclick="openPage('employees')">직원관리</button>
+    <button class="tab" data-page="ledger" onclick="openPage('ledger')">연월차 원장</button>
   </nav>
 
+  <section id="loginPage" class="page active">
+    <section class="card admin-lock">
+      <h2>관리자 로그인</h2>
+      <p class="description">관리자 비밀번호를 입력하면 모든 관리자 기능을 사용할 수 있습니다.</p>
 
-  <!-- 통계 -->
-  <section class="admin-dashboard">
+      <div class="field">
+        <input id="adminPassword" type="password" placeholder="관리자 비밀번호"
+          onkeydown="if(event.key==='Enter') adminLogin()">
+      </div>
 
-    <article class="stat-card">
-      <div class="stat-label">연월차 승인대기</div>
-      <div id="statLeavePending" class="stat-value">-</div>
-    </article>
-
-    <article class="stat-card">
-      <div class="stat-label">미휴무 승인대기</div>
-      <div id="statCompPending" class="stat-value">-</div>
-    </article>
-
-    <article class="stat-card">
-      <div class="stat-label">등록 직원</div>
-      <div id="statEmployees" class="stat-value">-</div>
-    </article>
-
-    <article class="stat-card">
-      <div class="stat-label">관리 상태</div>
-      <div id="statStatus" class="stat-value">정상</div>
-    </article>
-
+      <button class="btn btn-primary" style="width:100%;" onclick="adminLogin()">관리자 로그인</button>
+      <div id="adminLoginResult" class="result"></div>
+    </section>
   </section>
 
+  <div id="adminArea" class="admin-area">
 
-  <!-- 연월차 승인 -->
-  <section
-    id="leaveSection"
-    class="admin-section active"
-  >
-
-    <div class="section-head">
-      <div>
-        <h2>연월차 승인관리</h2>
-
-        <p>
-          승인 대기 중인 연월차 신청을 확인하고 승인 또는 반려합니다.
-        </p>
+    <section id="dashboardPage" class="page">
+      <div class="dashboard-grid">
+        <article class="stat-card">
+          <div class="stat-label">전체 신청</div>
+          <div id="statTotal" class="stat-value">0</div>
+        </article>
+        <article class="stat-card">
+          <div class="stat-label">승인 대기</div>
+          <div id="statPending" class="stat-value">0</div>
+        </article>
+        <article class="stat-card">
+          <div class="stat-label">승인 완료</div>
+          <div id="statApproved" class="stat-value">0</div>
+        </article>
+        <article class="stat-card">
+          <div class="stat-label">반려</div>
+          <div id="statRejected" class="stat-value">0</div>
+        </article>
       </div>
 
-      <div class="section-actions">
-        <button
-          class="admin-button button-primary"
-          onclick="loadLeaveAdminSection()"
-        >
-          연월차 신청 불러오기
-        </button>
-      </div>
-    </div>
-
-    <div id="leaveListMount">
-      <div id="adminList" class="list">
-        <div class="item">
-          관리자 비밀번호를 입력하고 신청목록을 불러오세요.
+      <section class="card">
+        <div class="card-header">
+          <div>
+            <h2>최근 연월차 신청</h2>
+          </div>
+          <button class="btn btn-secondary" onclick="openPage('leave')">전체 승인관리</button>
         </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>신청일</th>
+                <th>매장</th>
+                <th>직원</th>
+                <th>휴가종류</th>
+                <th>기간</th>
+                <th>일수</th>
+                <th>상태</th>
+              </tr>
+            </thead>
+            <tbody id="dashboardRequestBody">
+              <tr><td colspan="7" class="empty">관리자 로그인 후 확인할 수 있습니다.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+
+    <section id="leavePage" class="page">
+      <div class="dashboard-grid">
+        <article class="stat-card"><div class="stat-label">전체 신청</div><div id="adminTotal" class="stat-value">0</div></article>
+        <article class="stat-card"><div class="stat-label">승인 대기</div><div id="adminPending" class="stat-value">0</div></article>
+        <article class="stat-card"><div class="stat-label">승인 완료</div><div id="adminApproved" class="stat-value">0</div></article>
+        <article class="stat-card"><div class="stat-label">반려</div><div id="adminRejected" class="stat-value">0</div></article>
       </div>
-    </div>
 
-  </section>
+      <section class="card">
+        <div class="card-header">
+          <div>
+            <h2>신청 승인관리</h2>
+            <p class="description">한국의집 관리자 화면과 동일하게 전체·대기·승인·반려 내역을 관리합니다.</p>
+          </div>
 
+          <div class="section-actions">
+            <button class="btn btn-secondary" onclick="loadAdminRequests()">새로고침</button>
+            <button class="btn btn-outline" onclick="refreshSummary()">원장 재계산</button>
+          </div>
+        </div>
 
-  <!-- 미휴무 승인 -->
-  <section
-    id="compSection"
-    class="admin-section"
-  >
+        <div class="toolbar">
+          <input id="requestKeyword" placeholder="이름·연락처·신청번호" oninput="renderAdminRequests()">
+          <select id="requestStatus" onchange="renderAdminRequests()">
+            <option value="대기" selected>승인 대기</option>
+            <option value="전체">전체 상태</option>
+            <option value="승인">승인 완료</option>
+            <option value="반려">반려</option>
+          </select>
+          <input id="requestStartDate" type="date" onchange="renderAdminRequests()">
+          <input id="requestEndDate" type="date" onchange="renderAdminRequests()">
+          <button class="btn btn-secondary" onclick="resetRequestSearch()">초기화</button>
+        </div>
 
-    <div class="section-head">
-      <div>
-        <h2>미휴무 승인관리</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>신청일</th>
+                <th>매장</th>
+                <th>직원</th>
+                <th>휴가종류</th>
+                <th>기간</th>
+                <th>일수</th>
+                <th>사유</th>
+                <th>상태</th>
+                <th>관리</th>
+              </tr>
+            </thead>
+            <tbody id="adminRequestBody">
+              <tr><td colspan="9" class="empty">신청내역을 불러오는 중입니다.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </section>
 
-        <p>
-          추가근무 발생과 미휴무 사용신청을 승인 또는 반려합니다.
-        </p>
+    <section id="compPage" class="page">
+      <div class="dashboard-grid">
+        <article class="stat-card"><div class="stat-label">전체 신청</div><div id="compTotal" class="stat-value">0</div></article>
+        <article class="stat-card"><div class="stat-label">승인 대기</div><div id="compPending" class="stat-value">0</div></article>
+        <article class="stat-card"><div class="stat-label">승인 완료</div><div id="compApproved" class="stat-value">0</div></article>
+        <article class="stat-card"><div class="stat-label">반려</div><div id="compRejected" class="stat-value">0</div></article>
       </div>
 
-      <div class="section-actions">
-        <button
-          class="admin-button button-primary"
-          onclick="loadCompAdminSection()"
-        >
-          미휴무 신청 불러오기
-        </button>
-      </div>
-    </div>
+      <section class="card">
+        <div class="card-header">
+          <div>
+            <h2>미휴무 승인관리</h2>
+            <p class="description">추가근무 발생 및 미휴무 사용신청을 승인 또는 반려합니다.</p>
+          </div>
+          <button class="btn btn-secondary" onclick="loadCompRequests()">새로고침</button>
+        </div>
 
-    <div id="compListMount">
-      <div class="placeholder">
-        <strong>미휴무 승인대기</strong>
-        비밀번호를 입력한 뒤 미휴무 신청을 불러오세요.
-      </div>
-    </div>
+        <div class="toolbar comp-toolbar">
+          <input id="compKeyword" placeholder="이름·연락처·매장 검색" oninput="renderCompRequests()">
+          <select id="compStatus" onchange="renderCompRequests()">
+            <option value="대기" selected>승인 대기</option>
+            <option value="전체">전체 상태</option>
+            <option value="승인">승인 완료</option>
+            <option value="반려">반려</option>
+          </select>
+          <button class="btn btn-secondary" onclick="resetCompSearch()">초기화</button>
+        </div>
 
-  </section>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>등록일시</th>
+                <th>구분</th>
+                <th>매장</th>
+                <th>직원</th>
+                <th>날짜</th>
+                <th>일수</th>
+                <th>사유</th>
+                <th>상태</th>
+                <th>관리</th>
+              </tr>
+            </thead>
+            <tbody id="compRequestBody">
+              <tr><td colspan="9" class="empty">미휴무 신청내역을 불러오는 중입니다.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </section>
 
+    <section id="employeesPage" class="page">
+      <section class="card">
+        <div class="card-header">
+          <div>
+            <h2>등록 직원목록</h2>
+            <p class="description">직원 조회·검색·퇴사처리를 관리합니다.</p>
+          </div>
+          <button class="btn btn-secondary" onclick="loadEmployees()">새로고침</button>
+        </div>
 
-  <!-- 직원관리 -->
-  <section
-    id="employeeSection"
-    class="admin-section"
-  >
+        <div class="field">
+          <input id="employeeKeyword" placeholder="이름·연락처·매장 검색" oninput="renderEmployees()">
+        </div>
 
-    <div class="section-head">
-      <div>
-        <h2>직원관리</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>매장</th>
+                <th>이름</th>
+                <th>연락처</th>
+                <th>입사일</th>
+                <th>상태</th>
+                <th>최종수정</th>
+                <th>관리</th>
+              </tr>
+            </thead>
+            <tbody id="employeeBody">
+              <tr><td colspan="7" class="empty">직원목록을 불러오는 중입니다.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </section>
 
-        <p>
-          등록 직원 조회, 수정 및 퇴사처리를 관리합니다.
-        </p>
-      </div>
-    </div>
+    <section id="ledgerPage" class="page">
+      <section class="card">
+        <div class="card-header">
+          <div>
+            <h2>연월차 관리원장</h2>
+          </div>
+          <div class="section-actions">
+            <button class="btn btn-secondary" onclick="loadLedger()">새로고침</button>
+            <button class="btn btn-outline" onclick="window.print()">인쇄</button>
+          </div>
+        </div>
 
-    <div class="employee-toolbar">
-      <input
-        id="employeeKeyword"
-        class="employee-search"
-        type="search"
-        placeholder="이름 · 연락처 검색"
-        autocomplete="off"
-        oninput="renderEmployees()"
-      >
+        <div class="toolbar">
+          <input id="ledgerKeyword" placeholder="이름·연락처·매장 검색" oninput="renderLedger()">
+          <select id="ledgerStatus" onchange="renderLedger()">
+            <option value="전체">전체 상태</option>
+            <option value="재직">재직</option>
+            <option value="휴직">휴직</option>
+          </select>
+          <select id="ledgerMemo" onchange="renderLedger()">
+            <option value="전체">전체 구분</option>
+            <option value="정상">정상</option>
+            <option value="승인대기 있음">승인대기 있음</option>
+            <option value="잔여 3일 이하">잔여 3일 이하</option>
+            <option value="잔여 없음">잔여 없음</option>
+          </select>
+          <button class="btn btn-secondary" onclick="resetLedgerSearch()">초기화</button>
+        </div>
 
-      <button
-        class="admin-button button-primary"
-        onclick="loadEmployees()"
-      >
-        직원목록 새로고침
-      </button>
-    </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>매장</th>
+                <th>이름</th>
+                <th>연락처</th>
+                <th>입사일</th>
+                <th>근속기간</th>
+                <th>발생</th>
+                <th>승인사용</th>
+                <th>승인대기</th>
+                <th>잔여</th>
+                <th>상태</th>
+                <th>비고</th>
+              </tr>
+            </thead>
+            <tbody id="ledgerBody">
+              <tr><td colspan="11" class="empty">연월차 원장을 불러오는 중입니다.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </section>
 
-    <div class="employee-table-wrap">
-      <table class="employee-table">
-        <thead>
-          <tr>
-            <th>매장</th>
-            <th>이름</th>
-            <th>연락처</th>
-            <th>입사일</th>
-            <th>상태</th>
-            <th>관리</th>
-          </tr>
-        </thead>
-
-        <tbody id="employeeBody">
-          <tr>
-            <td colspan="6" class="employee-empty">
-              관리자 비밀번호를 입력하고 직원목록을 불러오세요.
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-  </section>
-
-
-  <!-- 연월차 원장 -->
-  <section
-    id="ledgerSection"
-    class="admin-section"
-  >
-
-    <div class="section-head">
-      <div>
-        <h2>연월차 원장</h2>
-
-        <p>
-          직원별 발생연차, 승인사용, 승인대기 및 잔여연차를 조회합니다.
-        </p>
-      </div>
-    </div>
-
-    <div class="placeholder">
-      <strong>연월차 관리원장</strong>
-      다음 단계에서 LeaveSummary 데이터를 연결합니다.
-    </div>
-
-  </section>
-
-
-  <section class="footer-link">
-    <a href="index.html">
-      직원 신청 페이지로 이동
-    </a>
-  </section>
-
+  </div>
 </main>
 
+<div id="detailModal" class="modal" onclick="closeModalByOutside(event)">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>연월차 신청 상세</h3>
+      <button class="modal-close" onclick="closeDetailModal()">×</button>
+    </div>
+    <dl id="detailContent" class="detail-list"></dl>
+    <div id="detailAdminActions" class="section-actions" style="margin-top:22px;"></div>
+  </div>
+</div>
 
-<script src="script.js?v=20260713-3"></script>
-
-<script>
-  let currentAdminTab = "leave";
-
-
-  function showAdminTab(tabName) {
-    currentAdminTab = tabName;
-
-    document
-      .querySelectorAll(".admin-section")
-      .forEach(function (section) {
-        section.classList.remove("active");
-      });
-
-    document
-      .querySelectorAll(".admin-tab")
-      .forEach(function (button) {
-        button.classList.remove("active");
-      });
-
-    const sectionMap = {
-      leave: "leaveSection",
-      comp: "compSection",
-      employee: "employeeSection",
-      ledger: "ledgerSection"
-    };
-
-    const section =
-      document.getElementById(sectionMap[tabName]);
-
-    if (section) {
-      section.classList.add("active");
-    }
-
-    const activeButton =
-      document.querySelector(
-        '.admin-tab[data-tab="' +
-        tabName +
-        '"]'
-      );
-
-    if (activeButton) {
-      activeButton.classList.add("active");
-    }
-
-    if (tabName === "leave") {
-      moveAdminList("leaveListMount");
-    }
-
-    if (tabName === "comp") {
-      moveAdminList("compListMount");
-    }
-
-    if (tabName === "employee") {
-      const password =
-        document
-          .getElementById("password")
-          .value
-          .trim();
-
-      if (password) {
-        loadEmployees();
-      }
-    }
-
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth"
-    });
-  }
-
-
-  function moveAdminList(targetId) {
-    const target =
-      document.getElementById(targetId);
-
-    const list =
-      document.getElementById("adminList");
-
-    if (!target || !list) return;
-
-    target.innerHTML = "";
-    target.appendChild(list);
-  }
-
-
-  function loadLeaveAdminSection() {
-    moveAdminList("leaveListMount");
-    loadAdminList();
-
-    setTimeout(function () {
-      updatePendingCount(
-        "statLeavePending",
-        "adminList"
-      );
-    }, 900);
-  }
-
-
-  function loadCompAdminSection() {
-    moveAdminList("compListMount");
-    loadCompAdminList();
-
-    setTimeout(function () {
-      updatePendingCount(
-        "statCompPending",
-        "adminList"
-      );
-    }, 900);
-  }
-
-
-  function loadCurrentAdminTab() {
-    const password =
-      document
-        .getElementById("password")
-        .value
-        .trim();
-
-    if (!password) {
-      show(
-        "adminResult",
-        "관리자 비밀번호를 입력하세요."
-      );
-      return;
-    }
-
-    if (currentAdminTab === "leave") {
-      loadLeaveAdminSection();
-      return;
-    }
-
-    if (currentAdminTab === "comp") {
-      loadCompAdminSection();
-      return;
-    }
-
-    if (currentAdminTab === "employee") {
-      loadEmployees();
-      return;
-    }
-
-    if (currentAdminTab === "ledger") {
-      show(
-        "adminResult",
-        "연월차 원장 기능은 다음 단계에서 연결합니다."
-      );
-    }
-  }
-
-
-  function updatePendingCount(statId, listId) {
-    const stat =
-      document.getElementById(statId);
-
-    const list =
-      document.getElementById(listId);
-
-    if (!stat || !list) return;
-
-    const items =
-      list.querySelectorAll(".item");
-
-    if (
-      items.length === 1 &&
-      (
-        list.textContent.includes("없습니다") ||
-        list.textContent.includes("입력하고")
-      )
-    ) {
-      stat.textContent = "0";
-      return;
-    }
-
-    stat.textContent = String(items.length);
-  }
-
-
-  document.addEventListener(
-    "DOMContentLoaded",
-    function () {
-      showAdminTab("leave");
-    }
-  );
-</script>
-
+<script src="script.js?v=20260713-4"></script>
 </body>
 </html>

@@ -1,74 +1,82 @@
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx7Y5zaVU7kYTdFwdwhUgoKwqOGx55-8a0McZOmA42PpbU4WWJqYTFPeSH2oD4mOzd7/exec";
+const SCRIPT_URL =
+  "https://script.google.com/macros/s/AKfycbx7Y5zaVU7kYTdFwdwhUgoKwqOGx55-8a0McZOmA42PpbU4WWJqYTFPeSH2oD4mOzd7/exec";
 
+let adminPassword =
+  sessionStorage.getItem("thebigLeaveAdminPassword") || "";
+
+let currentPage = "dashboard";
+let adminRequests = [];
+let compRequests = [];
 let employeeRows = [];
+let ledgerRows = [];
+let selectedRequest = null;
 
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () =>
-    navigator.serviceWorker.register("service-worker.js").catch(() => {})
-  );
-}
 
 function $(id) {
   return document.getElementById(id);
 }
 
-window.addEventListener("DOMContentLoaded", () => {
-  const pw = $("password");
-  if (pw) pw.value = "";
-});
 
-function getVal(r, keys) {
-  for (const k of keys) {
-    if (r && r[k] !== undefined && r[k] !== null && r[k] !== "") {
-      return r[k];
-    }
-  }
-  return "-";
+function escapeHtml(value) {
+  return String(value == null ? "" : value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
-function show(id, msg) {
-  const el = $(id);
-  if (!el) return;
-  el.textContent = msg;
-  el.classList.add("show");
+
+function setResult(id, message, success) {
+  const box = $(id);
+
+  if (!box) return;
+
+  box.textContent = message;
+  box.className =
+    "result show " + (success ? "success" : "error");
 }
 
-function showTab(tab){
 
-  document.getElementById("applyTab").classList.add("hidden");
-  document.getElementById("registerTab").classList.add("hidden");
-  document.getElementById("historyTab").classList.add("hidden");
-  document.getElementById("compTab").classList.add("hidden");
+function jsonp(params) {
+  return new Promise(function (resolve, reject) {
+    const callback =
+      "cb_" +
+      Date.now() +
+      "_" +
+      Math.floor(Math.random() * 10000);
 
-  document.querySelectorAll(".tab").forEach(btn => {
-    btn.classList.remove("active");
+    const script = document.createElement("script");
+
+    window[callback] = function (data) {
+      resolve(data);
+
+      delete window[callback];
+      script.remove();
+    };
+
+    const query = new URLSearchParams(
+      Object.assign({}, params, {
+        callback: callback
+      })
+    );
+
+    script.src =
+      SCRIPT_URL + "?" + query.toString();
+
+    script.onerror = function () {
+      delete window[callback];
+      script.remove();
+
+      reject(
+        new Error("서버 연결에 실패했습니다.")
+      );
+    };
+
+    document.body.appendChild(script);
   });
-
-  if(tab === "apply"){
-    document.getElementById("applyTab").classList.remove("hidden");
-    document.querySelectorAll(".tab")[0].classList.add("active");
-  }
-
-  if(tab === "register"){
-    document.getElementById("registerTab").classList.remove("hidden");
-    document.querySelectorAll(".tab")[1].classList.add("active");
-  }
-
-  if(tab === "history"){
-    document.getElementById("historyTab").classList.remove("hidden");
-    document.querySelectorAll(".tab")[2].classList.add("active");
-  }
-
-  if(tab === "comp"){
-    document.getElementById("compTab").classList.remove("hidden");
-    document.querySelectorAll(".tab")[3].classList.add("active");
-  }
 }
 
-function syncRegisterFields() {
-  if ($("regName") && $("name")) $("regName").value = $("name").value.trim();
-  if ($("regPhone") && $("phone")) $("regPhone").value = $("phone").value.trim();
-}
 
 async function postNoCors(data) {
   await fetch(SCRIPT_URL, {
@@ -81,752 +89,1110 @@ async function postNoCors(data) {
   });
 }
 
-function jsonp(params) {
-  return new Promise((resolve, reject) => {
-    const callback = "cb_" + Date.now() + "_" + Math.floor(Math.random() * 10000);
 
-    window[callback] = data => {
-      resolve(data);
-      delete window[callback];
-      script.remove();
-    };
+function getStatusBadge(status) {
+  const value = String(status || "대기");
 
-    const query = new URLSearchParams({
-      ...params,
-      callback
+  if (value === "승인") {
+    return `
+      <span class="badge badge-approved">
+        승인
+      </span>
+    `;
+  }
+
+  if (value === "반려") {
+    return `
+      <span class="badge badge-rejected">
+        반려
+      </span>
+    `;
+  }
+
+  return `
+    <span class="badge badge-wait">
+      대기
+    </span>
+  `;
+}
+
+
+function formatEmployeePhone(phone) {
+  let number =
+    String(phone || "")
+      .replace(/[^0-9]/g, "");
+
+  if (
+    number.length === 10 &&
+    number.startsWith("10")
+  ) {
+    number = "0" + number;
+  }
+
+  if (number.length === 11) {
+    return number.replace(
+      /(\d{3})(\d{4})(\d{4})/,
+      "$1-$2-$3"
+    );
+  }
+
+  return String(phone || "");
+}
+
+
+document.addEventListener(
+  "DOMContentLoaded",
+  function () {
+    if (adminPassword) {
+      showAdminArea();
+      openPage("dashboard");
+      loadAllAdminData();
+    } else {
+      $("loginPage").classList.add("active");
+    }
+  }
+);
+
+
+async function adminLogin() {
+  const password =
+    $("adminPassword").value.trim();
+
+  if (!password) {
+    setResult(
+      "adminLoginResult",
+      "관리자 비밀번호를 입력하세요.",
+      false
+    );
+
+    return;
+  }
+
+  try {
+    const result = await jsonp({
+      action: "list",
+      password: password
     });
 
-    const script = document.createElement("script");
-    script.src = SCRIPT_URL + "?" + query.toString();
-    script.onerror = () => reject(new Error("불러오기 실패"));
+    if (!result.ok) {
+      throw new Error(
+        result.message || "로그인 실패"
+      );
+    }
 
-    document.body.appendChild(script);
+    adminPassword = password;
+
+    sessionStorage.setItem(
+      "thebigLeaveAdminPassword",
+      password
+    );
+
+    adminRequests = result.rows || [];
+
+    showAdminArea();
+    openPage("dashboard");
+
+    renderAdminRequests();
+    updateLeaveDashboard();
+
+    await Promise.all([
+      loadCompRequests(),
+      loadEmployees(),
+      loadLedger()
+    ]);
+
+  } catch (error) {
+    setResult(
+      "adminLoginResult",
+      error.message || "관리자 로그인 실패",
+      false
+    );
+  }
+}
+
+
+function showAdminArea() {
+  $("loginPage").classList.remove("active");
+  $("adminArea").classList.add("show");
+}
+
+
+function openPage(pageName) {
+  if (!adminPassword) {
+    $("loginPage").classList.add("active");
+    return;
+  }
+
+  currentPage = pageName;
+
+  document
+    .querySelectorAll(".page")
+    .forEach(function (page) {
+      page.classList.remove("active");
+    });
+
+  document
+    .querySelectorAll(".tab")
+    .forEach(function (tab) {
+      tab.classList.remove("active");
+    });
+
+  const page =
+    $(pageName + "Page");
+
+  if (page) {
+    page.classList.add("active");
+  }
+
+  const tab =
+    document.querySelector(
+      '.tab[data-page="' +
+      pageName +
+      '"]'
+    );
+
+  if (tab) {
+    tab.classList.add("active");
+  }
+
+  if (
+    pageName === "dashboard" ||
+    pageName === "leave"
+  ) {
+    loadAdminRequests();
+  }
+
+  if (pageName === "comp") {
+    loadCompRequests();
+  }
+
+  if (pageName === "employees") {
+    loadEmployees();
+  }
+
+  if (pageName === "ledger") {
+    loadLedger();
+  }
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
   });
 }
 
-async function registerEmployee() {
-  const btn = document.querySelector("#registerTab .primary");
 
-  const data = {
-    action: "register",
-    store: $("regStore").value,
-    name: $("regName").value.trim(),
-    phone: $("regPhone").value.trim(),
-    hireDate: $("hireDate").value
-  };
-
-  if (!data.name) return show("registerResult", "이름을 입력하세요.");
-  if (!data.phone) return show("registerResult", "연락처를 입력하세요.");
-  if (!data.hireDate) return show("registerResult", "입사일을 선택하세요.");
-
-  try {
-    if (btn) {
-      btn.disabled = true;
-      btn.textContent = "등록중...";
-    }
-
-    await postNoCors(data);
-
-    show("registerResult", "직원 등록/수정이 완료되었습니다.");
-
-    if ($("name")) $("name").value = data.name;
-    if ($("phone")) $("phone").value = data.phone;
-    if ($("store")) $("store").value = data.store;
-
-  } catch (e) {
-    show("registerResult", "등록 중 오류가 발생했습니다.");
-  } finally {
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = "직원 등록 / 수정";
-    }
-  }
+function loadCurrentPage() {
+  openPage(currentPage);
 }
 
-async function submitLeave() {
-  const btn = document.querySelector("#applyTab .primary");
 
-  const data = {
-    action: "apply",
-    store: $("store").value,
-    name: $("name").value.trim(),
-    phone: $("phone").value.trim(),
-    leaveType: $("leaveType").value,
-    startDate: $("startDate").value,
-    endDate: $("endDate").value,
-    days: Number($("days").value),
-    reason: $("reason").value.trim()
-  };
-
-  if (!data.name || !data.phone || !data.leaveType || !data.startDate || !data.endDate || !data.days) {
-    return show("result", "필수 항목을 확인하세요.");
-  }
-
-  try {
-    if (btn) {
-      btn.disabled = true;
-      btn.textContent = "신청중...";
-    }
-
-    show("result", "신청을 접수하고 있습니다...");
-
-    const res = await jsonp(data);
-
-    if (!res.ok) throw new Error(res.message || "신청 실패");
-
-    show("result", "신청이 접수되었습니다. 관리자 승인 후 반영됩니다.");
-
-    ["leaveType", "startDate", "endDate", "days", "reason"].forEach(id => {
-      if ($(id)) $(id).value = "";
-    });
-
-  } catch (e) {
-    show("result", e.message || "전송 중 오류가 발생했습니다.");
-  } finally {
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = "신청하기";
-    }
-  }
+async function loadAllAdminData() {
+  await Promise.all([
+    loadAdminRequests(),
+    loadCompRequests(),
+    loadEmployees(),
+    loadLedger()
+  ]);
 }
 
-async function checkBalance() {
-  const btn = document.querySelector(".secondary");
-  const oldText = btn ? btn.textContent : "";
-
-  const name = $("name").value.trim();
-  const phone = $("phone").value.trim();
-  const box = $("balanceBox");
-
-  if (!name || !phone) {
-    return show("result", "이름과 연락처를 입력한 뒤 조회하세요.");
-  }
-
-  try {
-    if (btn) {
-      btn.disabled = true;
-      btn.textContent = "조회중...";
-    }
-
-    const data = await jsonp({ action: "balance", name, phone });
-
-    if (!data.ok) return show("result", data.message || "조회 실패");
-
-    const b = data.balance;
-
-    if (!b.registered) {
-      box.innerHTML = "직원 등록 정보가 없습니다.<br>직원등록 탭에서 입사일을 먼저 등록하세요.";
-      box.classList.add("show");
-      syncRegisterFields();
-      return;
-    }
-
-    box.innerHTML =
-      `입사일: ${b.hireDate}<br>
-       근속기간: ${b.workYears}년 ${b.workMonths}개월<br>
-       발생 연월차: ${b.base}일<br>
-       승인 사용: ${b.used}일<br>
-       승인대기: ${b.pending}일<br>
-       현재 잔여: ${b.remain}일`;
-
-    box.classList.add("show");
-
-  } catch (e) {
-    show("result", "잔여 연월차 조회 중 오류가 발생했습니다.");
-  } finally {
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = oldText || "잔여 연월차 확인";
-    }
-  }
-}
-
-async function loadMyRequests() {
-  const name = $("name").value.trim();
-  const phone = $("phone").value.trim();
-  const list = $("myList");
-
-  if (!name || !phone) {
-    return show("result", "이름과 연락처를 입력한 뒤 조회하세요.");
-  }
-
-  list.innerHTML = "";
-
-  try {
-    const data = await jsonp({
-      action: "my",
-      name,
-      phone
-    });
-
-    if (!data.ok) {
-      list.innerHTML = `<div class="item">${data.message || "조회 실패"}</div>`;
-      return;
-    }
-
-    if (!data.rows.length) {
-      list.innerHTML = `<div class="item">신청 내역이 없습니다.</div>`;
-      return;
-    }
-
-    list.innerHTML = data.rows.map(renderItem).join("");
-
-  } catch (e) {
-    list.innerHTML = `<div class="item">조회 중 오류가 발생했습니다.</div>`;
-  }
-}
-
-function statusBadge(s) {
-  if (s === "승인" || s === "승인완료") {
-    return `<span class="badge ok">승인완료</span>`;
-  }
-
-  if (s === "반려") {
-    return `<span class="badge no">반려</span>`;
-  }
-
-  return `<span class="badge wait">대기</span>`;
-}
-
-function renderItem(r) {
-  const name = getVal(r, ["직원명", "이름", "name"]);
-  const leaveType = getVal(r, ["휴가구분", "휴가종류", "leaveType"]);
-  const status = getVal(r, ["상태", "status"]);
-  const startDate = getVal(r, ["시작일", "startDate"]);
-  const endDate = getVal(r, ["종료일", "endDate"]);
-  const days = getVal(r, ["일수", "사용일수", "days"]);
-  const reason = getVal(r, ["사유", "reason"]);
-  const memo = getVal(r, ["관리자메모", "adminMemo"]);
-
-  return `
-    <div class="item">
-      <div class="item-title">
-        ${leaveType} ${statusBadge(status)}
-      </div>
-
-      <div class="item-meta">
-        신청자: ${name}<br>
-        기간: ${startDate} ~ ${endDate}<br>
-        사용일수: ${days}일<br>
-        사유: ${reason}<br>
-        관리자메모: ${memo}
-      </div>
-    </div>
-  `;
-}
-
-async function loadAdminList() {
-  const password = $("password").value.trim();
-  const list = $("adminList");
-  const result = $("adminResult");
-
-  if (!password) {
-    return show("adminResult", "관리자 비밀번호를 입력하세요.");
-  }
-
-  list.innerHTML = "신청 목록을 불러오는 중입니다...";
-
-  try {
-    const data = await jsonp({
-      action: "list",
-      password
-    });
-
-    if (!data.ok) {
-      show("adminResult", data.message || "조회 실패");
-      return;
-    }
-
-    result.classList.remove("show");
-
-    if (!data.rows.length) {
-      list.innerHTML = `<div class="item">신청 내역이 없습니다.</div>`;
-      return;
-    }
-
-   const pendingRows = data.rows.filter(r => {
-  const status = getVal(r, ["상태", "status"]);
-  return status === "대기";
-});
-
-if (!pendingRows.length) {
-  list.innerHTML = `<div class="item">승인 대기 신청이 없습니다.</div>`;
-  return;
-}
-
-list.innerHTML = pendingRows.map(renderAdminItem).join("");
-
-  } catch (e) {
-    show("adminResult", "신청 목록 조회 중 오류가 발생했습니다.");
-  }
-}
-
-function renderAdminItem(r) {
-  const id = getVal(r, ["신청ID", "ID", "id"]);
-
-  const store = getVal(r, ["소속", "매장", "store", "branch", "dept"]);
-  const name = getVal(r, ["직원명", "이름", "name", "employeeName", "staffName"]);
-  const phone = getVal(r, ["휴대폰", "연락처", "phone", "mobile"]);
-  const leaveType = getVal(r, ["휴가구분", "휴가종류", "leaveType", "type"]);
-  const startDate = getVal(r, ["시작일", "startDate"]);
-  const endDate = getVal(r, ["종료일", "endDate"]);
-  const days = getVal(r, ["일수", "사용일수", "days"]);
-  const reason = getVal(r, ["사유", "reason"]);
-  const status = getVal(r, ["상태", "status"]);
-  const createdAt = getVal(r, ["신청일", "신청일시", "createdAt"]);
-  const memo = getVal(r, ["관리자메모", "adminMemo"]);
-
-  const disabled = status !== "대기" ? "style='display:none'" : "";
-
-  return `
-    <div class="item">
-      <div class="item-title">
-        ${name} / ${leaveType} ${statusBadge(status)}
-      </div>
-
-      <div class="item-meta">
-        매장: ${store}<br>
-        연락처: ${phone}<br>
-        기간: ${startDate} ~ ${endDate}<br>
-        사용일수: ${days}일<br>
-        사유: ${reason}<br>
-        신청일시: ${createdAt}<br>
-        관리자메모: ${memo}
-      </div>
-
-      <div class="admin-actions" ${disabled}>
-        <button class="primary" onclick="processRequest('${id}','approve')">승인</button>
-        <button class="reject" onclick="processRequest('${id}','reject')">반려</button>
-      </div>
-    </div>
-  `;
-}
-
-async function processRequest(id, action) {
-  const password = $("password").value.trim();
-
-  if (!id || id === "-") {
-    return show("adminResult", "신청 ID가 없습니다.");
-  }
-
-  const memo =
-    prompt(
-      action === "approve"
-        ? "승인 메모를 입력하세요."
-        : "반려 사유를 입력하세요."
-    ) || "";
-
-  try {
-    show("adminResult", "처리 중입니다...");
-
-    await postNoCors({
-      action,
-      id,
-      password,
-      adminMemo: memo
-    });
-
-    show("adminResult", "처리되었습니다. 잠시 후 목록을 다시 불러옵니다.");
-
-    setTimeout(loadAdminList, 1200);
-
-  } catch (e) {
-    show("adminResult", "처리 중 오류가 발생했습니다.");
-  }
-}
 
 /* =========================
-   연월차 일수 자동 계산
+   연월차 승인관리
 ========================= */
 
-function calculateDays() {
+async function loadAdminRequests() {
+  if (!adminPassword) return;
 
-  const start = $("startDate").value;
-  const end = $("endDate").value;
-  const type = $("leaveType").value;
+  const body =
+    $("adminRequestBody");
 
-  if (!start || !end) return;
-
-  if (
-    type === "오전 반차" ||
-    type === "오후 반차" ||
-    type === "반차"
-  ) {
-    $("days").value = 0.5;
-    return;
-  }
-
-  const s = new Date(start);
-  const e = new Date(end);
-
-  const diff =
-    Math.floor((e - s) / (1000 * 60 * 60 * 24)) + 1;
-
-  $("days").value = diff > 0 ? diff : 1;
-}
-
-["startDate", "endDate", "leaveType"].forEach(id => {
-  const el = $(id);
-  if (el) el.addEventListener("change", calculateDays);
-});
-async function checkCompBalance(){
-
-  const store = $("compStore").value;
-  const name = $("compName").value.trim();
-  const phone = $("compPhone").value.trim();
-  const box = $("compBalanceBox");
-
-  if(!name || !phone){
-    alert("이름과 연락처를 입력해주세요.");
-    return;
-  }
-
-  box.innerHTML = "조회 중...";
-  box.classList.add("show");
-
-  try{
-    const res = await jsonp({
-      action: "compBalance",
-      store,
-      name,
-      phone
-    });
-
-    if(!res.ok){
-      box.innerHTML = res.message || "잔여 미휴무를 조회하지 못했습니다.";
-      return;
-    }
-
-    box.innerHTML =
-      `발생 미휴무: ${res.earned || 0}일<br>
-       사용 미휴무: ${res.used || 0}일<br>
-       잔여 미휴무: ${res.balance || 0}일`;
-
-  }catch(e){
-    box.innerHTML = "조회 오류가 발생했습니다.";
-  }
-}
-
-async function submitExtraWork(){
-
-  const btn = document.querySelector("button[onclick='submitExtraWork()']");
-
-  const data = {
-    action: "extraWork",
-    store: $("compStore").value,
-    name: $("compName").value.trim(),
-    phone: $("compPhone").value.trim(),
-    workDate: $("extraWorkDate").value,
-    days: $("extraDays").value,
-    reason: $("extraReason").value.trim()
-  };
-
-  if(!data.name || !data.phone || !data.workDate || !data.days){
-    alert("이름, 연락처, 추가근무일, 발생일수를 입력해주세요.");
-    return;
-  }
-
-  $("extraResult").innerHTML = "추가근무 등록 처리 중입니다...";
-
-  try{
-    if(btn){
-      btn.disabled = true;
-      btn.textContent = "등록 처리중...";
-      btn.style.opacity = "0.7";
-    }
-
-    const res = await jsonp(data);
-
-    if(!res.ok){
-      $("extraResult").innerHTML = res.message || "추가근무 등록에 실패했습니다.";
-      return;
-    }
-
-    $("extraResult").innerHTML = "추가근무가 승인대기로 등록되었습니다.";
-    checkCompBalance();
-
-  }catch(e){
-    $("extraResult").innerHTML = "등록 오류가 발생했습니다.";
-  }finally{
-    if(btn){
-      btn.disabled = false;
-      btn.textContent = "추가근무 등록";
-      btn.style.opacity = "1";
-    }
-  }
-}
-
-async function submitCompUse(){
-
-  const btn = document.querySelector("button[onclick='submitCompUse()']");
-
-  const data = {
-    action: "compUse",
-    store: $("compStore").value,
-    name: $("compName").value.trim(),
-    phone: $("compPhone").value.trim(),
-    useDate: $("compUseDate").value,
-    days: $("compUseDays").value,
-    reason: $("compUseReason").value.trim()
-  };
-
-  if(!data.name || !data.phone || !data.useDate || !data.days){
-    alert("이름, 연락처, 사용일, 사용일수를 입력해주세요.");
-    return;
-  }
-
-  $("compUseResult").innerHTML = "미휴무 사용신청 처리 중입니다...";
-
-  try{
-    if(btn){
-      btn.disabled = true;
-      btn.textContent = "신청 처리중...";
-      btn.style.opacity = "0.7";
-    }
-
-    const res = await jsonp(data);
-
-    if(!res.ok){
-      $("compUseResult").innerHTML = res.message || "미휴무 사용신청에 실패했습니다.";
-      return;
-    }
-
-    $("compUseResult").innerHTML = "미휴무 사용신청이 승인대기로 접수되었습니다.";
-    checkCompBalance();
-
-  }catch(e){
-    $("compUseResult").innerHTML = "신청 오류가 발생했습니다.";
-  }finally{
-    if(btn){
-      btn.disabled = false;
-      btn.textContent = "미휴무 사용신청";
-      btn.style.opacity = "1";
-    }
-  }
-}
-
-async function loadCompAdminList() {
-  const password = $("password").value.trim();
-  const list = $("adminList");
-
-  if (!password) {
-    return show("adminResult", "관리자 비밀번호를 입력하세요.");
-  }
-
-  list.innerHTML = "미휴무 신청 목록을 불러오는 중입니다...";
-
-  try {
-    const data = await jsonp({
-      action: "compList",
-      password
-    });
-
-    if (!data.ok) {
-      show("adminResult", data.message || "조회 실패");
-      return;
-    }
-
-    const pendingRows = data.rows.filter(r => {
-      const status = getVal(r, ["상태", "status"]);
-      return status === "대기";
-    });
-
-    if (!pendingRows.length) {
-      list.innerHTML = `<div class="item">승인 대기 미휴무 신청이 없습니다.</div>`;
-      return;
-    }
-
-    list.innerHTML = pendingRows.map(renderCompAdminItem).join("");
-
-  } catch (e) {
-    show("adminResult", "미휴무 신청 목록 조회 중 오류가 발생했습니다.");
-  }
-}
-function renderCompAdminItem(r) {
-  const rowNo = getVal(r, ["rowNo"]);
-  const type = getVal(r, ["구분"]);
-  const store = getVal(r, ["매장"]);
-  const name = getVal(r, ["이름"]);
-  const phone = getVal(r, ["연락처"]);
-  const workDate = getVal(r, ["발생일"]);
-  const useDate = getVal(r, ["사용일"]);
-  const days = getVal(r, ["일수"]);
-  const reason = getVal(r, ["사유"]);
-  const status = getVal(r, ["상태"]);
-
-  const dateText = type === "발생" ? workDate : useDate;
-  const title = type === "발생" ? "추가근무 발생 승인" : "미휴무 사용 승인";
-
-  return `
-    <div class="item">
-      <div class="item-title">
-        ${name} / ${title} ${statusBadge(status)}
-      </div>
-
-      <div class="item-meta">
-        매장: ${store}<br>
-        연락처: ${phone}<br>
-        구분: ${type}<br>
-        날짜: ${dateText}<br>
-        일수: ${days}일<br>
-        사유: ${reason}
-      </div>
-
-      <div class="admin-actions">
-        <button class="primary" onclick="processCompRequest('${rowNo}','approve')">승인</button>
-        <button class="reject" onclick="processCompRequest('${rowNo}','reject')">반려</button>
-      </div>
-    </div>
-  `;
-}
-async function processCompRequest(rowNo, processType) {
-  const password = $("password").value.trim();
-
-  if (!rowNo || rowNo === "-") {
-    return show("adminResult", "처리할 행 번호가 없습니다.");
-  }
-
-  try {
-    show("adminResult", "미휴무 처리 중입니다...");
-
-    const data = await jsonp({
-      action: "compProcess",
-      password,
-      rowNo,
-      processType
-    });
-
-    if (!data.ok) {
-      show("adminResult", data.message || "처리 실패");
-      return;
-    }
-
-    show("adminResult", data.message || "처리되었습니다.");
-    setTimeout(loadCompAdminList, 800);
-
-  } catch (e) {
-    show("adminResult", "미휴무 처리 중 오류가 발생했습니다.");
-  }
-}
-function showAdminTab(tab){
-
-  const leave = document.getElementById("leaveTab");
-  const comp = document.getElementById("compTab");
-  const employee = document.getElementById("employeeTab");
-  const ledger = document.getElementById("ledgerTab");
-
-  if(leave) leave.classList.add("hidden");
-  if(comp) comp.classList.add("hidden");
-  if(employee) employee.classList.add("hidden");
-  if(ledger) ledger.classList.add("hidden");
-
-  switch(tab){
-
-    case "leave":
-      if(leave) leave.classList.remove("hidden");
-      break;
-
-    case "comp":
-      if(comp) comp.classList.remove("hidden");
-      break;
-
-    case "employee":
-      if(employee) employee.classList.remove("hidden");
-      break;
-
-    case "ledger":
-      if(ledger) ledger.classList.remove("hidden");
-      break;
-
-  }
-
-}
-window.addEventListener("DOMContentLoaded",function(){
-
-    if(document.getElementById("leaveTab")){
-
-        showAdminTab("leave");
-
-    }
-
-});
-/* =========================
-   관리자 직원관리
-========================= */
-
-async function loadEmployees() {
-  const password = $("password") ? $("password").value.trim() : "";
-  const tbody = $("employeeBody");
-  const resultBox = $("adminResult");
-
-  if (!tbody) return;
-
-  if (!password) {
-    show("adminResult", "관리자 비밀번호를 입력하세요.");
-    tbody.innerHTML = `
+  if (body) {
+    body.innerHTML = `
       <tr>
-        <td colspan="6" class="employee-empty">
-          관리자 비밀번호를 입력하고 직원목록을 불러오세요.
+        <td colspan="9" class="empty">
+          신청내역을 불러오는 중입니다.
         </td>
       </tr>
     `;
+  }
+
+  try {
+    const result = await jsonp({
+      action: "list",
+      password: adminPassword,
+      t: Date.now()
+    });
+
+    if (!result.ok) {
+      throw new Error(
+        result.message || "조회 실패"
+      );
+    }
+
+    adminRequests =
+      result.rows || [];
+
+    renderAdminRequests();
+    updateLeaveDashboard();
+
+  } catch (error) {
+    if (body) {
+      body.innerHTML = `
+        <tr>
+          <td colspan="9" class="empty">
+            ${escapeHtml(error.message)}
+          </td>
+        </tr>
+      `;
+    }
+  }
+}
+
+
+function getFilteredAdminRequests() {
+  const keyword =
+    String(
+      $("requestKeyword")
+        ? $("requestKeyword").value
+        : ""
+    )
+      .trim()
+      .toLowerCase();
+
+  const status =
+    $("requestStatus")
+      ? $("requestStatus").value
+      : "대기";
+
+  const startDate =
+    $("requestStartDate")
+      ? $("requestStartDate").value
+      : "";
+
+  const endDate =
+    $("requestEndDate")
+      ? $("requestEndDate").value
+      : "";
+
+  return adminRequests.filter(
+    function (row) {
+      const searchable = [
+        row["ID"],
+        row["매장"],
+        row["이름"],
+        row["연락처"],
+        row["휴가종류"],
+        row["사유"]
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      if (
+        keyword &&
+        !searchable.includes(keyword)
+      ) {
+        return false;
+      }
+
+      if (
+        status !== "전체" &&
+        String(row["상태"]) !== status
+      ) {
+        return false;
+      }
+
+      const requestDate =
+        String(
+          row["신청일시"] || ""
+        ).substring(0, 10);
+
+      if (
+        startDate &&
+        requestDate < startDate
+      ) {
+        return false;
+      }
+
+      if (
+        endDate &&
+        requestDate > endDate
+      ) {
+        return false;
+      }
+
+      return true;
+    }
+  );
+}
+
+
+function renderAdminRequests() {
+  const body =
+    $("adminRequestBody");
+
+  if (!body) return;
+
+  const rows =
+    getFilteredAdminRequests();
+
+  if (!rows.length) {
+    body.innerHTML = `
+      <tr>
+        <td colspan="9" class="empty">
+          조건에 맞는 신청내역이 없습니다.
+        </td>
+      </tr>
+    `;
+
     return;
   }
 
-  tbody.innerHTML = `
+  body.innerHTML =
+    rows
+      .map(function (row) {
+        const id =
+          encodeURIComponent(
+            row["ID"]
+          );
+
+        return `
+          <tr>
+            <td>
+              ${escapeHtml(row["신청일시"])}
+            </td>
+
+            <td>
+              ${escapeHtml(row["매장"])}
+            </td>
+
+            <td>
+              ${escapeHtml(row["이름"])}
+              <br>
+              <small>
+                ${escapeHtml(
+                  formatEmployeePhone(
+                    row["연락처"]
+                  )
+                )}
+              </small>
+            </td>
+
+            <td>
+              ${escapeHtml(row["휴가종류"])}
+            </td>
+
+            <td>
+              ${escapeHtml(row["시작일"])}
+              ~
+              ${escapeHtml(row["종료일"])}
+            </td>
+
+            <td>
+              ${escapeHtml(row["사용일수"])}
+            </td>
+
+            <td>
+              ${escapeHtml(
+                row["사유"] || "-"
+              )}
+            </td>
+
+            <td>
+              ${getStatusBadge(row["상태"])}
+            </td>
+
+            <td>
+              <button
+                class="btn btn-secondary btn-small"
+                onclick="openRequestDetail('${id}')"
+              >
+                상세
+              </button>
+            </td>
+          </tr>
+        `;
+      })
+      .join("");
+}
+
+
+function resetRequestSearch() {
+  $("requestKeyword").value = "";
+  $("requestStatus").value = "대기";
+  $("requestStartDate").value = "";
+  $("requestEndDate").value = "";
+
+  renderAdminRequests();
+}
+
+
+function updateLeaveDashboard() {
+  const total =
+    adminRequests.length;
+
+  const pending =
+    adminRequests.filter(
+      function (row) {
+        return String(row["상태"]) === "대기";
+      }
+    ).length;
+
+  const approved =
+    adminRequests.filter(
+      function (row) {
+        return String(row["상태"]) === "승인";
+      }
+    ).length;
+
+  const rejected =
+    adminRequests.filter(
+      function (row) {
+        return String(row["상태"]) === "반려";
+      }
+    ).length;
+
+  [
+    ["statTotal", total],
+    ["statPending", pending],
+    ["statApproved", approved],
+    ["statRejected", rejected],
+    ["adminTotal", total],
+    ["adminPending", pending],
+    ["adminApproved", approved],
+    ["adminRejected", rejected]
+  ].forEach(
+    function (item) {
+      if ($(item[0])) {
+        $(item[0]).textContent =
+          item[1];
+      }
+    }
+  );
+
+  const body =
+    $("dashboardRequestBody");
+
+  if (!body) return;
+
+  const recent =
+    adminRequests.slice(0, 8);
+
+  if (!recent.length) {
+    body.innerHTML = `
+      <tr>
+        <td colspan="7" class="empty">
+          신청내역이 없습니다.
+        </td>
+      </tr>
+    `;
+
+    return;
+  }
+
+  body.innerHTML =
+    recent
+      .map(function (row) {
+        return `
+          <tr>
+            <td>
+              ${escapeHtml(row["신청일시"])}
+            </td>
+
+            <td>
+              ${escapeHtml(row["매장"])}
+            </td>
+
+            <td>
+              ${escapeHtml(row["이름"])}
+            </td>
+
+            <td>
+              ${escapeHtml(row["휴가종류"])}
+            </td>
+
+            <td>
+              ${escapeHtml(row["시작일"])}
+              ~
+              ${escapeHtml(row["종료일"])}
+            </td>
+
+            <td>
+              ${escapeHtml(row["사용일수"])}
+            </td>
+
+            <td>
+              ${getStatusBadge(row["상태"])}
+            </td>
+          </tr>
+        `;
+      })
+      .join("");
+}
+
+
+function openRequestDetail(encodedId) {
+  const id =
+    decodeURIComponent(encodedId);
+
+  selectedRequest =
+    adminRequests.find(
+      function (row) {
+        return (
+          String(row["ID"]) ===
+          String(id)
+        );
+      }
+    );
+
+  if (!selectedRequest) {
+    alert(
+      "신청정보를 찾을 수 없습니다."
+    );
+
+    return;
+  }
+
+  const row =
+    selectedRequest;
+
+  $("detailContent").innerHTML = `
+    <dt>신청번호</dt>
+    <dd>${escapeHtml(row["ID"])}</dd>
+
+    <dt>신청일</dt>
+    <dd>${escapeHtml(row["신청일시"])}</dd>
+
+    <dt>매장</dt>
+    <dd>${escapeHtml(row["매장"])}</dd>
+
+    <dt>직원</dt>
+    <dd>
+      ${escapeHtml(row["이름"])}
+      /
+      ${escapeHtml(
+        formatEmployeePhone(
+          row["연락처"]
+        )
+      )}
+    </dd>
+
+    <dt>휴가종류</dt>
+    <dd>${escapeHtml(row["휴가종류"])}</dd>
+
+    <dt>기간</dt>
+    <dd>
+      ${escapeHtml(row["시작일"])}
+      ~
+      ${escapeHtml(row["종료일"])}
+    </dd>
+
+    <dt>사용일수</dt>
+    <dd>
+      ${escapeHtml(row["사용일수"])}일
+    </dd>
+
+    <dt>사유</dt>
+    <dd>
+      ${escapeHtml(row["사유"] || "-")}
+    </dd>
+
+    <dt>상태</dt>
+    <dd>
+      ${getStatusBadge(row["상태"])}
+    </dd>
+
+    <dt>관리자메모</dt>
+    <dd>
+      ${escapeHtml(
+        row["관리자메모"] || "-"
+      )}
+    </dd>
+
+    <dt>처리일시</dt>
+    <dd>
+      ${escapeHtml(
+        row["처리일시"] || "-"
+      )}
+    </dd>
+  `;
+
+  const isPending =
+    String(row["상태"]) === "대기";
+
+  $("detailAdminActions").innerHTML =
+    (
+      isPending
+        ? `
+          <button
+            class="btn btn-green"
+            onclick="approveRequest()"
+          >
+            승인
+          </button>
+
+          <button
+            class="btn btn-red"
+            onclick="rejectRequest()"
+          >
+            반려
+          </button>
+        `
+        : ""
+    ) +
+    `
+      <button
+        class="btn btn-secondary"
+        onclick="closeDetailModal()"
+      >
+        닫기
+      </button>
+    `;
+
+  $("detailModal")
+    .classList
+    .add("show");
+}
+
+
+function closeDetailModal() {
+  $("detailModal")
+    .classList
+    .remove("show");
+
+  selectedRequest = null;
+}
+
+
+function closeModalByOutside(event) {
+  if (
+    event.target.id === "detailModal"
+  ) {
+    closeDetailModal();
+  }
+}
+
+
+async function approveRequest() {
+  if (!selectedRequest) return;
+
+  if (
+    !confirm(
+      "이 신청을 승인하시겠습니까?"
+    )
+  ) {
+    return;
+  }
+
+  await updateRequestStatus(
+    "approve",
+    "관리자 승인"
+  );
+}
+
+
+async function rejectRequest() {
+  if (!selectedRequest) return;
+
+  const memo =
+    prompt(
+      "반려 사유를 입력하세요.",
+      selectedRequest["관리자메모"] || ""
+    );
+
+  if (memo === null) return;
+
+  if (!memo.trim()) {
+    alert("반려 사유를 입력하세요.");
+    return;
+  }
+
+  await updateRequestStatus(
+    "reject",
+    memo.trim()
+  );
+}
+
+
+async function updateRequestStatus(
+  action,
+  memo
+) {
+  try {
+    await postNoCors({
+      action: action,
+      id: selectedRequest["ID"],
+      password: adminPassword,
+      adminMemo: memo
+    });
+
+    closeDetailModal();
+
+    setTimeout(
+      function () {
+        loadAdminRequests();
+        loadLedger();
+      },
+      1200
+    );
+
+  } catch (error) {
+    alert(
+      "처리 중 오류가 발생했습니다."
+    );
+  }
+}
+
+
+async function refreshSummary() {
+  try {
+    const result = await jsonp({
+      action: "refreshSummary",
+      password: adminPassword,
+      t: Date.now()
+    });
+
+    if (!result.ok) {
+      throw new Error(
+        result.message || "갱신 실패"
+      );
+    }
+
+    alert(
+      result.message ||
+      "연월차 원장을 갱신했습니다."
+    );
+
+    loadLedger();
+
+  } catch (error) {
+    alert(error.message);
+  }
+}
+
+
+/* =========================
+   미휴무 승인관리
+========================= */
+
+async function loadCompRequests() {
+  if (!adminPassword) return;
+
+  const body =
+    $("compRequestBody");
+
+  if (body) {
+    body.innerHTML = `
+      <tr>
+        <td colspan="9" class="empty">
+          미휴무 신청내역을 불러오는 중입니다.
+        </td>
+      </tr>
+    `;
+  }
+
+  try {
+    const result = await jsonp({
+      action: "compList",
+      password: adminPassword,
+      t: Date.now()
+    });
+
+    if (!result.ok) {
+      throw new Error(
+        result.message || "조회 실패"
+      );
+    }
+
+    compRequests =
+      result.rows || [];
+
+    renderCompRequests();
+    updateCompDashboard();
+
+  } catch (error) {
+    if (body) {
+      body.innerHTML = `
+        <tr>
+          <td colspan="9" class="empty">
+            ${escapeHtml(error.message)}
+          </td>
+        </tr>
+      `;
+    }
+  }
+}
+
+
+function renderCompRequests() {
+  const body =
+    $("compRequestBody");
+
+  if (!body) return;
+
+  const keyword =
+    String(
+      $("compKeyword")
+        ? $("compKeyword").value
+        : ""
+    )
+      .trim()
+      .toLowerCase();
+
+  const status =
+    $("compStatus")
+      ? $("compStatus").value
+      : "대기";
+
+  const rows =
+    compRequests.filter(
+      function (row) {
+        const text = [
+          row["매장"],
+          row["이름"],
+          row["연락처"],
+          row["구분"],
+          row["사유"]
+        ]
+          .join(" ")
+          .toLowerCase();
+
+        if (
+          keyword &&
+          !text.includes(keyword)
+        ) {
+          return false;
+        }
+
+        if (
+          status !== "전체" &&
+          String(row["상태"]) !== status
+        ) {
+          return false;
+        }
+
+        return true;
+      }
+    );
+
+  if (!rows.length) {
+    body.innerHTML = `
+      <tr>
+        <td colspan="9" class="empty">
+          조건에 맞는 미휴무 신청이 없습니다.
+        </td>
+      </tr>
+    `;
+
+    return;
+  }
+
+  body.innerHTML =
+    rows
+      .map(function (row) {
+        const dateText =
+          String(row["구분"]) === "발생"
+            ? row["발생일"]
+            : row["사용일"];
+
+        const isPending =
+          String(row["상태"]) === "대기";
+
+        return `
+          <tr>
+            <td>
+              ${escapeHtml(row["등록일시"])}
+            </td>
+
+            <td>
+              ${escapeHtml(row["구분"])}
+            </td>
+
+            <td>
+              ${escapeHtml(row["매장"])}
+            </td>
+
+            <td>
+              ${escapeHtml(row["이름"])}
+              <br>
+              <small>
+                ${escapeHtml(
+                  formatEmployeePhone(
+                    row["연락처"]
+                  )
+                )}
+              </small>
+            </td>
+
+            <td>
+              ${escapeHtml(dateText || "-")}
+            </td>
+
+            <td>
+              ${escapeHtml(row["일수"])}
+            </td>
+
+            <td>
+              ${escapeHtml(
+                row["사유"] || "-"
+              )}
+            </td>
+
+            <td>
+              ${getStatusBadge(row["상태"])}
+            </td>
+
+            <td>
+              ${
+                isPending
+                  ? `
+                    <button
+                      class="btn btn-green btn-small"
+                      onclick="processCompRequest('${row.rowNo}','approve')"
+                    >
+                      승인
+                    </button>
+
+                    <button
+                      class="btn btn-red btn-small"
+                      onclick="processCompRequest('${row.rowNo}','reject')"
+                    >
+                      반려
+                    </button>
+                  `
+                  : "-"
+              }
+            </td>
+          </tr>
+        `;
+      })
+      .join("");
+}
+
+
+function resetCompSearch() {
+  $("compKeyword").value = "";
+  $("compStatus").value = "대기";
+
+  renderCompRequests();
+}
+
+
+function updateCompDashboard() {
+  const total =
+    compRequests.length;
+
+  const pending =
+    compRequests.filter(
+      function (row) {
+        return String(row["상태"]) === "대기";
+      }
+    ).length;
+
+  const approved =
+    compRequests.filter(
+      function (row) {
+        return String(row["상태"]) === "승인";
+      }
+    ).length;
+
+  const rejected =
+    compRequests.filter(
+      function (row) {
+        return String(row["상태"]) === "반려";
+      }
+    ).length;
+
+  $("compTotal").textContent = total;
+  $("compPending").textContent = pending;
+  $("compApproved").textContent = approved;
+  $("compRejected").textContent = rejected;
+}
+
+
+async function processCompRequest(
+  rowNo,
+  processType
+) {
+  const message =
+    processType === "approve"
+      ? "이 미휴무 신청을 승인하시겠습니까?"
+      : "이 미휴무 신청을 반려하시겠습니까?";
+
+  if (!confirm(message)) return;
+
+  try {
+    const result = await jsonp({
+      action: "compProcess",
+      password: adminPassword,
+      rowNo: rowNo,
+      processType: processType,
+      t: Date.now()
+    });
+
+    if (!result.ok) {
+      throw new Error(
+        result.message || "처리 실패"
+      );
+    }
+
+    alert(
+      result.message ||
+      "처리되었습니다."
+    );
+
+    loadCompRequests();
+
+  } catch (error) {
+    alert(
+      error.message ||
+      "처리 중 오류가 발생했습니다."
+    );
+  }
+}
+
+
+/* =========================
+   직원관리
+========================= */
+
+async function loadEmployees() {
+  if (!adminPassword) return;
+
+  const body =
+    $("employeeBody");
+
+  body.innerHTML = `
     <tr>
-      <td colspan="6" class="employee-empty">
-        직원목록을 불러오는 중입니다...
+      <td colspan="7" class="empty">
+        직원목록을 불러오는 중입니다.
       </td>
     </tr>
   `;
 
   try {
-    const data = await jsonp({
+    const result = await jsonp({
       action: "employees",
-      password
+      password: adminPassword,
+      t: Date.now()
     });
 
-    if (!data.ok) {
-      show("adminResult", data.message || "직원목록 조회 실패");
-      tbody.innerHTML = `
-        <tr>
-          <td colspan="6" class="employee-empty">
-            직원목록을 불러오지 못했습니다.
-          </td>
-        </tr>
-      `;
-      return;
+    if (!result.ok) {
+      throw new Error(
+        result.message ||
+        "직원목록 조회 실패"
+      );
     }
 
-    employeeRows = Array.isArray(data.rows) ? data.rows : [];
-
-    if (resultBox) {
-      resultBox.classList.remove("show");
-    }
+    employeeRows =
+      result.rows || [];
 
     renderEmployees();
 
-    const activeCount = employeeRows.filter(function (employee) {
-      return String(employee.status || "재직").trim() !== "퇴사";
-    }).length;
-
-    if ($("statEmployees")) {
-      $("statEmployees").textContent = String(activeCount);
-    }
-
-  } catch (e) {
-    show(
-      "adminResult",
-      e && e.message
-        ? e.message
-        : "직원목록 조회 중 오류가 발생했습니다."
-    );
-
-    tbody.innerHTML = `
+  } catch (error) {
+    body.innerHTML = `
       <tr>
-        <td colspan="6" class="employee-empty">
-          직원목록 조회 중 오류가 발생했습니다.
+        <td colspan="7" class="empty">
+          ${escapeHtml(error.message)}
         </td>
       </tr>
     `;
@@ -835,188 +1201,355 @@ async function loadEmployees() {
 
 
 function renderEmployees() {
-  const tbody = $("employeeBody");
-  const keywordElement = $("employeeKeyword");
+  const body =
+    $("employeeBody");
 
-  if (!tbody) return;
+  const keyword =
+    String(
+      $("employeeKeyword")
+        ? $("employeeKeyword").value
+        : ""
+    )
+      .trim()
+      .toLowerCase();
 
-  const keyword = String(
-    keywordElement ? keywordElement.value : ""
-  )
-    .trim()
-    .toLowerCase();
+  const rows =
+    employeeRows.filter(
+      function (row) {
+        const text = [
+          row.store,
+          row.name,
+          row.phone,
+          row.status
+        ]
+          .join(" ")
+          .toLowerCase();
 
-  const filteredRows = employeeRows
-    .map(function (employee, originalIndex) {
-      return {
-        employee,
-        originalIndex
-      };
-    })
-    .filter(function (item) {
-      const employee = item.employee || {};
+        return (
+          !keyword ||
+          text.includes(keyword)
+        );
+      }
+    );
 
-      const searchText = [
-        employee.store,
-        employee.name,
-        employee.phone,
-        formatEmployeePhone(employee.phone),
-        employee.hireDate,
-        employee.status
-      ]
-        .join(" ")
-        .toLowerCase();
-
-      return !keyword || searchText.includes(keyword);
-    });
-
-  if (!filteredRows.length) {
-    tbody.innerHTML = `
+  if (!rows.length) {
+    body.innerHTML = `
       <tr>
-        <td colspan="6" class="employee-empty">
-          검색 조건에 맞는 직원이 없습니다.
+        <td colspan="7" class="empty">
+          등록된 직원이 없습니다.
         </td>
       </tr>
     `;
+
     return;
   }
 
-  tbody.innerHTML = filteredRows
-    .map(function (item) {
-      const employee = item.employee || {};
-      const status = String(employee.status || "재직").trim();
-      const isRetired = status === "퇴사";
+  body.innerHTML =
+    rows
+      .map(function (row) {
+        const isRetired =
+          String(row.status) === "퇴사";
 
-      return `
-        <tr>
-          <td>${escapeEmployeeHtml(employee.store || "-")}</td>
-          <td>${escapeEmployeeHtml(employee.name || "-")}</td>
-          <td>${escapeEmployeeHtml(formatEmployeePhone(employee.phone))}</td>
-          <td>${escapeEmployeeHtml(employee.hireDate || "-")}</td>
-          <td>${renderEmployeeStatus(status)}</td>
-          <td>
-            <button
-              type="button"
-              class="employee-retire-button"
-              onclick="retireEmployeeByIndex(${item.originalIndex})"
-              ${isRetired ? "disabled" : ""}
-            >
-              ${isRetired ? "퇴사완료" : "퇴사처리"}
-            </button>
-          </td>
-        </tr>
-      `;
-    })
-    .join("");
+        return `
+          <tr>
+            <td>
+              ${escapeHtml(row.store)}
+            </td>
+
+            <td>
+              ${escapeHtml(row.name)}
+            </td>
+
+            <td>
+              ${escapeHtml(
+                formatEmployeePhone(
+                  row.phone
+                )
+              )}
+            </td>
+
+            <td>
+              ${escapeHtml(row.hireDate)}
+            </td>
+
+            <td>
+              ${
+                isRetired
+                  ? `
+                    <span class="badge badge-rejected">
+                      퇴사
+                    </span>
+                  `
+                  : `
+                    <span class="badge badge-active">
+                      ${escapeHtml(
+                        row.status || "재직"
+                      )}
+                    </span>
+                  `
+              }
+            </td>
+
+            <td>
+              ${escapeHtml(
+                row.updatedAt || "-"
+              )}
+            </td>
+
+            <td>
+              ${
+                isRetired
+                  ? "-"
+                  : `
+                    <button
+                      class="btn btn-red btn-small"
+                      onclick="retireEmployee(
+                        '${encodeURIComponent(row.store)}',
+                        '${encodeURIComponent(row.name)}',
+                        '${encodeURIComponent(row.phone)}'
+                      )"
+                    >
+                      퇴사처리
+                    </button>
+                  `
+              }
+            </td>
+          </tr>
+        `;
+      })
+      .join("");
 }
 
 
-async function retireEmployeeByIndex(index) {
-  const employee = employeeRows[Number(index)];
+async function retireEmployee(
+  store,
+  name,
+  phone
+) {
+  const decodedStore =
+    decodeURIComponent(store);
 
-  if (!employee) {
-    show("adminResult", "퇴사 처리할 직원정보를 찾을 수 없습니다.");
+  const decodedName =
+    decodeURIComponent(name);
+
+  const decodedPhone =
+    decodeURIComponent(phone);
+
+  if (
+    !confirm(
+      decodedName +
+      " 직원을 퇴사 처리하시겠습니까?"
+    )
+  ) {
     return;
   }
-
-  const password = $("password") ? $("password").value.trim() : "";
-
-  if (!password) {
-    show("adminResult", "관리자 비밀번호를 입력하세요.");
-    return;
-  }
-
-  if (String(employee.status || "").trim() === "퇴사") {
-    show("adminResult", "이미 퇴사 처리된 직원입니다.");
-    return;
-  }
-
-  const confirmed = confirm(
-    employee.name +
-      " 직원을 퇴사 처리하시겠습니까?\n\n" +
-      "퇴사 처리 후에는 직원 신청 페이지에서 연월차를 신청할 수 없습니다."
-  );
-
-  if (!confirmed) return;
 
   try {
-    show("adminResult", employee.name + " 직원 퇴사 처리 중입니다...");
-
     await postNoCors({
       action: "retireEmployee",
-      password,
-      store: employee.store || "",
-      name: employee.name || "",
-      phone: employee.phone || ""
+      password: adminPassword,
+      store: decodedStore,
+      name: decodedName,
+      phone: decodedPhone
     });
 
-    show(
-      "adminResult",
-      "퇴사 처리 요청을 보냈습니다. 잠시 후 직원목록을 다시 불러옵니다."
+    setTimeout(
+      function () {
+        loadEmployees();
+        loadLedger();
+      },
+      1200
     );
 
-    setTimeout(function () {
-      loadEmployees();
-    }, 1300);
-
-  } catch (e) {
-    show("adminResult", "퇴사 처리 중 오류가 발생했습니다.");
-  }
-}
-
-
-function renderEmployeeStatus(status) {
-  const value = String(status || "재직").trim();
-
-  if (value === "퇴사") {
-    return '<span class="employee-status retired">퇴사</span>';
-  }
-
-  if (value === "휴직") {
-    return '<span class="employee-status leave">휴직</span>';
-  }
-
-  return '<span class="employee-status active">재직</span>';
-}
-
-
-function formatEmployeePhone(phone) {
-  let digits = String(phone || "").replace(/[^0-9]/g, "");
-
-  if (digits.length === 10 && digits.startsWith("10")) {
-    digits = "0" + digits;
-  }
-
-  if (digits.length === 11) {
-    return (
-      digits.substring(0, 3) +
-      "-" +
-      digits.substring(3, 7) +
-      "-" +
-      digits.substring(7)
+  } catch (error) {
+    alert(
+      "퇴사 처리 중 오류가 발생했습니다."
     );
   }
+}
 
-  if (digits.length === 10) {
-    return (
-      digits.substring(0, 3) +
-      "-" +
-      digits.substring(3, 6) +
-      "-" +
-      digits.substring(6)
+
+/* =========================
+   연월차 원장
+========================= */
+
+async function loadLedger() {
+  if (!adminPassword) return;
+
+  const body =
+    $("ledgerBody");
+
+  body.innerHTML = `
+    <tr>
+      <td colspan="11" class="empty">
+        연월차 원장을 불러오는 중입니다.
+      </td>
+    </tr>
+  `;
+
+  try {
+    const result = await jsonp({
+      action: "summary",
+      password: adminPassword,
+      t: Date.now()
+    });
+
+    if (!result.ok) {
+      throw new Error(
+        result.message ||
+        "원장 조회 실패"
+      );
+    }
+
+    ledgerRows =
+      result.rows || [];
+
+    renderLedger();
+
+  } catch (error) {
+    body.innerHTML = `
+      <tr>
+        <td colspan="11" class="empty">
+          ${escapeHtml(error.message)}
+        </td>
+      </tr>
+    `;
+  }
+}
+
+
+function renderLedger() {
+  const body =
+    $("ledgerBody");
+
+  const keyword =
+    String(
+      $("ledgerKeyword")
+        ? $("ledgerKeyword").value
+        : ""
+    )
+      .trim()
+      .toLowerCase();
+
+  const status =
+    $("ledgerStatus").value;
+
+  const memo =
+    $("ledgerMemo").value;
+
+  const rows =
+    ledgerRows.filter(
+      function (row) {
+        const text = [
+          row.store,
+          row.name,
+          row.phone
+        ]
+          .join(" ")
+          .toLowerCase();
+
+        if (
+          keyword &&
+          !text.includes(keyword)
+        ) {
+          return false;
+        }
+
+        if (
+          status !== "전체" &&
+          String(row.status) !== status
+        ) {
+          return false;
+        }
+
+        if (
+          memo !== "전체" &&
+          String(row.memo) !== memo
+        ) {
+          return false;
+        }
+
+        return true;
+      }
     );
+
+  if (!rows.length) {
+    body.innerHTML = `
+      <tr>
+        <td colspan="11" class="empty">
+          조건에 맞는 원장 데이터가 없습니다.
+        </td>
+      </tr>
+    `;
+
+    return;
   }
 
-  return String(phone || "-");
+  body.innerHTML =
+    rows
+      .map(function (row) {
+        return `
+          <tr>
+            <td>
+              ${escapeHtml(row.store)}
+            </td>
+
+            <td>
+              ${escapeHtml(row.name)}
+            </td>
+
+            <td>
+              ${escapeHtml(
+                formatEmployeePhone(
+                  row.phone
+                )
+              )}
+            </td>
+
+            <td>
+              ${escapeHtml(row.hireDate)}
+            </td>
+
+            <td>
+              ${escapeHtml(row.servicePeriod)}
+            </td>
+
+            <td>
+              ${escapeHtml(row.generated)}
+            </td>
+
+            <td>
+              ${escapeHtml(row.used)}
+            </td>
+
+            <td>
+              ${escapeHtml(row.pending)}
+            </td>
+
+            <td>
+              <strong>
+                ${escapeHtml(row.remain)}
+              </strong>
+            </td>
+
+            <td>
+              ${escapeHtml(row.status)}
+            </td>
+
+            <td>
+              ${escapeHtml(row.memo)}
+            </td>
+          </tr>
+        `;
+      })
+      .join("");
 }
 
 
-function escapeEmployeeHtml(value) {
-  return String(value === undefined || value === null ? "" : value)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
+function resetLedgerSearch() {
+  $("ledgerKeyword").value = "";
+  $("ledgerStatus").value = "전체";
+  $("ledgerMemo").value = "전체";
 
+  renderLedger();
+}
