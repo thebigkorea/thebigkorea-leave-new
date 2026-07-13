@@ -706,3 +706,45 @@ async function processCompRequest(rowNo, processType) {
     show("adminResult", "미휴무 처리 중 오류가 발생했습니다.");
   }
 }
+function showAdminTab(tab){
+
+  const leave = document.getElementById("leaveTab");
+  const comp = document.getElementById("compTab");
+  const employee = document.getElementById("employeeTab");
+  const ledger = document.getElementById("ledgerTab");
+
+  if(leave) leave.classList.add("hidden");
+  if(comp) comp.classList.add("hidden");
+  if(employee) employee.classList.add("hidden");
+  if(ledger) ledger.classList.add("hidden");
+
+  switch(tab){
+
+    case "leave":
+      if(leave) leave.classList.remove("hidden");
+      break;
+
+    case "comp":
+      if(comp) comp.classList.remove("hidden");
+      break;
+
+    case "employee":
+      if(employee) employee.classList.remove("hidden");
+      break;
+
+    case "ledger":
+      if(ledger) ledger.classList.remove("hidden");
+      break;
+
+  }
+
+}
+window.addEventListener("DOMContentLoaded",function(){
+
+    if(document.getElementById("leaveTab")){
+
+        showAdminTab("leave");
+
+    }
+
+});
