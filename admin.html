@@ -395,6 +395,113 @@
       background: #f5e8dc;
     }
 
+    /* 직원관리 */
+    .employee-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .employee-search {
+      width: min(420px, 100%);
+      min-height: 46px;
+      padding: 11px 14px;
+      color: var(--admin-text);
+      border: 1px solid #decbbc;
+      border-radius: 12px;
+      outline: none;
+      background: #fff;
+    }
+
+    .employee-search:focus {
+      border-color: var(--admin-primary);
+      box-shadow: 0 0 0 3px rgba(123, 30, 30, 0.1);
+    }
+
+    .employee-table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--admin-line);
+      border-radius: 15px;
+    }
+
+    .employee-table {
+      width: 100%;
+      min-width: 800px;
+      border-collapse: collapse;
+      background: #fff;
+    }
+
+    .employee-table th,
+    .employee-table td {
+      padding: 14px 12px;
+      text-align: center;
+      border-bottom: 1px solid #eee2d7;
+    }
+
+    .employee-table th {
+      color: #fff;
+      font-size: 14px;
+      font-weight: 900;
+      background: var(--admin-primary-dark);
+    }
+
+    .employee-table tbody tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .employee-table tbody tr:hover {
+      background: #fffaf6;
+    }
+
+    .employee-empty {
+      padding: 35px 15px !important;
+      color: var(--admin-muted);
+    }
+
+    .employee-status {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 56px;
+      min-height: 28px;
+      padding: 4px 10px;
+      font-size: 12px;
+      font-weight: 900;
+      border-radius: 999px;
+    }
+
+    .employee-status.active {
+      color: #12633b;
+      background: #dff5e8;
+    }
+
+    .employee-status.leave {
+      color: #8a5400;
+      background: #fff0c9;
+    }
+
+    .employee-status.retired {
+      color: #9d2924;
+      background: #fbe2df;
+    }
+
+    .employee-retire-button {
+      min-height: 36px;
+      padding: 0 14px;
+      color: #fff;
+      font-weight: 900;
+      border: 0;
+      border-radius: 9px;
+      background: var(--admin-red);
+    }
+
+    .employee-retire-button:disabled {
+      cursor: default;
+      opacity: 0.45;
+    }
+
     .footer-link {
       margin-top: 20px;
       text-align: center;
@@ -693,9 +800,45 @@
       </div>
     </div>
 
-    <div class="placeholder">
-      <strong>직원관리 화면</strong>
-      다음 단계에서 Employees 시트의 직원목록을 연결합니다.
+    <div class="employee-toolbar">
+      <input
+        id="employeeKeyword"
+        class="employee-search"
+        type="search"
+        placeholder="이름 · 연락처 검색"
+        autocomplete="off"
+        oninput="renderEmployees()"
+      >
+
+      <button
+        class="admin-button button-primary"
+        onclick="loadEmployees()"
+      >
+        직원목록 새로고침
+      </button>
+    </div>
+
+    <div class="employee-table-wrap">
+      <table class="employee-table">
+        <thead>
+          <tr>
+            <th>매장</th>
+            <th>이름</th>
+            <th>연락처</th>
+            <th>입사일</th>
+            <th>상태</th>
+            <th>관리</th>
+          </tr>
+        </thead>
+
+        <tbody id="employeeBody">
+          <tr>
+            <td colspan="6" class="employee-empty">
+              관리자 비밀번호를 입력하고 직원목록을 불러오세요.
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
   </section>
@@ -734,7 +877,7 @@
 </main>
 
 
-<script src="script.js?v=20260713-2"></script>
+<script src="script.js?v=20260713-3"></script>
 
 <script>
   let currentAdminTab = "leave";
@@ -786,6 +929,18 @@
 
     if (tabName === "comp") {
       moveAdminList("compListMount");
+    }
+
+    if (tabName === "employee") {
+      const password =
+        document
+          .getElementById("password")
+          .value
+          .trim();
+
+      if (password) {
+        loadEmployees();
+      }
     }
 
     window.scrollTo({
@@ -861,10 +1016,7 @@
     }
 
     if (currentAdminTab === "employee") {
-      show(
-        "adminResult",
-        "직원관리 기능은 다음 단계에서 연결합니다."
-      );
+      loadEmployees();
       return;
     }
 

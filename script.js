@@ -1,5 +1,7 @@
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx7Y5zaVU7kYTdFwdwhUgoKwqOGx55-8a0McZOmA42PpbU4WWJqYTFPeSH2oD4mOzd7/exec";
 
+let employeeRows = [];
+
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () =>
     navigator.serviceWorker.register("service-worker.js").catch(() => {})
@@ -748,3 +750,273 @@ window.addEventListener("DOMContentLoaded",function(){
     }
 
 });
+/* =========================
+   관리자 직원관리
+========================= */
+
+async function loadEmployees() {
+  const password = $("password") ? $("password").value.trim() : "";
+  const tbody = $("employeeBody");
+  const resultBox = $("adminResult");
+
+  if (!tbody) return;
+
+  if (!password) {
+    show("adminResult", "관리자 비밀번호를 입력하세요.");
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="6" class="employee-empty">
+          관리자 비밀번호를 입력하고 직원목록을 불러오세요.
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="6" class="employee-empty">
+        직원목록을 불러오는 중입니다...
+      </td>
+    </tr>
+  `;
+
+  try {
+    const data = await jsonp({
+      action: "employees",
+      password
+    });
+
+    if (!data.ok) {
+      show("adminResult", data.message || "직원목록 조회 실패");
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="6" class="employee-empty">
+            직원목록을 불러오지 못했습니다.
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    employeeRows = Array.isArray(data.rows) ? data.rows : [];
+
+    if (resultBox) {
+      resultBox.classList.remove("show");
+    }
+
+    renderEmployees();
+
+    const activeCount = employeeRows.filter(function (employee) {
+      return String(employee.status || "재직").trim() !== "퇴사";
+    }).length;
+
+    if ($("statEmployees")) {
+      $("statEmployees").textContent = String(activeCount);
+    }
+
+  } catch (e) {
+    show(
+      "adminResult",
+      e && e.message
+        ? e.message
+        : "직원목록 조회 중 오류가 발생했습니다."
+    );
+
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="6" class="employee-empty">
+          직원목록 조회 중 오류가 발생했습니다.
+        </td>
+      </tr>
+    `;
+  }
+}
+
+
+function renderEmployees() {
+  const tbody = $("employeeBody");
+  const keywordElement = $("employeeKeyword");
+
+  if (!tbody) return;
+
+  const keyword = String(
+    keywordElement ? keywordElement.value : ""
+  )
+    .trim()
+    .toLowerCase();
+
+  const filteredRows = employeeRows
+    .map(function (employee, originalIndex) {
+      return {
+        employee,
+        originalIndex
+      };
+    })
+    .filter(function (item) {
+      const employee = item.employee || {};
+
+      const searchText = [
+        employee.store,
+        employee.name,
+        employee.phone,
+        formatEmployeePhone(employee.phone),
+        employee.hireDate,
+        employee.status
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      return !keyword || searchText.includes(keyword);
+    });
+
+  if (!filteredRows.length) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="6" class="employee-empty">
+          검색 조건에 맞는 직원이 없습니다.
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = filteredRows
+    .map(function (item) {
+      const employee = item.employee || {};
+      const status = String(employee.status || "재직").trim();
+      const isRetired = status === "퇴사";
+
+      return `
+        <tr>
+          <td>${escapeEmployeeHtml(employee.store || "-")}</td>
+          <td>${escapeEmployeeHtml(employee.name || "-")}</td>
+          <td>${escapeEmployeeHtml(formatEmployeePhone(employee.phone))}</td>
+          <td>${escapeEmployeeHtml(employee.hireDate || "-")}</td>
+          <td>${renderEmployeeStatus(status)}</td>
+          <td>
+            <button
+              type="button"
+              class="employee-retire-button"
+              onclick="retireEmployeeByIndex(${item.originalIndex})"
+              ${isRetired ? "disabled" : ""}
+            >
+              ${isRetired ? "퇴사완료" : "퇴사처리"}
+            </button>
+          </td>
+        </tr>
+      `;
+    })
+    .join("");
+}
+
+
+async function retireEmployeeByIndex(index) {
+  const employee = employeeRows[Number(index)];
+
+  if (!employee) {
+    show("adminResult", "퇴사 처리할 직원정보를 찾을 수 없습니다.");
+    return;
+  }
+
+  const password = $("password") ? $("password").value.trim() : "";
+
+  if (!password) {
+    show("adminResult", "관리자 비밀번호를 입력하세요.");
+    return;
+  }
+
+  if (String(employee.status || "").trim() === "퇴사") {
+    show("adminResult", "이미 퇴사 처리된 직원입니다.");
+    return;
+  }
+
+  const confirmed = confirm(
+    employee.name +
+      " 직원을 퇴사 처리하시겠습니까?\n\n" +
+      "퇴사 처리 후에는 직원 신청 페이지에서 연월차를 신청할 수 없습니다."
+  );
+
+  if (!confirmed) return;
+
+  try {
+    show("adminResult", employee.name + " 직원 퇴사 처리 중입니다...");
+
+    await postNoCors({
+      action: "retireEmployee",
+      password,
+      store: employee.store || "",
+      name: employee.name || "",
+      phone: employee.phone || ""
+    });
+
+    show(
+      "adminResult",
+      "퇴사 처리 요청을 보냈습니다. 잠시 후 직원목록을 다시 불러옵니다."
+    );
+
+    setTimeout(function () {
+      loadEmployees();
+    }, 1300);
+
+  } catch (e) {
+    show("adminResult", "퇴사 처리 중 오류가 발생했습니다.");
+  }
+}
+
+
+function renderEmployeeStatus(status) {
+  const value = String(status || "재직").trim();
+
+  if (value === "퇴사") {
+    return '<span class="employee-status retired">퇴사</span>';
+  }
+
+  if (value === "휴직") {
+    return '<span class="employee-status leave">휴직</span>';
+  }
+
+  return '<span class="employee-status active">재직</span>';
+}
+
+
+function formatEmployeePhone(phone) {
+  let digits = String(phone || "").replace(/[^0-9]/g, "");
+
+  if (digits.length === 10 && digits.startsWith("10")) {
+    digits = "0" + digits;
+  }
+
+  if (digits.length === 11) {
+    return (
+      digits.substring(0, 3) +
+      "-" +
+      digits.substring(3, 7) +
+      "-" +
+      digits.substring(7)
+    );
+  }
+
+  if (digits.length === 10) {
+    return (
+      digits.substring(0, 3) +
+      "-" +
+      digits.substring(3, 6) +
+      "-" +
+      digits.substring(6)
+    );
+  }
+
+  return String(phone || "-");
+}
+
+
+function escapeEmployeeHtml(value) {
+  return String(value === undefined || value === null ? "" : value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
