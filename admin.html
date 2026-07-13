@@ -1,62 +1,565 @@
 <!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <meta charset="utf-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  >
 
   <title>더큰코리아 연월차 관리자</title>
 
-  <link rel="manifest" href="manifest.json"/>
-  <link rel="stylesheet" href="style.css"/>
-  <meta name="theme-color" content="#7b1e1e"/>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
+
+  <meta name="theme-color" content="#7b1e1e">
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    .admin-hero {
+      margin-bottom: 18px;
+    }
+
+    .admin-login-card {
+      margin-bottom: 18px;
+    }
+
+    .admin-login-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: end;
+    }
+
+    .admin-login-row .password-field {
+      min-width: 0;
+    }
+
+    .admin-login-row button {
+      min-width: 130px;
+      min-height: 48px;
+    }
+
+    .admin-menu {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .admin-menu-button {
+      min-height: 112px;
+      padding: 18px 12px;
+      color: #3f241a;
+      font-weight: 800;
+      border: 1px solid #eadfd6;
+      border-radius: 16px;
+      background: #fffaf7;
+      cursor: pointer;
+      transition:
+        transform 0.15s ease,
+        box-shadow 0.15s ease,
+        border-color 0.15s ease;
+    }
+
+    .admin-menu-button:hover {
+      transform: translateY(-2px);
+      border-color: #7b1e1e;
+      box-shadow: 0 8px 22px rgba(76, 28, 28, 0.1);
+    }
+
+    .admin-menu-button.active {
+      color: #fff;
+      border-color: #7b1e1e;
+      background: #7b1e1e;
+    }
+
+    .admin-menu-icon {
+      display: block;
+      margin-bottom: 9px;
+      font-size: 30px;
+      line-height: 1;
+    }
+
+    .admin-menu-title {
+      display: block;
+      font-size: 16px;
+    }
+
+    .admin-menu-desc {
+      display: block;
+      margin-top: 5px;
+      font-size: 12px;
+      font-weight: 500;
+      opacity: 0.75;
+    }
+
+    .admin-section {
+      margin-top: 18px;
+    }
+
+    .admin-section.hidden {
+      display: none;
+    }
+
+    .admin-section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .admin-section-head h2 {
+      margin: 0 0 6px;
+    }
+
+    .admin-section-head p {
+      margin: 0;
+      color: #806d63;
+      line-height: 1.5;
+    }
+
+    .approval-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .approval-toolbar button {
+      flex: 1 1 180px;
+    }
+
+    .placeholder-box {
+      padding: 44px 20px;
+      color: #856f64;
+      text-align: center;
+      border: 1px dashed #d9c7bb;
+      border-radius: 14px;
+      background: #fffaf7;
+    }
+
+    .placeholder-box strong {
+      display: block;
+      margin-bottom: 8px;
+      color: #48271d;
+      font-size: 18px;
+    }
+
+    .footer-link {
+      margin-top: 22px;
+    }
+
+    @media (max-width: 900px) {
+      .admin-menu {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 580px) {
+      .admin-login-row {
+        grid-template-columns: 1fr;
+      }
+
+      .admin-login-row button {
+        width: 100%;
+      }
+
+      .admin-menu {
+        grid-template-columns: 1fr 1fr;
+        gap: 9px;
+      }
+
+      .admin-menu-button {
+        min-height: 100px;
+        padding: 14px 8px;
+      }
+
+      .admin-menu-icon {
+        font-size: 26px;
+      }
+
+      .admin-menu-title {
+        font-size: 14px;
+      }
+
+      .admin-section-head {
+        display: block;
+      }
+    }
+  </style>
 </head>
 
 <body>
-  <main class="app">
 
-    <section class="hero admin">
-      <div class="brand">더큰코리아</div>
-      <h1>관리자 승인</h1>
-      <p>연월차 신청 승인 / 반려</p>
-    </section>
+<main class="app">
 
-    <section class="card">
+  <!-- 관리자 헤더 -->
+  <section class="hero admin admin-hero">
+    <div class="brand">더큰코리아</div>
 
-      <label>관리자 비밀번호</label>
+    <h1>연월차 관리자</h1>
 
-      <input
-        id="password"
-        type="password"
-        placeholder="비밀번호 입력"
-        autocomplete="new-password"
-        value=""
-      />
+    <p>
+      연월차 · 미휴무 · 직원 · 원장 통합관리
+    </p>
+  </section>
 
-      <div class="grid2">
-  <button class="primary" onclick="loadAdminList()">
-    연월차 신청 불러오기
-  </button>
 
-  <button class="primary" onclick="loadCompAdminList()">
-    미휴무 신청 불러오기
-  </button>
-</div>
+  <!-- 관리자 비밀번호 -->
+  <section class="card admin-login-card">
 
-      <div id="adminResult" class="result"></div>
+    <div class="admin-login-row">
 
-    </section>
+      <div class="password-field">
+        <label for="password">관리자 비밀번호</label>
 
-    <section class="card small">
-      <h2>승인 대기 목록</h2>
-      <div id="adminList" class="list"></div>
-    </section>
+        <input
+          id="password"
+          type="password"
+          placeholder="비밀번호 입력"
+          autocomplete="new-password"
+          value=""
+        >
+      </div>
 
-    <section class="footer-link">
-      <a href="index.html">직원 신청 페이지로 이동</a>
-    </section>
+      <button
+        class="primary"
+        onclick="loadCurrentAdminTab()"
+      >
+        조회하기
+      </button>
 
-  </main>
+    </div>
 
-  <script src="script.js?v=20260706-3"></script>
+    <div id="adminResult" class="result"></div>
+
+  </section>
+
+
+  <!-- 관리자 메뉴 -->
+  <section class="card">
+
+    <div class="admin-menu">
+
+      <button
+        class="admin-menu-button active"
+        data-admin-tab="leave"
+        onclick="showAdminTab('leave')"
+      >
+        <span class="admin-menu-icon">📋</span>
+        <span class="admin-menu-title">연월차 승인</span>
+        <span class="admin-menu-desc">신청 승인·반려</span>
+      </button>
+
+
+      <button
+        class="admin-menu-button"
+        data-admin-tab="comp"
+        onclick="showAdminTab('comp')"
+      >
+        <span class="admin-menu-icon">📅</span>
+        <span class="admin-menu-title">미휴무 승인</span>
+        <span class="admin-menu-desc">발생·사용 승인</span>
+      </button>
+
+
+      <button
+        class="admin-menu-button"
+        data-admin-tab="employee"
+        onclick="showAdminTab('employee')"
+      >
+        <span class="admin-menu-icon">👥</span>
+        <span class="admin-menu-title">직원관리</span>
+        <span class="admin-menu-desc">직원 조회·퇴사</span>
+      </button>
+
+
+      <button
+        class="admin-menu-button"
+        data-admin-tab="ledger"
+        onclick="showAdminTab('ledger')"
+      >
+        <span class="admin-menu-icon">📖</span>
+        <span class="admin-menu-title">연월차 원장</span>
+        <span class="admin-menu-desc">발생·사용·잔여</span>
+      </button>
+
+    </div>
+
+  </section>
+
+
+  <!-- 연월차 승인 -->
+  <section
+    id="leaveTab"
+    class="card admin-section"
+  >
+
+    <div class="admin-section-head">
+      <div>
+        <h2>연월차 승인관리</h2>
+
+        <p>
+          승인 대기 중인 연월차 신청을 확인하고 승인 또는 반려합니다.
+        </p>
+      </div>
+    </div>
+
+    <div class="approval-toolbar">
+      <button
+        class="primary"
+        onclick="loadAdminList()"
+      >
+        연월차 신청 불러오기
+      </button>
+    </div>
+
+    <div id="leaveListArea">
+      <div id="adminList" class="list">
+        <div class="item">
+          관리자 비밀번호를 입력하고 연월차 신청을 불러오세요.
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+
+  <!-- 미휴무 승인 -->
+  <section
+    id="compAdminTab"
+    class="card admin-section hidden"
+  >
+
+    <div class="admin-section-head">
+      <div>
+        <h2>미휴무 승인관리</h2>
+
+        <p>
+          추가근무 발생 및 미휴무 사용신청을 승인 또는 반려합니다.
+        </p>
+      </div>
+    </div>
+
+    <div class="approval-toolbar">
+      <button
+        class="primary"
+        onclick="loadCompAdminList()"
+      >
+        미휴무 신청 불러오기
+      </button>
+    </div>
+
+    <div id="compListMount">
+      <div class="placeholder-box">
+        <strong>미휴무 승인대기</strong>
+        관리자 비밀번호를 입력하고 미휴무 신청 불러오기를 누르세요.
+      </div>
+    </div>
+
+  </section>
+
+
+  <!-- 직원관리 -->
+  <section
+    id="employeeTab"
+    class="card admin-section hidden"
+  >
+
+    <div class="admin-section-head">
+      <div>
+        <h2>직원관리</h2>
+
+        <p>
+          등록 직원 조회, 직원정보 확인 및 퇴사처리를 관리합니다.
+        </p>
+      </div>
+    </div>
+
+    <div id="employeeArea" class="placeholder-box">
+      <strong>직원관리 준비 중</strong>
+      다음 단계에서 Employees 시트의 직원목록을 연결합니다.
+    </div>
+
+  </section>
+
+
+  <!-- 연월차 원장 -->
+  <section
+    id="ledgerTab"
+    class="card admin-section hidden"
+  >
+
+    <div class="admin-section-head">
+      <div>
+        <h2>연월차 원장</h2>
+
+        <p>
+          직원별 발생연차, 승인사용, 승인대기, 잔여연차를 조회합니다.
+        </p>
+      </div>
+    </div>
+
+    <div id="ledgerArea" class="placeholder-box">
+      <strong>연월차 원장 준비 중</strong>
+      다음 단계에서 LeaveSummary 데이터를 연결합니다.
+    </div>
+
+  </section>
+
+
+  <section class="footer-link">
+    <a href="index.html">
+      직원 신청 페이지로 이동
+    </a>
+  </section>
+
+</main>
+
+
+<script src="script.js?v=20260713-1"></script>
+
+<script>
+  let currentAdminTab = "leave";
+
+
+  function showAdminTab(tab) {
+    currentAdminTab = tab;
+
+    const leaveTab =
+      document.getElementById("leaveTab");
+
+    const compTab =
+      document.getElementById("compAdminTab");
+
+    const employeeTab =
+      document.getElementById("employeeTab");
+
+    const ledgerTab =
+      document.getElementById("ledgerTab");
+
+    if (leaveTab) {
+      leaveTab.classList.add("hidden");
+    }
+
+    if (compTab) {
+      compTab.classList.add("hidden");
+    }
+
+    if (employeeTab) {
+      employeeTab.classList.add("hidden");
+    }
+
+    if (ledgerTab) {
+      ledgerTab.classList.add("hidden");
+    }
+
+    document
+      .querySelectorAll(".admin-menu-button")
+      .forEach(function (button) {
+        button.classList.remove("active");
+      });
+
+    const activeButton = document.querySelector(
+      '[data-admin-tab="' + tab + '"]'
+    );
+
+    if (activeButton) {
+      activeButton.classList.add("active");
+    }
+
+    if (tab === "leave" && leaveTab) {
+      leaveTab.classList.remove("hidden");
+      moveAdminListTo("leaveListArea");
+    }
+
+    if (tab === "comp" && compTab) {
+      compTab.classList.remove("hidden");
+      moveAdminListTo("compListMount");
+    }
+
+    if (tab === "employee" && employeeTab) {
+      employeeTab.classList.remove("hidden");
+    }
+
+    if (tab === "ledger" && ledgerTab) {
+      ledgerTab.classList.remove("hidden");
+    }
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+  }
+
+
+  function moveAdminListTo(targetId) {
+    const target =
+      document.getElementById(targetId);
+
+    const list =
+      document.getElementById("adminList");
+
+    if (!target || !list) return;
+
+    target.innerHTML = "";
+    target.appendChild(list);
+  }
+
+
+  function loadCurrentAdminTab() {
+    const password =
+      document.getElementById("password").value.trim();
+
+    if (!password) {
+      show(
+        "adminResult",
+        "관리자 비밀번호를 입력하세요."
+      );
+      return;
+    }
+
+    if (currentAdminTab === "leave") {
+      moveAdminListTo("leaveListArea");
+      loadAdminList();
+      return;
+    }
+
+    if (currentAdminTab === "comp") {
+      moveAdminListTo("compListMount");
+      loadCompAdminList();
+      return;
+    }
+
+    if (currentAdminTab === "employee") {
+      show(
+        "adminResult",
+        "직원관리 기능은 다음 단계에서 연결합니다."
+      );
+      return;
+    }
+
+    if (currentAdminTab === "ledger") {
+      show(
+        "adminResult",
+        "연월차 원장 기능은 다음 단계에서 연결합니다."
+      );
+    }
+  }
+
+
+  document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+      showAdminTab("leave");
+    }
+  );
+</script>
+
 </body>
 </html>
