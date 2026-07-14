@@ -1,6 +1,7 @@
 const SCRIPT_URL =
   "https://script.google.com/macros/s/AKfycbx7Y5zaVU7kYTdFwdwhUgoKwqOGx55-8a0McZOmA42PpbU4WWJqYTFPeSH2oD4mOzd7/exec";
 
+let employeeVerified = false;
 
 function $(id) {
   return document.getElementById(id);
@@ -314,6 +315,11 @@ async function registerEmployee() {
 ========================= */
 
 async function checkBalance() {
+
+  if (!verifyEmployee()) {
+  return;
+}  
+
   const name = $("name").value.trim();
   const phone = $("phone").value.trim();
   const box = $("balanceBox");
@@ -331,11 +337,13 @@ async function checkBalance() {
 
   try {
     const result = await jsonp({
-      action: "balance",
-      name: name,
-      phone: phone,
-      t: Date.now()
-    });
+  action: "balance",
+  store: $("store").value,
+  name: name,
+  phone: phone,
+  pin: $("pin").value.trim(),
+  t: Date.now()
+});
 
     if (!result.ok) {
       throw new Error(
@@ -448,6 +456,10 @@ async function submitLeave() {
 ========================= */
 
 async function loadMyRequests() {
+
+  if (!verifyEmployee()) {
+    return;
+}  
   const name = $("name").value.trim();
   const phone = $("phone").value.trim();
   const list = $("myList");
@@ -465,11 +477,13 @@ async function loadMyRequests() {
 
   try {
     const result = await jsonp({
-      action: "my",
-      name: name,
-      phone: phone,
-      t: Date.now()
-    });
+  action: "my",
+  store: $("store").value,
+  name: name,
+  phone: phone,
+  pin: $("pin").value.trim(),
+  t: Date.now()
+});
 
     if (!result.ok) {
       throw new Error(
@@ -534,6 +548,10 @@ function renderLeaveHistoryItem(row) {
 ========================= */
 
 async function checkCompBalance() {
+
+  if (!verifyCompEmployee()) {
+    return;
+}  
   const store = $("compStore").value;
   const name = $("compName").value.trim();
   const phone = $("compPhone").value.trim();
@@ -551,12 +569,12 @@ async function checkCompBalance() {
 
   try {
     const result = await jsonp({
-      action: "compBalance",
-      store: store,
-      name: name,
-      phone: phone,
-      t: Date.now()
-    });
+  action: "compBalance",
+  store: store,
+  name: name,
+  phone: phone,
+  t: Date.now()
+});
 
     if (!result.ok) {
       throw new Error(
@@ -715,6 +733,10 @@ async function submitCompUse() {
 ========================= */
 
 async function loadMyCompHistory() {
+
+  if (!verifyCompEmployee()) {
+    return;
+}  
   const name = $("compName").value.trim();
   const phone = $("compPhone").value.trim();
   const list = $("compHistoryList");
@@ -732,11 +754,13 @@ async function loadMyCompHistory() {
 
   try {
     const result = await jsonp({
-      action: "myCompHistory",
-      name: name,
-      phone: phone,
-      t: Date.now()
-    });
+  action: "myCompHistory",
+  store: $("compStore").value,
+  name: name,
+  phone: phone,
+  pin: $("compPin").value.trim(),
+  t: Date.now()
+});
 
     if (!result.ok) {
       throw new Error(
@@ -812,4 +836,56 @@ function formatDate(value) {
   if (!text) return "-";
 
   return text.substring(0, 10);
+}
+function verifyEmployee() {
+
+  const store = $("store").value;
+  const name = $("name").value.trim();
+  const phone = $("phone").value.trim();
+  const pin = $("pin").value.trim();
+
+  if (
+    !store ||
+    !name ||
+    !phone ||
+    !pin
+  ) {
+
+    showMessage(
+      "result",
+      "근무지, 이름, 연락처, PIN을 입력하세요."
+    );
+
+    return false;
+  }
+
+  employeeVerified = true;
+
+  return true;
+}
+
+
+function verifyCompEmployee() {
+
+  const store = $("compStore").value;
+  const name = $("compName").value.trim();
+  const phone = $("compPhone").value.trim();
+  const pin = $("compPin").value.trim();
+
+  if (
+    !store ||
+    !name ||
+    !phone ||
+    !pin
+  ) {
+
+    showMessage(
+      "compUseResult",
+      "근무지, 이름, 연락처, PIN을 입력하세요."
+    );
+
+    return false;
+  }
+
+  return true;
 }
