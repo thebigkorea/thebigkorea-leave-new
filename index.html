@@ -4,7 +4,7 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
 
-  <title>더큰코리아 연월차관리</title>
+  <title>더큰코리아 임직원 연월차·미휴무 관리</title>
 
   <link rel="manifest" href="manifest.json"/>
   <link rel="stylesheet" href="style.css"/>
@@ -15,36 +15,72 @@
   <main class="app">
 
     <section class="hero">
-      <div class="brand">더큰코리아</div>
-      <h1>연월차 신청</h1>
-      <p>더큰코리아 본사 직원용</p>
+      <div class="brand">더큰코리아 임직원</div>
+      <h1>연월차·미휴무 신청</h1>
+      <p>
+        연월차 신청, 미휴무 발생 및 사용내역을
+        한 곳에서 관리합니다.
+      </p>
     </section>
 
     <section class="tabs">
-      <button class="tab active" onclick="showTab('apply')">신청</button>
-      <button class="tab" onclick="showTab('register')">직원등록</button>
-      <button class="tab" onclick="showTab('history')">내역조회</button>
-      <button class="tab" onclick="showTab('comp')">미휴무관리</button>
+      <button
+        class="tab active"
+        onclick="showTab('apply')">
+        연월차 신청
+      </button>
+
+      <button
+        class="tab"
+        onclick="showTab('register')">
+        직원등록
+      </button>
+
+      <button
+        class="tab"
+        onclick="showTab('history')">
+        연월차 내역
+      </button>
+
+      <button
+        class="tab"
+        onclick="showTab('comp')">
+        미휴무 관리
+      </button>
     </section>
 
+
+    <!-- =========================
+         연월차 신청
+    ========================== -->
     <section id="applyTab" class="card">
 
-      <label>매장</label>
+      <label>근무지</label>
       <select id="store">
         <option>더큰코리아 본사</option>
       </select>
 
       <label>이름</label>
-      <input id="name" placeholder="예: 홍길동"/>
+      <input
+        id="name"
+        placeholder="예: 홍길동"/>
 
       <label>연락처</label>
-      <input id="phone" placeholder="010-0000-0000" inputmode="tel"/>
+      <input
+        id="phone"
+        placeholder="010-0000-0000"
+        inputmode="tel"/>
 
-      <button class="secondary" onclick="checkBalance()">
+      <button
+        class="secondary"
+        onclick="checkBalance()">
         잔여 연월차 확인
       </button>
 
-      <div id="balanceBox" class="balance-box"></div>
+      <div
+        id="balanceBox"
+        class="balance-box">
+      </div>
 
       <label>휴가 종류</label>
       <select id="leaveType">
@@ -58,145 +94,287 @@
       </select>
 
       <div class="grid2">
+
         <div>
           <label>시작일</label>
-          <input id="startDate" type="date"/>
+          <input
+            id="startDate"
+            type="date"/>
         </div>
 
         <div>
           <label>종료일</label>
-          <input id="endDate" type="date"/>
+          <input
+            id="endDate"
+            type="date"/>
         </div>
+
       </div>
 
       <label>사용일수</label>
-      <input id="days" type="number" readonly />
+      <input
+        id="days"
+        type="number"
+        readonly/>
 
       <label>사유</label>
-      <textarea id="reason" placeholder="간단히 입력하세요"></textarea>
+      <textarea
+        id="reason"
+        placeholder="간단히 입력하세요">
+      </textarea>
 
-      <button class="primary" onclick="submitLeave()">
+      <button
+        class="primary"
+        onclick="submitLeave()">
         신청하기
       </button>
 
-      <div id="result" class="result"></div>
+      <div
+        id="result"
+        class="result">
+      </div>
 
     </section>
 
-    <section id="registerTab" class="card hidden">
+
+    <!-- =========================
+         직원등록
+    ========================== -->
+    <section
+      id="registerTab"
+      class="card hidden">
 
       <h2>직원 등록</h2>
+
       <p class="notice">
-        최초 1회 등록하면 입사일 기준으로 연차가 자동 계산됩니다.
+        최초 1회 등록하면 입사일 기준으로
+        연차가 자동 계산됩니다.
       </p>
 
-      <label>매장</label>
+      <label>근무지</label>
       <select id="regStore">
         <option>더큰코리아 본사</option>
       </select>
 
       <label>이름</label>
-      <input id="regName" placeholder="예: 홍길동"/>
+      <input
+        id="regName"
+        placeholder="예: 홍길동"/>
 
       <label>연락처</label>
-      <input id="regPhone" placeholder="010-0000-0000" inputmode="tel"/>
+      <input
+        id="regPhone"
+        placeholder="010-0000-0000"
+        inputmode="tel"/>
 
       <label>입사일</label>
-      <input id="hireDate" type="date"/>
+      <input
+        id="hireDate"
+        type="date"/>
 
-      <button class="primary" onclick="registerEmployee()">
+      <button
+        class="primary"
+        onclick="registerEmployee()">
         직원 등록 / 수정
       </button>
 
-      <div id="registerResult" class="result"></div>
+      <div
+        id="registerResult"
+        class="result">
+      </div>
 
     </section>
 
-    <section id="historyTab" class="card small hidden">
 
-      <h2>내 신청 내역</h2>
+    <!-- =========================
+         내 연월차 신청내역
+    ========================== -->
+    <section
+      id="historyTab"
+      class="card small hidden">
+
+      <h2>내 연월차 신청내역</h2>
 
       <p class="notice">
-        신청 탭에 이름과 연락처를 입력한 뒤 조회하세요.
+        연월차 신청 탭에 이름과 연락처를
+        입력한 뒤 조회하세요.
       </p>
 
-      <button class="secondary" onclick="loadMyRequests()">
+      <button
+        class="secondary"
+        onclick="loadMyRequests()">
         조회하기
       </button>
 
-      <div id="myList" class="list"></div>
+      <div
+        id="myList"
+        class="list">
+      </div>
 
     </section>
-    <section id="compTab" class="card hidden">
 
-  <h2>미휴무 관리</h2>
-  <p class="notice">
-    추가근무 발생 시 미휴무를 등록하고, 사용 시 미휴무 사용신청을 합니다.
-  </p>
 
-  <label>매장</label>
-  <select id="compStore">
-    <option>더큰코리아 본사</option>
-  </select>
+    <!-- =========================
+         미휴무 관리
+    ========================== -->
+    <section
+      id="compTab"
+      class="card hidden">
 
-  <label>이름</label>
-  <input id="compName" placeholder="예: 홍길동"/>
+      <h2>미휴무 관리</h2>
 
-  <label>연락처</label>
-  <input id="compPhone" placeholder="010-0000-0000" inputmode="tel"/>
+      <p class="notice">
+        추가근무로 발생한 미휴무를 등록하고,
+        승인된 잔여 미휴무에서 사용할 날짜를 신청합니다.
+      </p>
 
-  <button class="secondary" onclick="checkCompBalance()">
-    잔여 미휴무 확인
-  </button>
+      <label>근무지</label>
+      <select id="compStore">
+        <option>더큰코리아 본사</option>
+      </select>
 
-  <div id="compBalanceBox" class="balance-box"></div>
+      <label>이름</label>
+      <input
+        id="compName"
+        placeholder="예: 홍길동"/>
 
-  <hr style="margin:28px 0; border:none; border-top:1px solid #eadfd6;">
+      <label>연락처</label>
+      <input
+        id="compPhone"
+        placeholder="010-0000-0000"
+        inputmode="tel"/>
 
-  <h3>추가근무 등록</h3>
+      <div class="grid2">
 
-  <label>추가근무일</label>
-  <input id="extraWorkDate" type="date"/>
+        <button
+          class="secondary"
+          onclick="checkCompBalance()">
+          잔여 미휴무 확인
+        </button>
 
-  <label>발생일수</label>
-  <input id="extraDays" type="number" step="0.5" placeholder="예: 1 또는 0.5"/>
+        <button
+          class="secondary"
+          onclick="loadMyCompHistory()">
+          발생·사용내역 조회
+        </button>
 
-  <label>추가근무 사유</label>
-  <textarea id="extraReason" placeholder="예: 휴무일 추가근무, 인력부족 등"></textarea>
+      </div>
 
-  <button class="primary" onclick="submitExtraWork()">
-    추가근무 등록
-  </button>
+      <div
+        id="compBalanceBox"
+        class="balance-box">
+      </div>
 
-  <div id="extraResult" class="result"></div>
+      <div
+        id="compHistoryList"
+        class="list">
+      </div>
 
-  <hr style="margin:28px 0; border:none; border-top:1px solid #eadfd6;">
 
-  <h3>미휴무 사용신청</h3>
+      <hr
+        style="
+          margin:28px 0;
+          border:none;
+          border-top:1px solid #eadfd6;
+        ">
 
-  <label>사용일</label>
-  <input id="compUseDate" type="date"/>
 
-  <label>사용일수</label>
-  <input id="compUseDays" type="number" step="0.5" placeholder="예: 1 또는 0.5"/>
+      <!-- 추가근무 발생 -->
+      <h3>추가근무 발생 등록</h3>
 
-  <label>사용 사유</label>
-  <textarea id="compUseReason" placeholder="예: 미휴무 사용"></textarea>
+      <p class="notice">
+        등록 후 관리자 승인이 완료되어야
+        잔여 미휴무에 포함됩니다.
+      </p>
 
-  <button class="primary" onclick="submitCompUse()">
-    미휴무 사용신청
-  </button>
+      <label>추가근무일</label>
+      <input
+        id="extraWorkDate"
+        type="date"/>
 
-  <div id="compUseResult" class="result"></div>
+      <label>발생일수</label>
+      <input
+        id="extraDays"
+        type="number"
+        min="0.5"
+        step="0.5"
+        placeholder="예: 1 또는 0.5"/>
 
-</section>
+      <label>추가근무 사유</label>
+      <textarea
+        id="extraReason"
+        placeholder="예: 휴무일 추가근무, 인력부족 등">
+      </textarea>
+
+      <button
+        class="primary"
+        onclick="submitExtraWork()">
+        추가근무 발생 등록
+      </button>
+
+      <div
+        id="extraResult"
+        class="result">
+      </div>
+
+
+      <hr
+        style="
+          margin:28px 0;
+          border:none;
+          border-top:1px solid #eadfd6;
+        ">
+
+
+      <!-- 미휴무 사용 -->
+      <h3>미휴무 사용신청</h3>
+
+      <p class="notice">
+        위에서 잔여 미휴무를 먼저 확인한 뒤
+        실제 사용할 날짜를 선택하세요.
+      </p>
+
+      <label>사용 예정일</label>
+      <input
+        id="compUseDate"
+        type="date"/>
+
+      <label>사용일수</label>
+      <input
+        id="compUseDays"
+        type="number"
+        min="0.5"
+        step="0.5"
+        placeholder="예: 1 또는 0.5"/>
+
+      <label>사용 사유</label>
+      <textarea
+        id="compUseReason"
+        placeholder="예: 미휴무 사용">
+      </textarea>
+
+      <button
+        class="primary"
+        onclick="submitCompUse()">
+        미휴무 사용신청
+      </button>
+
+      <div
+        id="compUseResult"
+        class="result">
+      </div>
+
+    </section>
+
 
     <section class="footer-link">
-      <a href="admin.html">관리자 승인 페이지</a>
+      <a href="admin.html">
+        관리자 승인 페이지
+      </a>
     </section>
 
   </main>
 
-  <script src="script.js?v=20260608-1"></script>
+  <script src="script.js?v=20260714-1"></script>
 </body>
 </html>
