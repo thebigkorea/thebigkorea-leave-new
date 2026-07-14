@@ -389,21 +389,23 @@ async function submitLeave() {
   calculateLeaveDays();
 
   const data = {
-    action: "apply",
-    store: $("store").value,
-    name: $("name").value.trim(),
-    phone: $("phone").value.trim(),
-    leaveType: $("leaveType").value,
-    startDate: $("startDate").value,
-    endDate: $("endDate").value,
-    days: Number($("days").value || 0),
-    reason: $("reason").value.trim()
-  };
+  action: "apply",
+  store: $("store").value,
+  name: $("name").value.trim(),
+  phone: $("phone").value.trim(),
+  pin: $("pin").value.trim(),
+  leaveType: $("leaveType").value,
+  startDate: $("startDate").value,
+  endDate: $("endDate").value,
+  days: Number($("days").value || 0),
+  reason: $("reason").value.trim()
+};
 
   if (
   !data.store ||
   !data.name ||
   !data.phone ||
+  !data.pin ||
   !data.leaveType ||
   !data.startDate ||
   !data.endDate ||
@@ -411,7 +413,7 @@ async function submitLeave() {
 ) {
   showMessage(
     "result",
-    "근무지를 포함한 필수 항목을 모두 입력하세요."
+   "근무지, 이름, 연락처, PIN을 포함한 필수 항목을 모두 입력하세요."
   );
   return;
 }
@@ -606,25 +608,27 @@ async function checkCompBalance() {
 
 async function submitExtraWork() {
   const data = {
-    action: "extraWork",
-    store: $("compStore").value,
-    name: $("compName").value.trim(),
-    phone: $("compPhone").value.trim(),
-    workDate: $("extraWorkDate").value,
-    days: Number($("extraDays").value || 0),
-    reason: $("extraReason").value.trim()
-  };
+  action: "extraWork",
+  store: $("compStore").value,
+  name: $("compName").value.trim(),
+  phone: $("compPhone").value.trim(),
+  pin: $("compPin").value.trim(),
+  workDate: $("extraWorkDate").value,
+  days: Number($("extraDays").value || 0),
+  reason: $("extraReason").value.trim()
+};
 
   if (
-    !data.store ||
-    !data.name ||
-    !data.phone ||
-    !data.workDate ||
-    data.days <= 0
-  ) {
+  !data.store ||
+  !data.name ||
+  !data.phone ||
+  !data.pin ||
+  !data.workDate ||
+  data.days <= 0
+) {
     showMessage(
       "extraResult",
-      "이름, 연락처, 추가근무일, 발생일수를 입력하세요."
+      "근무지, 이름, 연락처, PIN, 추가근무일, 발생일수를 입력하세요."
     );
     return;
   }
@@ -670,25 +674,27 @@ async function submitExtraWork() {
 
 async function submitCompUse() {
   const data = {
-    action: "compUse",
-    store: $("compStore").value,
-    name: $("compName").value.trim(),
-    phone: $("compPhone").value.trim(),
-    useDate: $("compUseDate").value,
-    days: Number($("compUseDays").value || 0),
-    reason: $("compUseReason").value.trim()
-  };
+  action: "compUse",
+  store: $("compStore").value,
+  name: $("compName").value.trim(),
+  phone: $("compPhone").value.trim(),
+  pin: $("compPin").value.trim(),
+  useDate: $("compUseDate").value,
+  days: Number($("compUseDays").value || 0),
+  reason: $("compUseReason").value.trim()
+};
 
   if (
-    !data.store ||
-    !data.name ||
-    !data.phone ||
-    !data.useDate ||
-    data.days <= 0
-  ) {
+  !data.store ||
+  !data.name ||
+  !data.phone ||
+  !data.pin ||
+  !data.useDate ||
+  data.days <= 0
+) {
     showMessage(
       "compUseResult",
-      "이름, 연락처, 사용 예정일, 사용일수를 입력하세요."
+      "근무지, 이름, 연락처, PIN, 사용 예정일, 사용일수를 입력하세요."
     );
     return;
   }
