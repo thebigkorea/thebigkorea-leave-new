@@ -26,6 +26,39 @@ function escapeHtml(value) {
     .replace(/'/g, "&#039;");
 }
 
+function getRequestValue(row, keys) {
+  for (let i = 0; i < keys.length; i++) {
+    const key = keys[i];
+
+    if (
+      row &&
+      row[key] !== undefined &&
+      row[key] !== null &&
+      String(row[key]).trim() !== ""
+    ) {
+      return row[key];
+    }
+  }
+
+  return "";
+}
+
+
+function formatRequestDate(value, includeTime) {
+  const text = String(value || "").trim();
+
+  if (!text) return "-";
+
+  if (includeTime) {
+    return text
+      .replace("T", " ")
+      .replace(/\.\d{3}Z$/, "")
+      .substring(0, 16);
+  }
+
+  return text.substring(0, 10);
+}
+
 
 function setResult(id, message, success) {
   const box = $(id);
@@ -374,66 +407,111 @@ function getFilteredAdminRequests() {
       ? $("requestEndDate").value
       : "";
 
-  return adminRequests.filter(
-    function (row) {
-      const searchable = [
-        row["ID"],
-        row["매장"],
-        row["이름"],
-        row["연락처"],
-        row["휴가종류"],
-        row["사유"]
-      ]
-        .join(" ")
-        .toLowerCase();
+  return adminRequests.filter(function (row) {
+    const id = getRequestValue(row, [
+      "ID",
+      "신청번호",
+      "id"
+    ]);
 
-      if (
-        keyword &&
-        !searchable.includes(keyword)
-      ) {
-        return false;
-      }
+    const store = getRequestValue(row, [
+      "매장",
+      "소속",
+      "store"
+    ]);
 
-      if (
-        status !== "전체" &&
-        String(row["상태"]) !== status
-      ) {
-        return false;
-      }
+    const name = getRequestValue(row, [
+      "이름",
+      "직원명",
+      "성명",
+      "name"
+    ]);
 
-      const requestDate =
-        String(
-          row["신청일시"] || ""
-        ).substring(0, 10);
+    const phone = getRequestValue(row, [
+      "연락처",
+      "휴대폰",
+      "전화번호",
+      "phone"
+    ]);
 
-      if (
-        startDate &&
-        requestDate < startDate
-      ) {
-        return false;
-      }
+    const leaveType = getRequestValue(row, [
+      "휴가종류",
+      "휴가구분",
+      "연차구분",
+      "leaveType"
+    ]);
 
-      if (
-        endDate &&
-        requestDate > endDate
-      ) {
-        return false;
-      }
+    const reason = getRequestValue(row, [
+      "사유",
+      "신청사유",
+      "reason"
+    ]);
 
-      return true;
+    const rowStatus = getRequestValue(row, [
+      "상태",
+      "처리상태",
+      "status"
+    ]);
+
+    const requestDate = formatRequestDate(
+      getRequestValue(row, [
+        "신청일시",
+        "신청일",
+        "등록일시",
+        "createdAt"
+      ]),
+      false
+    );
+
+    const searchable = [
+      id,
+      store,
+      name,
+      phone,
+      leaveType,
+      reason
+    ]
+      .join(" ")
+      .toLowerCase();
+
+    if (keyword && !searchable.includes(keyword)) {
+      return false;
     }
-  );
+
+    if (
+      status !== "전체" &&
+      String(rowStatus) !== status
+    ) {
+      return false;
+    }
+
+    if (
+      startDate &&
+      requestDate !== "-" &&
+      requestDate < startDate
+    ) {
+      return false;
+    }
+
+    if (
+      endDate &&
+      requestDate !== "-" &&
+      requestDate > endDate
+    ) {
+      return false;
+    }
+
+    return true;
+  });
 }
 
 
 function renderAdminRequests() {
-  const body =
-    $("adminRequestBody");
+  const body = $("adminRequestBody");
 
   if (!body) return;
 
-  const rows =
-    getFilteredAdminRequests();
+  const rows = getFilteredAdminRequests();
 
   if (!rows.length) {
     body.innerHTML = `
@@ -443,76 +521,131 @@ function renderAdminRequests() {
         </td>
       </tr>
     `;
-
     return;
   }
 
-  body.innerHTML =
-    rows
-      .map(function (row) {
-        const id =
-          encodeURIComponent(
-            row["ID"]
-          );
+  body.innerHTML = rows.map(function (row) {
+    const id = getRequestValue(row, [
+      "ID",
+      "신청번호",
+      "id"
+    ]);
 
-        return `
-          <tr>
-            <td>
-              ${escapeHtml(row["신청일시"])}
-            </td>
+    const requestDate = getRequestValue(row, [
+      "신청일시",
+      "신청일",
+      "등록일시",
+      "createdAt"
+    ]);
 
-            <td>
-              ${escapeHtml(row["매장"])}
-            </td>
+    const store = getRequestValue(row, [
+      "매장",
+      "소속",
+      "store"
+    ]);
 
-            <td>
-              ${escapeHtml(row["이름"])}
-              <br>
-              <small>
-                ${escapeHtml(
-                  formatEmployeePhone(
-                    row["연락처"]
-                  )
-                )}
-              </small>
-            </td>
+    const name = getRequestValue(row, [
+      "이름",
+      "직원명",
+      "성명",
+      "name"
+    ]);
 
-            <td>
-              ${escapeHtml(row["휴가종류"])}
-            </td>
+    const phone = getRequestValue(row, [
+      "연락처",
+      "휴대폰",
+      "전화번호",
+      "phone"
+    ]);
 
-            <td>
-              ${escapeHtml(row["시작일"])}
-              ~
-              ${escapeHtml(row["종료일"])}
-            </td>
+    const leaveType = getRequestValue(row, [
+      "휴가종류",
+      "휴가구분",
+      "연차구분",
+      "leaveType"
+    ]);
 
-            <td>
-              ${escapeHtml(row["사용일수"])}
-            </td>
+    const startDate = getRequestValue(row, [
+      "시작일",
+      "사용시작일",
+      "startDate"
+    ]);
 
-            <td>
-              ${escapeHtml(
-                row["사유"] || "-"
-              )}
-            </td>
+    const endDate = getRequestValue(row, [
+      "종료일",
+      "사용종료일",
+      "endDate"
+    ]);
 
-            <td>
-              ${getStatusBadge(row["상태"])}
-            </td>
+    const days = getRequestValue(row, [
+      "사용일수",
+      "일수",
+      "days"
+    ]);
 
-            <td>
-              <button
-                class="btn btn-secondary btn-small"
-                onclick="openRequestDetail('${id}')"
-              >
-                상세
-              </button>
-            </td>
-          </tr>
-        `;
-      })
-      .join("");
+    const reason = getRequestValue(row, [
+      "사유",
+      "신청사유",
+      "reason"
+    ]);
+
+    const status = getRequestValue(row, [
+      "상태",
+      "처리상태",
+      "status"
+    ]);
+
+    return `
+      <tr>
+        <td>
+          ${escapeHtml(formatRequestDate(requestDate, true))}
+        </td>
+
+        <td>
+          ${escapeHtml(store || "-")}
+        </td>
+
+        <td>
+          ${escapeHtml(name || "-")}
+          <br>
+          <small>
+            ${escapeHtml(formatEmployeePhone(phone))}
+          </small>
+        </td>
+
+        <td>
+          ${escapeHtml(leaveType || "-")}
+        </td>
+
+        <td>
+          ${escapeHtml(formatRequestDate(startDate, false))}
+          ~
+          ${escapeHtml(formatRequestDate(endDate, false))}
+        </td>
+
+        <td>
+          ${escapeHtml(days || "-")}
+        </td>
+
+        <td>
+          ${escapeHtml(reason || "-")}
+        </td>
+
+        <td>
+          ${getStatusBadge(status)}
+        </td>
+
+        <td>
+          <button
+            class="btn btn-secondary btn-small"
+            onclick="openRequestDetail('${encodeURIComponent(id)}')"
+          >
+            상세
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join("");
 }
 
 
@@ -527,29 +660,29 @@ function resetRequestSearch() {
 
 
 function updateLeaveDashboard() {
-  const total =
-    adminRequests.length;
+  const getStatus = function (row) {
+    return String(
+      getRequestValue(row, [
+        "상태",
+        "처리상태",
+        "status"
+      ])
+    );
+  };
 
-  const pending =
-    adminRequests.filter(
-      function (row) {
-        return String(row["상태"]) === "대기";
-      }
-    ).length;
+  const total = adminRequests.length;
 
-  const approved =
-    adminRequests.filter(
-      function (row) {
-        return String(row["상태"]) === "승인";
-      }
-    ).length;
+  const pending = adminRequests.filter(function (row) {
+    return getStatus(row) === "대기";
+  }).length;
 
-  const rejected =
-    adminRequests.filter(
-      function (row) {
-        return String(row["상태"]) === "반려";
-      }
-    ).length;
+  const approved = adminRequests.filter(function (row) {
+    return getStatus(row) === "승인";
+  }).length;
+
+  const rejected = adminRequests.filter(function (row) {
+    return getStatus(row) === "반려";
+  }).length;
 
   [
     ["statTotal", total],
@@ -560,22 +693,17 @@ function updateLeaveDashboard() {
     ["adminPending", pending],
     ["adminApproved", approved],
     ["adminRejected", rejected]
-  ].forEach(
-    function (item) {
-      if ($(item[0])) {
-        $(item[0]).textContent =
-          item[1];
-      }
+  ].forEach(function (item) {
+    if ($(item[0])) {
+      $(item[0]).textContent = item[1];
     }
-  );
+  });
 
-  const body =
-    $("dashboardRequestBody");
+  const body = $("dashboardRequestBody");
 
   if (!body) return;
 
-  const recent =
-    adminRequests.slice(0, 8);
+  const recent = adminRequests.slice(0, 8);
 
   if (!recent.length) {
     body.innerHTML = `
@@ -585,48 +713,95 @@ function updateLeaveDashboard() {
         </td>
       </tr>
     `;
-
     return;
   }
 
-  body.innerHTML =
-    recent
-      .map(function (row) {
-        return `
-          <tr>
-            <td>
-              ${escapeHtml(row["신청일시"])}
-            </td>
+  body.innerHTML = recent.map(function (row) {
+    const requestDate = getRequestValue(row, [
+      "신청일시",
+      "신청일",
+      "등록일시",
+      "createdAt"
+    ]);
 
-            <td>
-              ${escapeHtml(row["매장"])}
-            </td>
+    const store = getRequestValue(row, [
+      "매장",
+      "소속",
+      "store"
+    ]);
 
-            <td>
-              ${escapeHtml(row["이름"])}
-            </td>
+    const name = getRequestValue(row, [
+      "이름",
+      "직원명",
+      "성명",
+      "name"
+    ]);
 
-            <td>
-              ${escapeHtml(row["휴가종류"])}
-            </td>
+    const leaveType = getRequestValue(row, [
+      "휴가종류",
+      "휴가구분",
+      "연차구분",
+      "leaveType"
+    ]);
 
-            <td>
-              ${escapeHtml(row["시작일"])}
-              ~
-              ${escapeHtml(row["종료일"])}
-            </td>
+    const startDate = getRequestValue(row, [
+      "시작일",
+      "사용시작일",
+      "startDate"
+    ]);
 
-            <td>
-              ${escapeHtml(row["사용일수"])}
-            </td>
+    const endDate = getRequestValue(row, [
+      "종료일",
+      "사용종료일",
+      "endDate"
+    ]);
 
-            <td>
-              ${getStatusBadge(row["상태"])}
-            </td>
-          </tr>
-        `;
-      })
-      .join("");
+    const days = getRequestValue(row, [
+      "사용일수",
+      "일수",
+      "days"
+    ]);
+
+    const status = getRequestValue(row, [
+      "상태",
+      "처리상태",
+      "status"
+    ]);
+
+    return `
+      <tr>
+        <td>
+          ${escapeHtml(formatRequestDate(requestDate, true))}
+        </td>
+
+        <td>
+          ${escapeHtml(store || "-")}
+        </td>
+
+        <td>
+          ${escapeHtml(name || "-")}
+        </td>
+
+        <td>
+          ${escapeHtml(leaveType || "-")}
+        </td>
+
+        <td>
+          ${escapeHtml(formatRequestDate(startDate, false))}
+          ~
+          ${escapeHtml(formatRequestDate(endDate, false))}
+        </td>
+
+        <td>
+          ${escapeHtml(days || "-")}
+        </td>
+
+        <td>
+          ${getStatusBadge(status)}
+        </td>
+      </tr>
+    `;
+  }).join("");
 }
 
 
