@@ -1728,3 +1728,95 @@ function resetLedgerSearch() {
 
   renderLedger();
 }
+async function loadMyCompHistory() {
+
+  const name =
+    $("compName").value.trim();
+
+  const phone =
+    $("compPhone").value.trim();
+
+  if(!name || !phone){
+    alert("이름과 연락처를 입력하세요.");
+    return;
+  }
+
+  try{
+
+    const result =
+      await jsonp({
+        action:"myCompHistory",
+        name:name,
+        phone:phone
+      });
+
+    if(!result.ok){
+      alert(result.message);
+      return;
+    }
+
+    renderMyCompHistory(result.rows);
+
+  }catch(err){
+
+    alert("미휴무 내역을 불러오지 못했습니다.");
+
+  }
+
+}
+function renderMyCompHistory(rows){
+
+  const box =
+    $("compHistoryList");
+
+  if(!rows.length){
+
+    box.innerHTML=
+    `
+    <div class="empty">
+      등록된 미휴무 내역이 없습니다.
+    </div>
+    `;
+
+    return;
+  }
+
+  box.innerHTML =
+    rows.map(r=>`
+
+<div class="item">
+
+<div class="item-title">
+
+${r.type}
+
+<span class="badge ${r.status=="승인"?"ok":r.status=="반려"?"no":"wait"}">
+
+${r.status}
+
+</span>
+
+</div>
+
+<div class="item-meta">
+
+날짜 :
+${r.date}
+
+<br>
+
+일수 :
+${r.days}일
+
+<br>
+
+사유 :
+${r.reason || "-"}
+
+</div>
+
+</div>
+
+`).join("");
+
+}
