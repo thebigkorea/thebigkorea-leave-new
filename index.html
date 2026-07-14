@@ -180,6 +180,24 @@
         id="hireDate"
         type="date"/>
 
+      <label>PIN</label>
+      <input
+        id="regPin"
+        type="password"
+        inputmode="numeric"
+        maxlength="8"
+        autocomplete="new-password"
+        placeholder="숫자 4~8자리"/>
+
+      <label>PIN 확인</label>
+      <input
+        id="regPinConfirm"
+        type="password"
+        inputmode="numeric"
+        maxlength="8"
+        autocomplete="new-password"
+        placeholder="PIN을 다시 입력하세요"/>  
+
       <button
         class="primary"
         onclick="registerEmployee()">
@@ -387,6 +405,6 @@
 
   </main>
 
-  <script src="index-script.js?v=20260714-2"></script>
+  <script src="index-script.js?v=20260714-3"></script>
 </body>
 </html>
