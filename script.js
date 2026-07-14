@@ -9,6 +9,7 @@ let adminRequests = [];
 let compRequests = [];
 let employeeRows = [];
 let ledgerRows = [];
+let compLedgerRows = [];
 let selectedRequest = null;
 
 
@@ -299,6 +300,10 @@ function openPage(pageName) {
     loadCompRequests();
   }
 
+  if (pageName === "compLedger") {
+  loadCompLedger();
+}
+
   if (pageName === "employees") {
     loadEmployees();
   }
@@ -324,8 +329,9 @@ async function loadAllAdminData() {
     loadAdminRequests(),
     loadCompRequests(),
     loadEmployees(),
-    loadLedger()
-  ]);
+    loadLedger(),
+    loadCompLedger()
+]);
 }
 
 
@@ -1884,5 +1890,146 @@ ${r.reason || "-"}
 </div>
 
 `).join("");
+
+}
+async function loadCompLedger(){
+
+  const body =
+    $("compLedgerBody");
+
+  body.innerHTML=
+  `
+  <tr>
+    <td colspan="10" class="empty">
+      미휴무 원장을 불러오는 중입니다.
+    </td>
+  </tr>
+  `;
+
+  try{
+
+    const result=
+      await jsonp({
+
+        action:"compSummary",
+
+        password:adminPassword,
+
+        t:Date.now()
+
+      });
+
+    if(!result.ok){
+
+      throw new Error(result.message);
+
+    }
+
+    compLedgerRows=
+      result.rows||[];
+
+    renderCompLedger();
+
+  }catch(err){
+
+    body.innerHTML=
+    `
+    <tr>
+
+      <td colspan="10" class="empty">
+
+      ${escapeHtml(err.message)}
+
+      </td>
+
+    </tr>
+    `;
+
+  }
+
+}
+
+
+
+function renderCompLedger(){
+
+  const body=
+    $("compLedgerBody");
+
+  const keyword=
+    $("compLedgerKeyword")
+      .value
+      .trim()
+      .toLowerCase();
+
+  const rows=
+    compLedgerRows.filter(function(r){
+
+      return(
+        !keyword ||
+
+        (
+          r.store+
+          r.name+
+          r.phone
+        )
+        .toLowerCase()
+        .includes(keyword)
+
+      );
+
+    });
+
+  if(!rows.length){
+
+    body.innerHTML=
+    `
+    <tr>
+
+      <td colspan="10" class="empty">
+
+      조회 결과가 없습니다.
+
+      </td>
+
+    </tr>
+    `;
+
+    return;
+
+  }
+
+  body.innerHTML=
+  rows.map(function(r){
+
+    return`
+
+<tr>
+
+<td>${escapeHtml(r.store)}</td>
+
+<td>${escapeHtml(r.name)}</td>
+
+<td>${escapeHtml(formatEmployeePhone(r.phone))}</td>
+
+<td>${r.approvedCreate}</td>
+
+<td>${r.approvedUse}</td>
+
+<td>${r.waitCreate}</td>
+
+<td>${r.waitUse}</td>
+
+<td><strong>${r.remain}</strong></td>
+
+<td>${escapeHtml(r.lastCreate||"-")}</td>
+
+<td>${escapeHtml(r.lastUse||"-")}</td>
+
+</tr>
+
+`;
+
+  }).join("");
 
 }
