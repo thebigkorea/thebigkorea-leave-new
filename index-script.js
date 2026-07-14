@@ -221,13 +221,25 @@ document.addEventListener(
 ========================= */
 
 async function registerEmployee() {
+  const pin = $("regPin").value.trim();
+  const pinConfirm = $("regPinConfirm").value.trim();
+
   const data = {
     action: "register",
     store: $("regStore").value,
     name: $("regName").value.trim(),
     phone: $("regPhone").value.trim(),
-    hireDate: $("hireDate").value
+    hireDate: $("hireDate").value,
+    pin: pin
   };
+
+  if (!data.store) {
+    showMessage(
+      "registerResult",
+      "근무지를 선택하세요."
+    );
+    return;
+  }
 
   if (!data.name) {
     showMessage(
@@ -253,6 +265,22 @@ async function registerEmployee() {
     return;
   }
 
+  if (!/^[0-9]{4,8}$/.test(pin)) {
+    showMessage(
+      "registerResult",
+      "PIN은 숫자 4~8자리로 입력하세요."
+    );
+    return;
+  }
+
+  if (pin !== pinConfirm) {
+    showMessage(
+      "registerResult",
+      "PIN과 PIN 확인이 일치하지 않습니다."
+    );
+    return;
+  }
+
   try {
     await postNoCors(data);
 
@@ -264,6 +292,9 @@ async function registerEmployee() {
     $("name").value = data.name;
     $("phone").value = data.phone;
     $("store").value = data.store;
+
+    $("regPin").value = "";
+    $("regPinConfirm").value = "";
 
   } catch (error) {
     showMessage(
@@ -358,19 +389,20 @@ async function submitLeave() {
   };
 
   if (
-    !data.name ||
-    !data.phone ||
-    !data.leaveType ||
-    !data.startDate ||
-    !data.endDate ||
-    !data.days
-  ) {
-    showMessage(
-      "result",
-      "필수 항목을 모두 입력하세요."
-    );
-    return;
-  }
+  !data.store ||
+  !data.name ||
+  !data.phone ||
+  !data.leaveType ||
+  !data.startDate ||
+  !data.endDate ||
+  !data.days
+) {
+  showMessage(
+    "result",
+    "근무지를 포함한 필수 항목을 모두 입력하세요."
+  );
+  return;
+}
 
   try {
     const result = await jsonp(
@@ -562,6 +594,7 @@ async function submitExtraWork() {
   };
 
   if (
+    !data.store ||
     !data.name ||
     !data.phone ||
     !data.workDate ||
@@ -625,6 +658,7 @@ async function submitCompUse() {
   };
 
   if (
+    !data.store ||
     !data.name ||
     !data.phone ||
     !data.useDate ||
