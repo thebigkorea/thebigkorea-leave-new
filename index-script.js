@@ -293,6 +293,10 @@ async function registerEmployee() {
     $("phone").value = data.phone;
     $("store").value = data.store;
 
+    $("regStore").value = "";
+    $("regName").value = "";
+    $("regPhone").value = "";
+    $("hireDate").value = "";
     $("regPin").value = "";
     $("regPinConfirm").value = "";
 
