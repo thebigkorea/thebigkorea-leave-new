@@ -1471,24 +1471,35 @@ function renderEmployees() {
               )}
             </td>
 
-            <td>
-              ${
-                isRetired
-                  ? "-"
-                  : `
-                    <button
-                      class="btn btn-red btn-small"
-                      onclick="retireEmployee(
-                        '${encodeURIComponent(row.store)}',
-                        '${encodeURIComponent(row.name)}',
-                        '${encodeURIComponent(row.phone)}'
-                      )"
-                    >
-                      퇴사처리
-                    </button>
-                  `
-              }
-            </td>
+           <td>
+  ${
+    isRetired
+      ? "-"
+      : `
+        <button
+          class="btn btn-outline btn-small"
+          onclick="resetEmployeePin(
+            '${encodeURIComponent(row.store)}',
+            '${encodeURIComponent(row.name)}',
+            '${encodeURIComponent(row.phone)}'
+          )"
+        >
+          PIN 초기화
+        </button>
+
+        <button
+          class="btn btn-red btn-small"
+          onclick="retireEmployee(
+            '${encodeURIComponent(row.store)}',
+            '${encodeURIComponent(row.name)}',
+            '${encodeURIComponent(row.phone)}'
+          )"
+        >
+          퇴사처리
+        </button>
+      `
+  }
+</td>
           </tr>
         `;
       })
@@ -1539,6 +1550,61 @@ async function retireEmployee(
   } catch (error) {
     alert(
       "퇴사 처리 중 오류가 발생했습니다."
+    );
+  }
+}
+
+async function resetEmployeePin(
+  store,
+  name,
+  phone
+) {
+  const decodedStore =
+    decodeURIComponent(store);
+
+  const decodedName =
+    decodeURIComponent(name);
+
+  const decodedPhone =
+    decodeURIComponent(phone);
+
+  if (
+    !confirm(
+      decodedName +
+      " 직원의 PIN을 1234로 초기화하시겠습니까?"
+    )
+  ) {
+    return;
+  }
+
+  try {
+    const result = await jsonp({
+      action: "resetEmployeePin",
+      password: adminPassword,
+      store: decodedStore,
+      name: decodedName,
+      phone: decodedPhone,
+      t: Date.now()
+    });
+
+    if (!result.ok) {
+      throw new Error(
+        result.message ||
+        "PIN 초기화 실패"
+      );
+    }
+
+    alert(
+      result.message ||
+      "PIN이 1234로 초기화되었습니다."
+    );
+
+    loadEmployees();
+
+  } catch (error) {
+    alert(
+      error.message ||
+      "PIN 초기화 중 오류가 발생했습니다."
     );
   }
 }
