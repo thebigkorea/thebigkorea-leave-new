@@ -816,14 +816,22 @@ function openRequestDetail(encodedId) {
     decodeURIComponent(encodedId);
 
   selectedRequest =
-    adminRequests.find(
-      function (row) {
-        return (
-          String(row["ID"]) ===
-          String(id)
-        );
-      }
-    );
+  adminRequests.find(
+    function (row) {
+
+      const requestId =
+        getRequestValue(row, [
+          "ID",
+          "신청번호",
+          "id"
+        ]);
+
+      return (
+        String(requestId) ===
+        String(id)
+      );
+    }
+  );
 
   if (!selectedRequest) {
     alert(
