@@ -532,10 +532,11 @@ function renderAdminRequests() {
 
   body.innerHTML = rows.map(function (row) {
     const id = getRequestValue(row, [
-      "ID",
-      "신청번호",
-      "id"
-    ]);
+  "신청ID",
+  "ID",
+  "신청번호",
+  "id"
+]);
 
     const requestDate = getRequestValue(row, [
       "신청일시",
@@ -821,6 +822,7 @@ function openRequestDetail(encodedId) {
 
       const requestId =
         getRequestValue(row, [
+           "신청ID",
           "ID",
           "신청번호",
           "id"
@@ -844,69 +846,133 @@ function openRequestDetail(encodedId) {
   const row =
     selectedRequest;
 
-  $("detailContent").innerHTML = `
-    <dt>신청번호</dt>
-    <dd>${escapeHtml(row["ID"])}</dd>
+  const requestId = getRequestValue(row, [
+  "신청ID",
+  "ID",
+  "신청번호",
+  "id"
+]);
 
-    <dt>신청일</dt>
-    <dd>${escapeHtml(row["신청일시"])}</dd>
+const requestDate = getRequestValue(row, [
+  "신청일",
+  "신청일시",
+  "등록일시",
+  "createdAt"
+]);
 
-    <dt>매장</dt>
-    <dd>${escapeHtml(row["매장"])}</dd>
+const store = getRequestValue(row, [
+  "소속",
+  "매장",
+  "store"
+]);
 
-    <dt>직원</dt>
-    <dd>
-      ${escapeHtml(row["이름"])}
-      /
-      ${escapeHtml(
-        formatEmployeePhone(
-          row["연락처"]
-        )
-      )}
-    </dd>
+const name = getRequestValue(row, [
+  "직원명",
+  "이름",
+  "성명",
+  "name"
+]);
 
-    <dt>휴가종류</dt>
-    <dd>${escapeHtml(row["휴가종류"])}</dd>
+const phone = getRequestValue(row, [
+  "휴대폰",
+  "연락처",
+  "전화번호",
+  "phone"
+]);
 
-    <dt>기간</dt>
-    <dd>
-      ${escapeHtml(row["시작일"])}
-      ~
-      ${escapeHtml(row["종료일"])}
-    </dd>
+const leaveType = getRequestValue(row, [
+  "휴가구분",
+  "휴가종류",
+  "연차구분",
+  "leaveType"
+]);
 
-    <dt>사용일수</dt>
-    <dd>
-      ${escapeHtml(row["사용일수"])}일
-    </dd>
+const startDate = getRequestValue(row, [
+  "시작일",
+  "사용시작일",
+  "startDate"
+]);
 
-    <dt>사유</dt>
-    <dd>
-      ${escapeHtml(row["사유"] || "-")}
-    </dd>
+const endDate = getRequestValue(row, [
+  "종료일",
+  "사용종료일",
+  "endDate"
+]);
 
-    <dt>상태</dt>
-    <dd>
-      ${getStatusBadge(row["상태"])}
-    </dd>
+const days = getRequestValue(row, [
+  "일수",
+  "사용일수",
+  "days"
+]);
 
-    <dt>관리자메모</dt>
-    <dd>
-      ${escapeHtml(
-        row["관리자메모"] || "-"
-      )}
-    </dd>
+const reason = getRequestValue(row, [
+  "사유",
+  "신청사유",
+  "reason"
+]);
 
-    <dt>처리일시</dt>
-    <dd>
-      ${escapeHtml(
-        row["처리일시"] || "-"
-      )}
-    </dd>
-  `;
+const status = getRequestValue(row, [
+  "상태",
+  "처리상태",
+  "status"
+]);
+
+const adminMemo = getRequestValue(row, [
+  "관리자메모",
+  "adminMemo"
+]);
+
+const processedAt = getRequestValue(row, [
+  "처리일",
+  "처리일시",
+  "processedAt"
+]);
+
+$("detailContent").innerHTML = `
+  <dt>신청번호</dt>
+  <dd>${escapeHtml(requestId || "-")}</dd>
+
+  <dt>신청일</dt>
+  <dd>${escapeHtml(requestDate || "-")}</dd>
+
+  <dt>매장</dt>
+  <dd>${escapeHtml(store || "-")}</dd>
+
+  <dt>직원</dt>
+  <dd>
+    ${escapeHtml(name || "-")}
+    /
+    ${escapeHtml(formatEmployeePhone(phone))}
+  </dd>
+
+  <dt>휴가종류</dt>
+  <dd>${escapeHtml(leaveType || "-")}</dd>
+
+  <dt>기간</dt>
+  <dd>
+    ${escapeHtml(startDate || "-")}
+    ~
+    ${escapeHtml(endDate || "-")}
+  </dd>
+
+  <dt>사용일수</dt>
+  <dd>${escapeHtml(days || "-")}일</dd>
+
+  <dt>사유</dt>
+  <dd>${escapeHtml(reason || "-")}</dd>
+
+  <dt>상태</dt>
+  <dd>${getStatusBadge(status)}</dd>
+
+  <dt>관리자메모</dt>
+  <dd>${escapeHtml(adminMemo || "-")}</dd>
+
+  <dt>처리일시</dt>
+  <dd>${escapeHtml(processedAt || "-")}</dd>
+`;
 
   const isPending =
-    String(row["상태"]) === "대기";
+  String(status) === "대기";
 
   $("detailAdminActions").innerHTML =
     (
@@ -1009,7 +1075,12 @@ async function updateRequestStatus(
   try {
     await postNoCors({
       action: action,
-      id: selectedRequest["ID"],
+      id: getRequestValue(selectedRequest, [
+  "신청ID",
+  "ID",
+  "신청번호",
+  "id"
+]),
       password: adminPassword,
       adminMemo: memo
     });
