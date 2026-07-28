@@ -76,11 +76,12 @@ async function postNoCors(data) {
 
 function showTab(tabName) {
   const tabs = [
-    "apply",
-    "register",
-    "history",
-    "comp"
-  ];
+  "apply",
+  "register",
+  "pinReset",
+  "history",
+  "comp"
+];
 
   tabs.forEach(function (name) {
     const section = $(name + "Tab");
@@ -110,6 +111,10 @@ function showTab(tabName) {
     copyEmployeeFieldsToRegister();
   }
 
+  if (tabName === "pinReset") {
+  copyEmployeeFieldsToPinReset();
+}
+
   if (tabName === "comp") {
     copyEmployeeFieldsToComp();
   }
@@ -127,6 +132,20 @@ function copyEmployeeFieldsToRegister() {
 
   if ($("regStore") && $("store")) {
     $("regStore").value = $("store").value;
+  }
+}
+
+function copyEmployeeFieldsToPinReset() {
+  if ($("pinResetName") && $("name")) {
+    $("pinResetName").value = $("name").value.trim();
+  }
+
+  if ($("pinResetPhone") && $("phone")) {
+    $("pinResetPhone").value = $("phone").value.trim();
+  }
+
+  if ($("pinResetStore") && $("store")) {
+    $("pinResetStore").value = $("store").value;
   }
 }
 
@@ -305,6 +324,127 @@ async function registerEmployee() {
     showMessage(
       "registerResult",
       "직원 등록 중 오류가 발생했습니다."
+    );
+  }
+}
+
+/* =========================
+   PIN 재설정
+========================= */
+
+async function resetMyPin() {
+  const store =
+    $("pinResetStore").value;
+
+  const name =
+    $("pinResetName").value.trim();
+
+  const phone =
+    $("pinResetPhone").value.trim();
+
+  const currentPin =
+    $("pinResetCurrentPin").value.trim();
+
+  const newPin =
+    $("pinResetNewPin").value.trim();
+
+  const newPinConfirm =
+    $("pinResetNewPinConfirm").value.trim();
+
+  if (!store) {
+    showMessage(
+      "pinResetResult",
+      "근무지를 선택하세요."
+    );
+    return;
+  }
+
+  if (!name) {
+    showMessage(
+      "pinResetResult",
+      "이름을 입력하세요."
+    );
+    return;
+  }
+
+  if (!phone) {
+    showMessage(
+      "pinResetResult",
+      "연락처를 입력하세요."
+    );
+    return;
+  }
+
+  if (!currentPin) {
+    showMessage(
+      "pinResetResult",
+      "임시 PIN을 입력하세요."
+    );
+    return;
+  }
+
+  if (!/^[0-9]{4,8}$/.test(newPin)) {
+    showMessage(
+      "pinResetResult",
+      "새 PIN은 숫자 4~8자리로 입력하세요."
+    );
+    return;
+  }
+
+  if (newPin !== newPinConfirm) {
+    showMessage(
+      "pinResetResult",
+      "새 PIN과 PIN 확인이 일치하지 않습니다."
+    );
+    return;
+  }
+
+  if (currentPin === newPin) {
+    showMessage(
+      "pinResetResult",
+      "새 PIN은 임시 PIN과 다르게 설정하세요."
+    );
+    return;
+  }
+
+  try {
+    const result = await jsonp({
+      action: "changeEmployeePin",
+      store: store,
+      name: name,
+      phone: phone,
+      currentPin: currentPin,
+      newPin: newPin,
+      t: Date.now()
+    });
+
+    if (!result.ok) {
+      throw new Error(
+        result.message ||
+        "PIN 변경에 실패했습니다."
+      );
+    }
+
+    showMessage(
+      "pinResetResult",
+      result.message ||
+      "새 PIN이 등록되었습니다."
+    );
+
+    $("pinResetCurrentPin").value = "";
+    $("pinResetNewPin").value = "";
+    $("pinResetNewPinConfirm").value = "";
+
+    $("store").value = store;
+    $("name").value = name;
+    $("phone").value = phone;
+    $("pin").value = newPin;
+
+  } catch (error) {
+    showMessage(
+      "pinResetResult",
+      error.message ||
+      "PIN 재설정 중 오류가 발생했습니다."
     );
   }
 }

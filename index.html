@@ -38,6 +38,12 @@
 
       <button
         class="tab"
+        onclick="showTab('pinReset')">
+       PIN 재설정
+      </button>
+
+      <button
+        class="tab"
         onclick="showTab('history')">
         연월차 내역
       </button>
@@ -218,6 +224,80 @@
       </div>
 
     </section>
+
+    <!-- =========================
+     PIN 재설정
+========================== -->
+<section
+  id="pinResetTab"
+  class="card hidden">
+
+  <h2>PIN 재설정</h2>
+
+  <p class="notice">
+    관리자에게 PIN 초기화를 요청한 뒤,
+    임시 PIN 1234를 입력하여 새 PIN으로 변경하세요.
+  </p>
+
+  <label>근무지</label>
+  <select id="pinResetStore">
+    <option value="">근무지를 선택하세요</option>
+    <option value="더큰코리아 본사">더큰코리아 본사</option>
+    <option value="평촌 소바공방">평촌 소바공방</option>
+    <option value="압구정 길채정">압구정 길채정</option>
+    <option value="효종갱 파주점">효종갱 파주점</option>
+  </select>
+
+  <label>이름</label>
+  <input
+    id="pinResetName"
+    placeholder="예: 홍길동"/>
+
+  <label>연락처</label>
+  <input
+    id="pinResetPhone"
+    placeholder="010-0000-0000"
+    inputmode="tel"/>
+
+  <label>임시 PIN</label>
+  <input
+    id="pinResetCurrentPin"
+    type="password"
+    inputmode="numeric"
+    maxlength="8"
+    autocomplete="current-password"
+    placeholder="관리자가 초기화한 PIN 입력"/>
+
+  <label>새 PIN</label>
+  <input
+    id="pinResetNewPin"
+    type="password"
+    inputmode="numeric"
+    maxlength="8"
+    autocomplete="new-password"
+    placeholder="숫자 4~8자리"/>
+
+  <label>새 PIN 확인</label>
+  <input
+    id="pinResetNewPinConfirm"
+    type="password"
+    inputmode="numeric"
+    maxlength="8"
+    autocomplete="new-password"
+    placeholder="새 PIN을 다시 입력하세요"/>
+
+  <button
+    class="primary"
+    onclick="resetMyPin()">
+    새 PIN 등록
+  </button>
+
+  <div
+    id="pinResetResult"
+    class="result">
+  </div>
+
+</section>
 
 
     <!-- =========================
