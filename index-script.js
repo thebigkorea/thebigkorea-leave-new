@@ -438,7 +438,7 @@ async function resetMyPin() {
     $("store").value = store;
     $("name").value = name;
     $("phone").value = phone;
-    $("pin").value = newPin;
+    $("pin").value = "";
 
   } catch (error) {
     showMessage(
