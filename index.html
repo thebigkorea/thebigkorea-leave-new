@@ -61,98 +61,148 @@
     ========================== -->
     <section id="applyTab" class="card">
 
-      <label>근무지</label>
-      <select id="store">
-        <option value="">근무지를 선택하세요</option>
-        <option value="더큰코리아 본사">더큰코리아 본사</option>
-        <option value="평촌 소바공방">평촌 소바공방</option>
-        <option value="압구정 길채정">압구정 길채정</option>
-        <option value="효종갱 파주점">효종갱 파주점</option>
-      </select>
+  <div class="field">
+    <label>근무지</label>
 
-      <label>이름</label>
+    <select id="store">
+      <option value="">
+        근무지를 선택하세요
+      </option>
+
+      <option value="더큰코리아 본사">
+        더큰코리아 본사
+      </option>
+
+      <option value="평촌 소바공방">
+        평촌 소바공방
+      </option>
+
+      <option value="압구정 길채정">
+        압구정 길채정
+      </option>
+
+      <option value="효종갱 파주점">
+        효종갱 파주점
+      </option>
+    </select>
+  </div>
+
+
+  <div class="field">
+    <label>이름</label>
+
+    <input
+      id="name"
+      placeholder="예: 홍길동">
+  </div>
+
+
+  <div class="field">
+    <label>연락처</label>
+
+    <input
+      id="phone"
+      placeholder="010-0000-0000"
+      inputmode="tel">
+  </div>
+
+
+  <div class="field">
+    <label>PIN</label>
+
+    <input
+      id="pin"
+      type="password"
+      inputmode="numeric"
+      maxlength="8"
+      placeholder="PIN 입력">
+  </div>
+
+
+  <button
+    class="secondary"
+    onclick="checkBalance()">
+    잔여 연월차 확인
+  </button>
+
+
+  <div
+    id="balanceBox"
+    class="balance-box">
+  </div>
+
+
+  <div class="field">
+    <label>휴가 종류</label>
+
+    <select id="leaveType">
+      <option value="">
+        선택하세요
+      </option>
+
+      <option>연차</option>
+      <option>월차</option>
+      <option>오전 반차</option>
+      <option>오후 반차</option>
+      <option>경조휴가</option>
+      <option>병가</option>
+    </select>
+  </div>
+
+
+  <div class="field">
+    <label>사용일수</label>
+
+    <input
+      id="days"
+      type="number"
+      readonly>
+  </div>
+
+
+  <div class="grid2">
+
+    <div>
+      <label>시작일</label>
+
       <input
-        id="name"
-        placeholder="예: 홍길동"/>
+        id="startDate"
+        type="date">
+    </div>
 
-      <label>연락처</label>
+    <div>
+      <label>종료일</label>
+
       <input
-        id="phone"
-        placeholder="010-0000-0000"
-        inputmode="tel"/>
+        id="endDate"
+        type="date">
+    </div>
 
-        <label>PIN</label>
-<input
-  id="pin"
-  type="password"
-  inputmode="numeric"
-  maxlength="8"
-  placeholder="PIN 입력"/>
+  </div>
 
-      <button
-        class="secondary"
-        onclick="checkBalance()">
-        잔여 연월차 확인
-      </button>
 
-      <div
-        id="balanceBox"
-        class="balance-box">
-      </div>
+  <div class="field full">
+    <label>사유</label>
 
-      <label>휴가 종류</label>
-      <select id="leaveType">
-        <option value="">선택하세요</option>
-        <option>연차</option>
-        <option>월차</option>
-        <option>오전 반차</option>
-        <option>오후 반차</option>
-        <option>경조휴가</option>
-        <option>병가</option>
-      </select>
+    <textarea
+      id="reason"
+      placeholder="간단히 입력하세요"></textarea>
+  </div>
 
-      <div class="grid2">
 
-        <div>
-          <label>시작일</label>
-          <input
-            id="startDate"
-            type="date"/>
-        </div>
+  <button
+    class="primary"
+    onclick="submitLeave()">
+    신청하기
+  </button>
 
-        <div>
-          <label>종료일</label>
-          <input
-            id="endDate"
-            type="date"/>
-        </div>
 
-      </div>
+  <div
+    id="result"
+    class="result">
+  </div>
 
-      <label>사용일수</label>
-      <input
-        id="days"
-        type="number"
-        readonly/>
-
-      <label>사유</label>
-      <textarea
-        id="reason"
-        placeholder="간단히 입력하세요">
-      </textarea>
-
-      <button
-        class="primary"
-        onclick="submitLeave()">
-        신청하기
-      </button>
-
-      <div
-        id="result"
-        class="result">
-      </div>
-
-    </section>
+</section>
 
 
     <!-- =========================

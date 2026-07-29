@@ -568,15 +568,76 @@ h1 {
 
 
 /* 제목이 있는 다른 카드의 최대 폭 */
+/* 모든 탭 카드의 좌우 폭을
+   상단 헤더·탭과 동일하게 사용 */
 #applyTab,
 #registerTab,
 #pinResetTab,
 #historyTab,
 #compTab {
-    max-width: 900px;
+    width: 100%;
+    max-width: none;
+    margin-left: 0;
+    margin-right: 0;
+}
 
-    margin-left: auto;
-    margin-right: auto;
+
+/* 연월차 신청 화면: PC에서 가로 2열 */
+#applyTab {
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            2,
+            minmax(0, 1fr)
+        );
+
+    column-gap: 24px;
+    row-gap: 0;
+
+    align-items: start;
+}
+
+
+/* 숨김 탭이 열려 보이지 않도록 유지 */
+#applyTab.hidden {
+    display: none;
+}
+
+
+/* 날짜 시작일·종료일 영역 */
+#applyTab > .grid2 {
+    grid-column: 1 / -1;
+}
+
+
+/* 잔여 연월차 확인 버튼 */
+#applyTab > .secondary {
+    grid-column: 1 / -1;
+}
+
+
+/* 잔여 연월차 결과 */
+#applyTab > .balance-box {
+    grid-column: 1 / -1;
+}
+
+
+/* 사유 입력창 */
+#applyTab > textarea {
+    grid-column: 1 / -1;
+}
+
+
+/* 신청하기 버튼 */
+#applyTab > .primary {
+    grid-column: 1 / -1;
+}
+
+
+/* 신청 결과 */
+#applyTab > .result {
+    grid-column: 1 / -1;
 }
 
 
@@ -870,5 +931,43 @@ button:hover {
 
     .admin-actions {
         grid-template-columns: 1fr;
+    }
+}
+#applyTab {
+    display: grid;
+    grid-template-columns:
+        repeat(
+            2,
+            minmax(0, 1fr)
+        );
+    gap: 4px 24px;
+}
+
+#applyTab .field {
+    min-width: 0;
+}
+
+#applyTab .field.full {
+    grid-column: 1 / -1;
+}
+
+#applyTab > .grid2,
+#applyTab > button,
+#applyTab > .balance-box,
+#applyTab > .result {
+    grid-column: 1 / -1;
+}
+@media (max-width: 700px) {
+    #applyTab {
+        grid-template-columns: 1fr;
+    }
+
+    #applyTab .field,
+    #applyTab .field.full,
+    #applyTab > .grid2,
+    #applyTab > button,
+    #applyTab > .balance-box,
+    #applyTab > .result {
+        grid-column: 1;
     }
 }
