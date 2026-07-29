@@ -287,3 +287,588 @@ button {
     opacity: .65;
     cursor: wait;
 }
+/* ==================================================
+   직원용 연월차·미휴무 화면 개선
+   기존 기능 및 HTML 구조는 변경하지 않습니다.
+================================================== */
+
+:root {
+    --main: #2f5f9e;
+    --main-dark: #1f3f70;
+    --main-soft: #edf4fc;
+
+    --dark: #172033;
+    --bg: #f3f6fa;
+    --card: #ffffff;
+    --line: #dce3eb;
+    --muted: #6f7785;
+}
+
+
+/* 전체 배경 */
+html,
+body {
+    background:
+        radial-gradient(
+            circle at top left,
+            rgba(47, 95, 158, 0.08),
+            transparent 34%
+        ),
+        linear-gradient(
+            180deg,
+            #f7f9fc 0%,
+            #edf1f6 100%
+        );
+
+    color: var(--dark);
+}
+
+
+/* PC에서는 관리자 화면처럼 넓게 */
+.app {
+    width: min(
+        1180px,
+        calc(100% - 40px)
+    );
+
+    max-width: none;
+
+    margin: 0 auto;
+
+    padding:
+        28px 0
+        70px;
+}
+
+
+/* 상단 헤더 */
+.hero {
+    position: relative;
+    overflow: hidden;
+
+    padding:
+        34px 38px;
+
+    margin-bottom: 18px;
+
+    border-radius: 28px;
+
+    background:
+        linear-gradient(
+            125deg,
+            #356cae 0%,
+            #29588f 50%,
+            #1d3d68 100%
+        );
+
+    box-shadow:
+        0 20px 44px
+        rgba(31, 63, 112, 0.21);
+}
+
+.hero::before {
+    content: "";
+
+    position: absolute;
+
+    width: 320px;
+    height: 320px;
+
+    top: -135px;
+    right: -55px;
+
+    border-radius: 50%;
+
+    background:
+        rgba(255, 255, 255, 0.08);
+}
+
+.hero::after {
+    content: "";
+
+    position: absolute;
+
+    width: 220px;
+    height: 220px;
+
+    right: 210px;
+    bottom: -145px;
+
+    border-radius: 50%;
+
+    background:
+        rgba(255, 255, 255, 0.05);
+}
+
+.hero > * {
+    position: relative;
+    z-index: 1;
+}
+
+.brand {
+    color: #dcecff;
+    opacity: 1;
+
+    font-weight: 800;
+}
+
+h1 {
+    font-size:
+        clamp(
+            31px,
+            4vw,
+            44px
+        );
+
+    letter-spacing: -0.04em;
+}
+
+.hero p {
+    max-width: 650px;
+
+    font-size: 15px;
+    line-height: 1.7;
+}
+
+
+/* 메뉴 5개를 PC에서 한 줄로 */
+.tabs {
+    grid-template-columns:
+        repeat(
+            5,
+            minmax(130px, 1fr)
+        );
+
+    gap: 8px;
+
+    padding: 9px;
+
+    margin-bottom: 18px;
+
+    border:
+        1px solid
+        rgba(218, 225, 234, 0.95);
+
+    border-radius: 20px;
+
+    background:
+        rgba(255, 255, 255, 0.92);
+
+    box-shadow:
+        0 8px 24px
+        rgba(31, 45, 70, 0.07);
+}
+
+.tab {
+    min-height: 50px;
+
+    margin: 0;
+
+    padding:
+        11px 12px;
+
+    color: #596474;
+
+    border:
+        1px solid transparent;
+
+    border-radius: 13px;
+
+    background: transparent;
+
+    font-size: 15px;
+
+    transition:
+        transform 0.15s ease,
+        background 0.15s ease,
+        color 0.15s ease,
+        box-shadow 0.15s ease;
+}
+
+.tab:hover {
+    color: var(--main);
+
+    background:
+        var(--main-soft);
+}
+
+.tab.active {
+    color: #ffffff;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--main),
+            var(--main-dark)
+        );
+
+    box-shadow:
+        0 7px 18px
+        rgba(47, 95, 158, 0.24);
+}
+
+
+/* 입력 카드 */
+.card {
+    width: 100%;
+
+    padding:
+        28px 30px;
+
+    margin-bottom: 18px;
+
+    border:
+        1px solid
+        var(--line);
+
+    border-radius: 24px;
+
+    background:
+        var(--card);
+
+    box-shadow:
+        0 12px 32px
+        rgba(24, 39, 75, 0.08);
+}
+
+
+
+
+
+/* 숨김 상태는 반드시 유지 */
+#applyTab.hidden,
+.card.hidden {
+    display: none;
+}
+
+
+/* 한 줄 전체를 사용하는 항목 */
+#applyTab > .grid2,
+#applyTab > button,
+#applyTab > .balance-box,
+#applyTab > .result,
+#applyTab > textarea,
+#applyTab > label[for="reason"] {
+    grid-column:
+        1 / -1;
+}
+
+
+/*
+ * HTML의 label에 for가 없으므로
+ * 신청 카드의 주요 하단 요소를 전체폭으로 맞춥니다.
+ */
+#applyTab .grid2 {
+    width: 100%;
+}
+
+#applyTab textarea {
+    width: 100%;
+}
+
+
+/* 제목이 있는 다른 카드의 최대 폭 */
+#applyTab,
+#registerTab,
+#pinResetTab,
+#historyTab,
+#compTab {
+    max-width: 900px;
+
+    margin-left: auto;
+    margin-right: auto;
+}
+
+
+/* 입력창 */
+input,
+select,
+textarea {
+    min-height: 52px;
+
+    padding:
+        14px 16px;
+
+    border:
+        1px solid
+        #d7dfe8;
+
+    border-radius: 14px;
+
+    background:
+        #fbfcfd;
+
+    color:
+        var(--dark);
+
+    font-size: 17px;
+
+    transition:
+        border-color 0.15s ease,
+        box-shadow 0.15s ease,
+        background 0.15s ease;
+}
+
+input:hover,
+select:hover,
+textarea:hover {
+    border-color:
+        #bbc7d5;
+
+    background: #ffffff;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    border-color:
+        var(--main);
+
+    background: #ffffff;
+
+    box-shadow:
+        0 0 0 3px
+        rgba(47, 95, 158, 0.12);
+}
+
+
+/* 항목명 */
+label {
+    color: #263448;
+
+    font-size: 14px;
+    font-weight: 900;
+}
+
+
+/* 버튼 */
+button {
+    min-height: 52px;
+
+    margin-top: 14px;
+
+    border-radius: 14px;
+
+    font-size: 17px;
+
+    transition:
+        transform 0.14s ease,
+        box-shadow 0.14s ease,
+        filter 0.14s ease;
+}
+
+button:hover {
+    transform:
+        translateY(-1px);
+}
+
+.primary {
+    color: #ffffff;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--main),
+            var(--main-dark)
+        );
+
+    box-shadow:
+        0 8px 18px
+        rgba(47, 95, 158, 0.20);
+}
+
+.secondary {
+    color: #32465f;
+
+    border:
+        1px solid
+        #d8e1eb;
+
+    background:
+        #edf3f9;
+}
+
+.secondary:hover {
+    background:
+        #e2edf8;
+}
+
+
+/* 결과 및 잔여일수 영역 */
+.result.show {
+    color: #334155;
+
+    border:
+        1px solid
+        #d9e3ee;
+
+    background:
+        #f4f8fc;
+}
+
+.balance-box {
+    color: #24466f;
+
+    border:
+        1px solid
+        #cddff1;
+
+    background:
+        #edf6ff;
+}
+
+
+/* 신청 및 사용 내역 */
+.item {
+    padding: 17px;
+
+    border:
+        1px solid
+        var(--line);
+
+    border-radius: 16px;
+
+    background: #ffffff;
+
+    box-shadow:
+        0 5px 14px
+        rgba(24, 39, 75, 0.05);
+}
+
+
+/* 관리자 링크 */
+.footer-link {
+    margin-top: 20px;
+}
+
+.footer-link a {
+    color:
+        var(--main);
+
+    padding:
+        10px 14px;
+
+    border-radius: 12px;
+
+    background:
+        rgba(47, 95, 158, 0.07);
+}
+
+
+/* 태블릿 */
+@media (max-width: 900px) {
+    .app {
+        width:
+            calc(100% - 28px);
+    }
+
+    .tabs {
+        grid-template-columns:
+            repeat(
+                3,
+                minmax(0, 1fr)
+            );
+    }
+
+    #applyTab {
+        grid-template-columns: 1fr;
+    }
+
+    #applyTab > * {
+        grid-column: auto;
+    }
+}
+
+
+/* 휴대폰 */
+@media (max-width: 580px) {
+    .app {
+        width:
+            calc(100% - 20px);
+
+        padding:
+            10px 0
+            38px;
+    }
+
+    .hero {
+        padding:
+            25px 21px;
+
+        border-radius:
+            21px;
+    }
+
+    h1 {
+        font-size:
+            29px;
+    }
+
+    .hero p {
+        font-size:
+            14px;
+    }
+
+    .tabs {
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(0, 1fr)
+            );
+
+        gap: 7px;
+
+        padding: 7px;
+
+        position: static;
+    }
+
+    .tab {
+        min-height: 47px;
+
+        font-size: 14px;
+    }
+
+    .card {
+        padding:
+            20px 17px;
+
+        border-radius:
+            19px;
+    }
+
+    #registerTab,
+    #pinResetTab,
+    #historyTab,
+    #compTab {
+        max-width: none;
+    }
+
+    input,
+    select,
+    textarea {
+        min-height: 50px;
+
+        padding:
+            13px 14px;
+
+        font-size: 16px;
+    }
+
+    button {
+        min-height: 50px;
+
+        padding:
+            13px 14px;
+
+        font-size: 16px;
+    }
+
+    .grid2 {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-actions {
+        grid-template-columns: 1fr;
+    }
+}
