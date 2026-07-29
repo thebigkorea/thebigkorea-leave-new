@@ -382,6 +382,568 @@
       .section-actions { justify-content:stretch; }
       .section-actions .btn { width:100%; }
     }
+    /* ==================================================
+   관리자 화면 디자인 개선
+   기존 기능과 HTML 구조는 변경하지 않습니다.
+================================================== */
+
+:root {
+  --primary: #7a2029;
+  --primary-dark: #48151b;
+  --primary-light: #a73a44;
+
+  --background: #f3f5f8;
+  --card: #ffffff;
+  --line: #dfe5ec;
+
+  --text: #172033;
+  --muted: #6f7785;
+
+  --green: #178b59;
+  --red: #d14949;
+  --orange: #d88924;
+  --blue: #3269b2;
+
+  --shadow:
+    0 12px 32px
+    rgba(24, 39, 75, 0.08);
+}
+
+
+/* 전체 화면 폭 확대 */
+.app {
+  width: min(
+    1480px,
+    calc(100% - 40px)
+  );
+
+  padding:
+    28px 0
+    90px;
+}
+
+
+/* 전체 배경 */
+body {
+  background:
+    radial-gradient(
+      circle at top left,
+      rgba(122, 32, 41, 0.07),
+      transparent 32%
+    ),
+    linear-gradient(
+      180deg,
+      #f7f8fa 0%,
+      #eef1f5 100%
+    );
+}
+
+
+/* 상단 헤더 */
+.hero {
+  position: relative;
+  overflow: hidden;
+
+  padding:
+    34px 38px;
+
+  border-radius: 28px;
+
+  background:
+    linear-gradient(
+      125deg,
+      #7d2028 0%,
+      #5a1820 48%,
+      #321318 100%
+    );
+
+  box-shadow:
+    0 20px 45px
+    rgba(77, 20, 27, 0.22);
+}
+
+.hero::before {
+  content: "";
+
+  position: absolute;
+  top: -90px;
+  right: -40px;
+
+  width: 340px;
+  height: 340px;
+
+  border-radius: 50%;
+
+  background:
+    rgba(255, 255, 255, 0.07);
+}
+
+.hero::after {
+  content: "";
+
+  position: absolute;
+  right: 250px;
+  bottom: -130px;
+
+  width: 260px;
+  height: 260px;
+
+  border-radius: 50%;
+
+  background:
+    rgba(255, 196, 128, 0.06);
+}
+
+.hero > * {
+  position: relative;
+  z-index: 1;
+}
+
+.hero h1 {
+  font-size:
+    clamp(
+      32px,
+      4vw,
+      46px
+    );
+
+  letter-spacing: -0.04em;
+}
+
+.hero p {
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.brand {
+  color: #ffd5ad;
+  opacity: 1;
+}
+
+
+/* 헤더 버튼 */
+.top-button {
+  min-height: 46px;
+
+  padding:
+    0 20px;
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.32);
+
+  background:
+    rgba(255, 255, 255, 0.11);
+
+  box-shadow:
+    inset 0 1px 0
+    rgba(255, 255, 255, 0.12);
+
+  transition:
+    transform 0.15s ease,
+    background 0.15s ease;
+}
+
+.top-button:hover {
+  transform:
+    translateY(-2px);
+
+  background:
+    rgba(255, 255, 255, 0.2);
+}
+
+
+/* 탭 6개를 한 줄로 표시 */
+.tabs {
+  grid-template-columns:
+    repeat(
+      6,
+      minmax(120px, 1fr)
+    );
+
+  padding: 9px;
+
+  border:
+    1px solid
+    rgba(213, 219, 227, 0.95);
+
+  border-radius: 20px;
+
+  background:
+    rgba(255, 255, 255, 0.9);
+
+  box-shadow:
+    0 8px 24px
+    rgba(31, 45, 70, 0.07);
+}
+
+.tab {
+  min-height: 50px;
+
+  color: #586171;
+
+  border:
+    1px solid transparent;
+
+  background: transparent;
+
+  transition:
+    transform 0.15s ease,
+    background 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.tab:hover {
+  color: var(--primary);
+
+  background: #f8ecee;
+}
+
+.tab.active {
+  color: #fff;
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--primary),
+      var(--primary-dark)
+    );
+
+  box-shadow:
+    0 7px 18px
+    rgba(116, 31, 31, 0.24);
+}
+
+
+/* 통계 카드 */
+.dashboard-grid {
+  gap: 18px;
+  margin-bottom: 22px;
+}
+
+.stat-card {
+  position: relative;
+  overflow: hidden;
+
+  min-height: 126px;
+
+  padding:
+    23px 24px;
+
+  border:
+    1px solid
+    var(--line);
+
+  border-radius: 22px;
+
+  box-shadow: var(--shadow);
+
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.stat-card:hover {
+  transform:
+    translateY(-3px);
+
+  box-shadow:
+    0 18px 38px
+    rgba(24, 39, 75, 0.12);
+}
+
+.stat-card::before {
+  content: "";
+
+  position: absolute;
+  top: 0;
+  left: 0;
+
+  width: 100%;
+  height: 5px;
+
+  background: var(--primary);
+}
+
+/* 통계 카드별 포인트 색상 */
+.stat-card:nth-child(1)::before {
+  background: var(--blue);
+}
+
+.stat-card:nth-child(2)::before {
+  background: var(--orange);
+}
+
+.stat-card:nth-child(3)::before {
+  background: var(--green);
+}
+
+.stat-card:nth-child(4)::before {
+  background: var(--red);
+}
+
+.stat-card:nth-child(1) {
+  background:
+    linear-gradient(
+      145deg,
+      #ffffff,
+      #f3f7ff
+    );
+}
+
+.stat-card:nth-child(2) {
+  background:
+    linear-gradient(
+      145deg,
+      #ffffff,
+      #fff9ed
+    );
+}
+
+.stat-card:nth-child(3) {
+  background:
+    linear-gradient(
+      145deg,
+      #ffffff,
+      #effaf5
+    );
+}
+
+.stat-card:nth-child(4) {
+  background:
+    linear-gradient(
+      145deg,
+      #ffffff,
+      #fff3f3
+    );
+}
+
+.stat-label {
+  font-size: 14px;
+  letter-spacing: -0.02em;
+}
+
+.stat-value {
+  margin-top: 12px;
+
+  font-size: 36px;
+  letter-spacing: -0.04em;
+}
+
+
+/* 본문 카드 */
+.card {
+  padding: 28px;
+
+  border:
+    1px solid
+    var(--line);
+
+  border-radius: 24px;
+
+  box-shadow: var(--shadow);
+}
+
+.card-header {
+  padding-bottom: 18px;
+
+  border-bottom:
+    1px solid
+    #edf0f4;
+}
+
+.card-header h2 {
+  font-size: 23px;
+  letter-spacing: -0.035em;
+}
+
+
+/* 버튼 */
+.btn {
+  transition:
+    transform 0.14s ease,
+    box-shadow 0.14s ease,
+    filter 0.14s ease;
+}
+
+.btn:hover {
+  transform:
+    translateY(-1px);
+
+  filter: brightness(1.02);
+}
+
+.btn-primary {
+  background:
+    linear-gradient(
+      135deg,
+      var(--primary),
+      var(--primary-dark)
+    );
+
+  box-shadow:
+    0 7px 16px
+    rgba(116, 31, 31, 0.2);
+}
+
+.btn-secondary {
+  color: #4c5564;
+
+  border-color: #dce2e9;
+
+  background:
+    #f5f7f9;
+}
+
+.btn-outline {
+  background:
+    #fff8f8;
+}
+
+
+/* 검색 입력창 */
+input,
+select,
+textarea {
+  border-color: #d9e0e7;
+  background: #fbfcfd;
+
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    background 0.15s ease;
+}
+
+input:hover,
+select:hover,
+textarea:hover {
+  border-color: #bcc7d3;
+  background: #fff;
+}
+
+
+/* 표 */
+.table-wrap {
+  border:
+    1px solid
+    #dde3ea;
+
+  border-radius: 18px;
+
+  background: #fff;
+
+  box-shadow:
+    inset 0 1px 0
+    rgba(255, 255, 255, 0.9);
+}
+
+table {
+  min-width: 980px;
+}
+
+th {
+  padding:
+    15px 13px;
+
+  font-size: 13px;
+
+  background:
+    linear-gradient(
+      180deg,
+      #543027,
+      #43231c
+    );
+}
+
+td {
+  padding:
+    15px 13px;
+
+  color: #263044;
+}
+
+tbody tr:nth-child(even) td {
+  background: #fafbfc;
+}
+
+tbody tr:hover td {
+  background: #fff5f3;
+}
+
+
+/* 상태 배지 */
+.badge {
+  min-width: 64px;
+
+  min-height: 30px;
+
+  box-shadow:
+    inset 0 0 0 1px
+    rgba(0, 0, 0, 0.035);
+}
+
+.badge-wait {
+  color: #875100;
+  background: #fff0c7;
+}
+
+.badge-approved {
+  color: #11603d;
+  background: #dcf5e8;
+}
+
+.badge-rejected {
+  color: #9e2929;
+  background: #fde3e2;
+}
+
+.badge-active {
+  color: #225d9d;
+  background: #e4effd;
+}
+
+
+/* 태블릿 */
+@media (max-width: 1100px) {
+  .tabs {
+    grid-template-columns:
+      repeat(
+        3,
+        minmax(0, 1fr)
+      );
+  }
+}
+
+
+/* 모바일 */
+@media (max-width: 580px) {
+  .app {
+    width:
+      calc(100% - 20px);
+  }
+
+  .hero {
+    padding:
+      25px 21px;
+  }
+
+  .tabs {
+    grid-template-columns:
+      repeat(
+        2,
+        minmax(0, 1fr)
+      );
+  }
+
+  .dashboard-grid {
+    gap: 10px;
+  }
+
+  .stat-card {
+    min-height: 105px;
+  }
+}
   </style>
 </head>
 
