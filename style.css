@@ -971,3 +971,20 @@ button:hover {
         grid-column: 1;
     }
 }
+/* 직원 전용 화면: 본인 연월차 신청만 표시 */
+.employee-apply-only .tabs,
+.employee-apply-only #registerTab,
+.employee-apply-only #pinResetTab,
+.employee-apply-only #historyTab,
+.employee-apply-only #compTab {
+    display: none !important;
+}
+
+.employee-apply-only .app {
+    padding-bottom: 70px;
+}
+
+.employee-apply-only #applyTab {
+    display: block !important;
+    margin-top: 24px;
+}
