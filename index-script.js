@@ -214,6 +214,7 @@ document.addEventListener(
   "DOMContentLoaded",
   function () {
     loadActiveEmployees();
+    initializeEmbeddedMode();
     applyEmployeeFromQuery();
 
     if ($("startDate")) {
@@ -251,6 +252,24 @@ function applyEmployeeFromQuery() {
   if ($("name")) $("name").value = name;
   if ($("phone")) $("phone").value = phone;
   if ($("pin")) $("pin").focus();
+}
+
+function initializeEmbeddedMode() {
+  const params = new URLSearchParams(window.location.search);
+
+  if (params.get("embedded") === "1") {
+    document.body.classList.add("embedded-mode");
+  }
+
+  const tab = params.get("tab");
+
+  if (
+    tab === "apply" ||
+    tab === "history" ||
+    tab === "register"
+  ) {
+    showTab(tab);
+  }
 }
 
 
