@@ -2,6 +2,7 @@ const SCRIPT_URL =
   "https://script.google.com/macros/s/AKfycbx7Y5zaVU7kYTdFwdwhUgoKwqOGx55-8a0McZOmA42PpbU4WWJqYTFPeSH2oD4mOzd7/exec";
 
 let employeeVerified = false;
+let activeEmployeeRows = [];
 
 function $(id) {
   return document.getElementById(id);
@@ -212,6 +213,9 @@ function calculateLeaveDays() {
 document.addEventListener(
   "DOMContentLoaded",
   function () {
+    loadActiveEmployees();
+    applyEmployeeFromQuery();
+
     if ($("startDate")) {
       $("startDate").addEventListener(
         "change",
@@ -234,6 +238,20 @@ document.addEventListener(
     }
   }
 );
+
+function applyEmployeeFromQuery() {
+  const params = new URLSearchParams(window.location.search);
+  const store = params.get("store") || "";
+  const name = params.get("name") || "";
+  const phone = params.get("phone") || "";
+
+  if (!store && !name && !phone) return;
+
+  if ($("store")) $("store").value = store;
+  if ($("name")) $("name").value = name;
+  if ($("phone")) $("phone").value = phone;
+  if ($("pin")) $("pin").focus();
+}
 
 
 /* =========================
@@ -502,16 +520,38 @@ async function checkBalance() {
       return;
     }
 
+    const monthlyExpired =
+      Number(balance.workYears || 0) >= 1;
+
     box.innerHTML =
-      "입사일: " + balance.hireDate + "<br>" +
-      "근속기간: " +
-      balance.workYears + "년 " +
-      balance.workMonths + "개월<br>" +
-      "발생 연월차: " + balance.base + "일<br>" +
-      "승인 사용: " + balance.used + "일<br>" +
-      "승인 대기: " + balance.pending + "일<br>" +
-      "<strong>현재 잔여: " +
-      balance.remain + "일</strong>";
+      '<div class="balance-person">' +
+        "<strong>" + escapeHtml(name) + "님의 연월차 현황</strong>" +
+        "<span>입사일 " + escapeHtml(balance.hireDate) +
+        " · 근속 " + escapeHtml(balance.workYears) + "년 " +
+        escapeHtml(balance.workMonths) + "개월</span>" +
+      "</div>" +
+      renderLeaveBalanceGroup(
+        "월차",
+        "monthly",
+        balance.monthlyGenerated,
+        balance.monthlyUsed,
+        balance.monthlyPending,
+        balance.monthlyRemain,
+        monthlyExpired
+          ? "사용기간 종료"
+          : escapeHtml(balance.monthlyExpireDate || "-") + "까지 사용"
+      ) +
+      renderLeaveBalanceGroup(
+        "연차",
+        "annual",
+        balance.annualGenerated,
+        balance.annualUsed,
+        balance.annualPending,
+        balance.annualRemain,
+        Number(balance.annualGenerated || 0) > 0
+          ? escapeHtml(balance.annualExpireDate || "-") + "까지 사용"
+          : "입사 1년 후 발생"
+      );
 
   } catch (error) {
     box.innerHTML =
@@ -959,9 +999,127 @@ async function loadMyCompHistory() {
 }
 
 
+async function loadActiveEmployees() {
+  const list = $("applyEmployeeList");
+  if (!list) return;
+
+  list.innerHTML =
+    '<div class="apply-employee-empty">직원목록을 불러오는 중입니다.</div>';
+
+  try {
+    const result = await jsonp({
+      action: "activeEmployees",
+      t: Date.now()
+    });
+
+    if (!result.ok) {
+      throw new Error(result.message || "직원목록 조회 실패");
+    }
+
+    activeEmployeeRows = result.rows || [];
+    renderActiveEmployees();
+  } catch (error) {
+    list.innerHTML =
+      '<div class="apply-employee-empty">' +
+      escapeHtml(error.message || "직원목록 조회 실패") +
+      "</div>";
+  }
+}
+
+function renderActiveEmployees() {
+  const list = $("applyEmployeeList");
+  if (!list) return;
+
+  const keyword = String(
+    $("applyEmployeeSearch")
+      ? $("applyEmployeeSearch").value
+      : ""
+  ).trim().toLowerCase();
+
+  const rows = activeEmployeeRows.filter(function (employee) {
+    return !keyword || [
+      employee.name,
+      employee.phone,
+      employee.store
+    ].join(" ").toLowerCase().includes(keyword);
+  });
+
+  if (!rows.length) {
+    list.innerHTML =
+      '<div class="apply-employee-empty">등록된 재직 직원이 없습니다.</div>';
+    return;
+  }
+
+  list.innerHTML = rows.map(function (employee, index) {
+    return (
+      '<button type="button" class="apply-employee-item" ' +
+      'onclick="selectApplyEmployee(' + index + ')">' +
+        "<strong>" + escapeHtml(employee.name) + "</strong>" +
+        "<span>" + escapeHtml(employee.phone) + " · " +
+        escapeHtml(employee.store) + "</span>" +
+      "</button>"
+    );
+  }).join("");
+}
+
+function selectApplyEmployee(index) {
+  const employee = activeEmployeeRows[index];
+  if (!employee) return;
+
+  $("store").value = employee.store || "";
+  $("name").value = employee.name || "";
+  $("phone").value = employee.phone || "";
+  $("pin").value = "";
+  $("balanceBox").classList.remove("show");
+  $("balanceBox").innerHTML = "";
+  $("pin").focus();
+}
+
 /* =========================
    공통 표시
 ========================= */
+
+function escapeHtml(value) {
+  return String(value == null ? "" : value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function renderLeaveBalanceGroup(
+  label,
+  type,
+  generated,
+  used,
+  pending,
+  remain,
+  periodText
+) {
+  return (
+    '<section class="leave-balance-group ' + type + '">' +
+      '<div class="leave-balance-head">' +
+        "<strong>" + label + "</strong>" +
+        "<span>" + periodText + "</span>" +
+      "</div>" +
+      '<div class="leave-balance-numbers">' +
+        '<div><small>발생</small><strong>' +
+          escapeHtml(generated || 0) +
+        "</strong></div>" +
+        '<div><small>사용</small><strong>' +
+          escapeHtml(used || 0) +
+        "</strong></div>" +
+        '<div><small>승인대기</small><strong>' +
+          escapeHtml(pending || 0) +
+        "</strong></div>" +
+        '<div><small>잔여</small><strong>' +
+          escapeHtml(remain || 0) +
+        "</strong></div>" +
+      "</div>" +
+    "</section>"
+  );
+}
 
 function renderStatusBadge(status) {
   if (status === "승인") {
