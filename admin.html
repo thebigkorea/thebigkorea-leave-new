@@ -966,6 +966,28 @@ tbody tr:hover td {
     #ledgerPage th:nth-child(n+11):nth-child(-n+15) {
       background: #2f65a5;
     }
+    /* 신청·내역 화면 통합 */
+.tabs {
+  grid-template-columns:
+    repeat(8, minmax(105px, 1fr));
+}
+
+.employee-page-frame {
+  display: block;
+  width: 100%;
+  min-height: 1050px;
+  border: 0;
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: var(--shadow);
+}
+
+@media (max-width: 1200px) {
+  .tabs {
+    grid-template-columns:
+      repeat(4, minmax(120px, 1fr));
+  }
+}
   </style>
 </head>
 
@@ -980,19 +1002,72 @@ tbody tr:hover td {
     </div>
 
     <div class="hero-actions">
-      <button class="top-button" onclick="location.href='index.html'">직원 신청 페이지</button>
+      <button
+  class="top-button"
+  onclick="openPage('apply')">
+  연월차 신청
+</button>
       <button class="top-button" onclick="loadCurrentPage()">현재 화면 새로고침</button>
     </div>
   </section>
 
   <nav class="tabs">
-    <button class="tab active" data-page="dashboard" onclick="openPage('dashboard')">대시보드</button>
-    <button class="tab" data-page="leave" onclick="openPage('leave')">연월차 승인</button>
-    <button class="tab" data-page="comp" onclick="openPage('comp')">미휴무 승인</button>
-    <button class="tab" data-page="compLedger" onclick="openPage('compLedger')">미휴무 원장</button>
-    <button class="tab" data-page="employees" onclick="openPage('employees')">직원관리</button>
-    <button class="tab" data-page="ledger" onclick="openPage('ledger')">연월차 원장</button>
-  </nav>
+  <button
+    class="tab active"
+    data-page="dashboard"
+    onclick="openPage('dashboard')">
+    대시보드
+  </button>
+
+  <button
+    class="tab"
+    data-page="apply"
+    onclick="openPage('apply')">
+    연월차 신청
+  </button>
+
+  <button
+    class="tab"
+    data-page="history"
+    onclick="openPage('history')">
+    내 신청내역
+  </button>
+
+  <button
+    class="tab"
+    data-page="leave"
+    onclick="openPage('leave')">
+    승인관리
+  </button>
+
+  <button
+    class="tab"
+    data-page="comp"
+    onclick="openPage('comp')">
+    미휴무 승인
+  </button>
+
+  <button
+    class="tab"
+    data-page="compLedger"
+    onclick="openPage('compLedger')">
+    미휴무 원장
+  </button>
+
+  <button
+    class="tab"
+    data-page="employees"
+    onclick="openPage('employees')">
+    직원관리
+  </button>
+
+  <button
+    class="tab"
+    data-page="ledger"
+    onclick="openPage('ledger')">
+    연월차 원장
+  </button>
+</nav>
 
   <section id="loginPage" class="page active">
     <section class="card admin-lock">
@@ -1010,6 +1085,24 @@ tbody tr:hover td {
   </section>
 
   <div id="adminArea" class="admin-area">
+
+    <section id="applyPage" class="page">
+  <iframe
+    id="applyFrame"
+    class="employee-page-frame"
+    title="연월차 신청"
+    src="index.html?embedded=1&tab=apply">
+  </iframe>
+</section>
+
+<section id="historyPage" class="page">
+  <iframe
+    id="historyFrame"
+    class="employee-page-frame"
+    title="내 연월차 신청내역"
+    src="index.html?embedded=1&tab=history">
+  </iframe>
+</section>
 
     <section id="dashboardPage" class="page">
       <div class="dashboard-grid">
@@ -1340,6 +1433,6 @@ tbody tr:hover td {
   </div>
 </div>
 
-<script src="script.js?v=20260730-1"></script>
+<script src="script.js?v=20260730-4"></script>
 </body>
 </html>

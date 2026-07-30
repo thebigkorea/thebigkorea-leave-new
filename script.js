@@ -1,6 +1,3 @@
-script-js-code.txt
-
-
 const SCRIPT_URL =
   "https://script.google.com/macros/s/AKfycbx7Y5zaVU7kYTdFwdwhUgoKwqOGx55-8a0McZOmA42PpbU4WWJqYTFPeSH2oD4mOzd7/exec";
 
