@@ -1707,7 +1707,7 @@ async function loadLedger() {
 
   body.innerHTML = `
     <tr>
-      <td colspan="17" class="empty">
+      <td colspan="11" class="empty">
         연월차 원장을 불러오는 중입니다.
       </td>
     </tr>
@@ -1735,7 +1735,7 @@ async function loadLedger() {
   } catch (error) {
     body.innerHTML = `
       <tr>
-        <td colspan="17" class="empty">
+        <td colspan="11" class="empty">
           ${escapeHtml(error.message)}
         </td>
       </tr>
@@ -1802,7 +1802,7 @@ function renderLedger() {
   if (!rows.length) {
     body.innerHTML = `
       <tr>
-        <td colspan="17" class="empty">
+        <td colspan="11" class="empty">
           조건에 맞는 원장 데이터가 없습니다.
         </td>
       </tr>
@@ -1821,10 +1821,7 @@ function renderLedger() {
             </td>
 
             <td>
-              <a class="ledger-name-link"
-                 href="index.html?store=${encodeURIComponent(row.store)}&name=${encodeURIComponent(row.name)}&phone=${encodeURIComponent(row.phone)}">
-                ${escapeHtml(row.name)}
-              </a>
+              ${escapeHtml(row.name)}
             </td>
 
             <td>
@@ -1844,47 +1841,21 @@ function renderLedger() {
             </td>
 
             <td>
-              ${escapeHtml(row.monthlyGenerated || 0)}
+              ${escapeHtml(row.generated)}
             </td>
 
             <td>
-              ${escapeHtml(row.monthlyUsed || 0)}
+              ${escapeHtml(row.used)}
             </td>
 
             <td>
-              ${escapeHtml(row.monthlyPending || 0)}
-            </td>
-
-            <td>
-              <strong>
-                ${escapeHtml(row.monthlyRemain || 0)}
-              </strong>
-            </td>
-
-            <td>
-              ${escapeHtml(row.monthlyExpireDate || "-")}
-            </td>
-
-            <td>
-              ${escapeHtml(row.annualGenerated || 0)}
-            </td>
-
-            <td>
-              ${escapeHtml(row.annualUsed || 0)}
-            </td>
-
-            <td>
-              ${escapeHtml(row.annualPending || 0)}
+              ${escapeHtml(row.pending)}
             </td>
 
             <td>
               <strong>
-                ${escapeHtml(row.annualRemain || 0)}
+                ${escapeHtml(row.remain)}
               </strong>
-            </td>
-
-            <td>
-              ${escapeHtml(row.annualExpireDate || "-")}
             </td>
 
             <td>
