@@ -971,20 +971,47 @@ button:hover {
         grid-column: 1;
     }
 }
-/* 직원 전용 화면: 본인 연월차 신청만 표시 */
-.employee-apply-only .tabs,
-.employee-apply-only #registerTab,
-.employee-apply-only #pinResetTab,
+/* 직원용 화면 메뉴 표시 */
+.employee-apply-only .tabs {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+/* 사용하지 않는 메뉴만 숨김 */
+.employee-apply-only .tabs .tab:nth-child(4),
+.employee-apply-only .tabs .tab:nth-child(5),
 .employee-apply-only #historyTab,
 .employee-apply-only #compTab {
     display: none !important;
+}
+
+/* JavaScript가 선택한 화면만 표시 */
+.employee-apply-only .card.hidden {
+    display: none !important;
+}
+
+.employee-apply-only #applyTab:not(.hidden),
+.employee-apply-only #registerTab:not(.hidden),
+.employee-apply-only #pinResetTab:not(.hidden) {
+    display: block;
+}
+
+/* 연월차 신청 화면은 원래의 PC 2열 구조 유지 */
+.employee-apply-only #applyTab:not(.hidden) {
+    display: grid;
+    margin-top: 0;
 }
 
 .employee-apply-only .app {
     padding-bottom: 70px;
 }
 
-.employee-apply-only #applyTab {
-    display: block !important;
-    margin-top: 24px;
+@media (max-width: 700px) {
+    .employee-apply-only .tabs {
+        grid-template-columns: 1fr;
+    }
+
+    .employee-apply-only #applyTab:not(.hidden) {
+        display: block;
+    }
 }
