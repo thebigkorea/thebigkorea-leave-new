@@ -2169,7 +2169,7 @@ function renderCompLedger(){
   }).join("");
 
 }
-function renderEmployeeBalanceSummary() {
+async function renderEmployeeBalanceSummary() {
 
   const box =
     document.getElementById("employeeBalanceSummary");
@@ -2190,9 +2190,6 @@ function renderEmployeeBalanceSummary() {
     return;
   }
 
-  /*
-   * 직원 검색
-   */
   const matches =
     employeeRows.filter(function(row) {
 
@@ -2223,22 +2220,17 @@ function renderEmployeeBalanceSummary() {
           ""
         );
 
-      const text =
+      return (
         [store, name, phone]
           .join(" ")
-          .toLowerCase();
-
-      return text.includes(keyword);
+          .toLowerCase()
+          .includes(keyword)
+      );
     });
 
-  /*
-   * 검색결과가 1명이 아닐 경우
-   */
   if (matches.length !== 1) {
-
     box.style.display = "none";
     box.innerHTML = "";
-
     return;
   }
 
@@ -2271,190 +2263,196 @@ function renderEmployeeBalanceSummary() {
       ""
     );
 
-  const phoneKey =
-    phone.replace(/\D/g, "");
-
-  /*
-   * 연월차 원장 조회
-   */
-  const leave =
-    ledgerRows.find(function(row) {
-
-      const rowName =
-        String(row.name || "");
-
-      const rowPhone =
-        String(row.phone || "")
-          .replace(/\D/g, "");
-
-      return (
-        rowName === name &&
-        (
-          !phoneKey ||
-          !rowPhone ||
-          rowPhone === phoneKey
-        )
-      );
-
-    }) || {};
-
-  /*
-   * 미휴무 원장 조회
-   */
-  const comp =
-    compLedgerRows.find(function(row) {
-
-      const rowName =
-        String(row.name || "");
-
-      const rowPhone =
-        String(row.phone || "")
-          .replace(/\D/g, "");
-
-      return (
-        rowName === name &&
-        (
-          !phoneKey ||
-          !rowPhone ||
-          rowPhone === phoneKey
-        )
-      );
-
-    }) || {};
-
-  /*
-   * 실제 연월차 원장 필드
-   */
-  const leaveGenerated =
-    Number(leave.generated || 0);
-
-  const leaveUsed =
-    Number(leave.used || 0);
-
-  const leavePending =
-    Number(leave.pending || 0);
-
-  const leaveRemain =
-    Number(leave.remain || 0);
-
-  /*
-   * 실제 미휴무 원장 필드
-   */
-  const compEarned =
-    Number(comp.approvedCreate || 0);
-
-  const compUsed =
-    Number(comp.approvedUse || 0);
-
-  const compPendingEarned =
-    Number(comp.waitCreate || 0);
-
-  const compPendingUsed =
-    Number(comp.waitUse || 0);
-
-  const compRemain =
-    Number(comp.remain || 0);
-
   box.style.display = "block";
 
   box.innerHTML = `
     <div style="
-      font-size:20px;
-      font-weight:900;
-      margin-bottom:5px;
-    ">
-      ${escapeHtml(name)}
-    </div>
-
-    <div style="
+      padding:20px;
+      text-align:center;
       color:#6f7785;
-      margin-bottom:18px;
     ">
-      ${escapeHtml(store)}
-      ·
-      ${escapeHtml(formatEmployeePhone(phone))}
-    </div>
-
-    <div style="
-      display:grid;
-      grid-template-columns:
-        repeat(auto-fit,minmax(280px,1fr));
-      gap:14px;
-    ">
-
-      <div style="
-        padding:18px;
-        border:1px solid #dce3eb;
-        border-radius:16px;
-        background:#fff;
-      ">
-
-        <div style="
-          font-size:17px;
-          font-weight:900;
-          color:#2f5f9e;
-          margin-bottom:12px;
-        ">
-          연월차 현황
-        </div>
-
-        발생
-        <strong>${leaveGenerated}일</strong><br><br>
-
-        승인 사용
-        <strong>${leaveUsed}일</strong><br><br>
-
-        승인 대기
-        <strong>${leavePending}일</strong><br><br>
-
-        <div style="
-          font-size:19px;
-          color:#178b59;
-          font-weight:900;
-        ">
-          현재 잔여 ${leaveRemain}일
-        </div>
-
-      </div>
-
-      <div style="
-        padding:18px;
-        border:1px solid #dce3eb;
-        border-radius:16px;
-        background:#fff;
-      ">
-
-        <div style="
-          font-size:17px;
-          font-weight:900;
-          color:#d88924;
-          margin-bottom:12px;
-        ">
-          미휴무 현황
-        </div>
-
-        승인 발생
-        <strong>${compEarned}일</strong><br><br>
-
-        승인 사용
-        <strong>${compUsed}일</strong><br><br>
-
-        발생 승인대기
-        <strong>${compPendingEarned}일</strong><br><br>
-
-        사용 승인대기
-        <strong>${compPendingUsed}일</strong><br><br>
-
-        <div style="
-          font-size:19px;
-          color:#178b59;
-          font-weight:900;
-        ">
-          현재 잔여 미휴무 ${compRemain}일
-        </div>
-
-      </div>
-
+      연월차와 미휴무 현황을 조회 중입니다.
     </div>
   `;
+
+  try {
+
+    const results =
+      await Promise.all([
+        jsonp({
+          action: "adminBalance",
+          password: adminPassword,
+          store: store,
+          name: name,
+          phone: phone,
+          t: Date.now()
+        }),
+
+        jsonp({
+          action: "adminCompBalance",
+          password: adminPassword,
+          store: store,
+          name: name,
+          phone: phone,
+          t: Date.now()
+        })
+      ]);
+
+    const leaveResult = results[0];
+    const compResult = results[1];
+
+    if (!leaveResult.ok) {
+      throw new Error(
+        leaveResult.message ||
+        "연월차 조회 실패"
+      );
+    }
+
+    if (!compResult.ok) {
+      throw new Error(
+        compResult.message ||
+        "미휴무 조회 실패"
+      );
+    }
+
+    const leave =
+      leaveResult.balance || {};
+
+    box.innerHTML = `
+      <div style="
+        font-size:20px;
+        font-weight:900;
+        margin-bottom:5px;
+      ">
+        ${escapeHtml(name)}
+      </div>
+
+      <div style="
+        color:#6f7785;
+        margin-bottom:18px;
+      ">
+        ${escapeHtml(store)}
+        ·
+        ${escapeHtml(formatEmployeePhone(phone))}
+      </div>
+
+      <div style="
+        display:grid;
+        grid-template-columns:
+          repeat(auto-fit,minmax(280px,1fr));
+        gap:14px;
+      ">
+
+        <div style="
+          padding:18px;
+          border:1px solid #dce3eb;
+          border-radius:16px;
+          background:#fff;
+        ">
+
+          <div style="
+            font-size:17px;
+            font-weight:900;
+            color:#2f5f9e;
+            margin-bottom:12px;
+          ">
+            연월차 현황
+          </div>
+
+          입사일
+          <strong>${escapeHtml(leave.hireDate || "-")}</strong>
+          <br><br>
+
+          근속기간
+          <strong>
+            ${Number(leave.workYears || 0)}년
+            ${Number(leave.workMonths || 0)}개월
+          </strong>
+          <br><br>
+
+          발생
+          <strong>${Number(leave.base || 0)}일</strong>
+          <br><br>
+
+          승인 사용
+          <strong>${Number(leave.used || 0)}일</strong>
+          <br><br>
+
+          승인 대기
+          <strong>${Number(leave.pending || 0)}일</strong>
+          <br><br>
+
+          <div style="
+            font-size:19px;
+            color:#178b59;
+            font-weight:900;
+          ">
+            현재 잔여
+            ${Number(leave.remain || 0)}일
+          </div>
+
+        </div>
+
+        <div style="
+          padding:18px;
+          border:1px solid #dce3eb;
+          border-radius:16px;
+          background:#fff;
+        ">
+
+          <div style="
+            font-size:17px;
+            font-weight:900;
+            color:#d88924;
+            margin-bottom:12px;
+          ">
+            미휴무 현황
+          </div>
+
+          승인 발생
+          <strong>${Number(compResult.earned || 0)}일</strong>
+          <br><br>
+
+          승인 사용
+          <strong>${Number(compResult.used || 0)}일</strong>
+          <br><br>
+
+          발생 승인대기
+          <strong>${Number(compResult.pendingEarned || 0)}일</strong>
+          <br><br>
+
+          사용 승인대기
+          <strong>${Number(compResult.pendingUsed || 0)}일</strong>
+          <br><br>
+
+          <div style="
+            font-size:19px;
+            color:#178b59;
+            font-weight:900;
+          ">
+            현재 잔여 미휴무
+            ${Number(compResult.balance || 0)}일
+          </div>
+
+        </div>
+
+      </div>
+    `;
+
+  } catch (error) {
+
+    box.innerHTML = `
+      <div style="
+        padding:18px;
+        color:#a12724;
+        background:#fce7e5;
+        border-radius:14px;
+      ">
+        ${escapeHtml(
+          error.message ||
+          "직원 현황 조회 중 오류가 발생했습니다."
+        )}
+      </div>
+    `;
+  }
 }
