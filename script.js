@@ -1461,8 +1461,9 @@ async function loadEmployees() {
 
 
 function renderEmployees() {
-  const body =
-    $("employeeBody");
+  const body = $("employeeBody");
+
+  if (!body) return;
 
   const keyword =
     String(
@@ -1474,29 +1475,59 @@ function renderEmployees() {
       .toLowerCase();
 
   const rows =
-    employeeRows.filter(
-      function (row) {
-        const text = [
-          row.store,
-          row.name,
-          row.phone,
-          row.status
-        ]
-          .join(" ")
-          .toLowerCase();
+    employeeRows.filter(function(row) {
 
-        return (
-          !keyword ||
-          text.includes(keyword)
-        );
-      }
-    );
+      const store = String(
+        row.store ||
+        row["근무지"] ||
+        row["매장"] ||
+        row["소속"] ||
+        ""
+      );
+
+      const name = String(
+        row.name ||
+        row["이름"] ||
+        row["직원명"] ||
+        row["성명"] ||
+        ""
+      );
+
+      const phone = String(
+        row.phone ||
+        row["연락처"] ||
+        row["휴대폰"] ||
+        row["전화번호"] ||
+        ""
+      );
+
+      const status = String(
+        row.status ||
+        row["상태"] ||
+        row["재직상태"] ||
+        ""
+      );
+
+      const text = [
+        store,
+        name,
+        phone,
+        status
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      return (
+        !keyword ||
+        text.includes(keyword)
+      );
+    });
 
   if (!rows.length) {
     body.innerHTML = `
       <tr>
         <td colspan="7" class="empty">
-          등록된 직원이 없습니다.
+          검색 조건에 맞는 직원이 없습니다.
         </td>
       </tr>
     `;
@@ -1505,90 +1536,116 @@ function renderEmployees() {
   }
 
   body.innerHTML =
-    rows
-      .map(function (row) {
-        const isRetired =
-          String(row.status) === "퇴사";
+    rows.map(function(row) {
 
-        return `
-          <tr>
-            <td>
-              ${escapeHtml(row.store)}
-            </td>
+      const store =
+        row.store ||
+        row["근무지"] ||
+        row["매장"] ||
+        row["소속"] ||
+        "";
 
-            <td>
-              ${escapeHtml(row.name)}
-            </td>
+      const name =
+        row.name ||
+        row["이름"] ||
+        row["직원명"] ||
+        row["성명"] ||
+        "";
 
-            <td>
-              ${escapeHtml(
-                formatEmployeePhone(
-                  row.phone
-                )
-              )}
-            </td>
+      const phone =
+        row.phone ||
+        row["연락처"] ||
+        row["휴대폰"] ||
+        row["전화번호"] ||
+        "";
 
-            <td>
-              ${escapeHtml(row.hireDate)}
-            </td>
+      const hireDate =
+        row.hireDate ||
+        row["입사일"] ||
+        "";
 
-            <td>
-              ${
-                isRetired
-                  ? `
-                    <span class="badge badge-rejected">
-                      퇴사
-                    </span>
-                  `
-                  : `
-                    <span class="badge badge-active">
-                      ${escapeHtml(
-                        row.status || "재직"
-                      )}
-                    </span>
-                  `
-              }
-            </td>
+      const status =
+        row.status ||
+        row["상태"] ||
+        row["재직상태"] ||
+        "재직";
 
-            <td>
-              ${escapeHtml(
-                row.updatedAt || "-"
-              )}
-            </td>
+      const updatedAt =
+        row.updatedAt ||
+        row["최종수정"] ||
+        row["수정일시"] ||
+        row["최종갱신"] ||
+        "";
 
-           <td>
-  ${
-    isRetired
-      ? "-"
-      : `
-        <button
-          class="btn btn-outline btn-small"
-          onclick="resetEmployeePin(
-            '${encodeURIComponent(row.store)}',
-            '${encodeURIComponent(row.name)}',
-            '${encodeURIComponent(row.phone)}'
-          )"
-        >
-          PIN 초기화
-        </button>
+      const isRetired =
+        String(status) === "퇴사";
 
-        <button
-          class="btn btn-red btn-small"
-          onclick="retireEmployee(
-            '${encodeURIComponent(row.store)}',
-            '${encodeURIComponent(row.name)}',
-            '${encodeURIComponent(row.phone)}'
-          )"
-        >
-          퇴사처리
-        </button>
-      `
-  }
-</td>
-          </tr>
-        `;
-      })
-      .join("");
+      return `
+        <tr>
+
+          <td>
+            ${escapeHtml(store)}
+          </td>
+
+          <td>
+            ${escapeHtml(name)}
+          </td>
+
+          <td>
+            ${escapeHtml(
+              formatEmployeePhone(phone)
+            )}
+          </td>
+
+          <td>
+            ${escapeHtml(
+              String(hireDate).substring(0, 10)
+            )}
+          </td>
+
+          <td>
+            ${
+              isRetired
+                ? `
+                  <span class="badge badge-rejected">
+                    퇴사
+                  </span>
+                `
+                : `
+                  <span class="badge badge-active">
+                    ${escapeHtml(status)}
+                  </span>
+                `
+            }
+          </td>
+
+          <td>
+            ${escapeHtml(updatedAt || "-")}
+          </td>
+
+          <td>
+            ${
+              isRetired
+                ? "-"
+                : `
+                  <button
+                    class="btn btn-red btn-small"
+                    onclick="retireEmployee(
+                      '${encodeURIComponent(store)}',
+                      '${encodeURIComponent(name)}',
+                      '${encodeURIComponent(phone)}'
+                    )"
+                  >
+                    퇴사처리
+                  </button>
+                `
+            }
+          </td>
+
+        </tr>
+      `;
+    })
+    .join("");
 }
 
 
@@ -2115,18 +2172,12 @@ function renderCompLedger(){
 function renderEmployeeBalanceSummary() {
 
   const box =
-    document.getElementById(
-      "employeeBalanceSummary"
-    );
+    document.getElementById("employeeBalanceSummary");
 
   const input =
-    document.getElementById(
-      "employeeKeyword"
-    );
+    document.getElementById("employeeKeyword");
 
-  if (!box || !input) {
-    return;
-  }
+  if (!box || !input) return;
 
   const keyword =
     String(input.value || "")
@@ -2140,222 +2191,169 @@ function renderEmployeeBalanceSummary() {
   }
 
   /*
-   * 직원 찾기
+   * 직원 검색
    */
-  const employee =
-    employeeRows.find(function(row) {
+  const matches =
+    employeeRows.filter(function(row) {
 
       const store =
         String(
+          row.store ||
           row["근무지"] ||
           row["매장"] ||
           row["소속"] ||
-          row.store ||
           ""
         );
 
       const name =
         String(
+          row.name ||
           row["이름"] ||
           row["직원명"] ||
           row["성명"] ||
-          row.name ||
           ""
         );
 
       const phone =
         String(
+          row.phone ||
           row["연락처"] ||
           row["휴대폰"] ||
           row["전화번호"] ||
-          row.phone ||
           ""
         );
 
-      return (
-        name.toLowerCase().includes(keyword) ||
-        phone.toLowerCase().includes(keyword) ||
-        store.toLowerCase().includes(keyword)
-      );
+      const text =
+        [store, name, phone]
+          .join(" ")
+          .toLowerCase();
+
+      return text.includes(keyword);
     });
 
-  if (!employee) {
+  /*
+   * 검색결과가 1명이 아닐 경우
+   */
+  if (matches.length !== 1) {
+
     box.style.display = "none";
     box.innerHTML = "";
+
     return;
   }
 
+  const employee = matches[0];
+
   const store =
     String(
+      employee.store ||
       employee["근무지"] ||
       employee["매장"] ||
       employee["소속"] ||
-      employee.store ||
       ""
     );
 
   const name =
     String(
+      employee.name ||
       employee["이름"] ||
       employee["직원명"] ||
       employee["성명"] ||
-      employee.name ||
       ""
     );
 
   const phone =
     String(
+      employee.phone ||
       employee["연락처"] ||
       employee["휴대폰"] ||
       employee["전화번호"] ||
-      employee.phone ||
       ""
     );
 
+  const phoneKey =
+    phone.replace(/\D/g, "");
+
   /*
-   * 연월차 원장 찾기
+   * 연월차 원장 조회
    */
   const leave =
     ledgerRows.find(function(row) {
 
       const rowName =
-        String(
-          row["이름"] ||
-          row["직원명"] ||
-          row["성명"] ||
-          row.name ||
-          ""
-        );
+        String(row.name || "");
 
       const rowPhone =
-        String(
-          row["연락처"] ||
-          row["휴대폰"] ||
-          row["전화번호"] ||
-          row.phone ||
-          ""
-        );
+        String(row.phone || "")
+          .replace(/\D/g, "");
 
       return (
         rowName === name &&
         (
-          !phone ||
+          !phoneKey ||
           !rowPhone ||
-          rowPhone.replace(/\D/g, "") ===
-          phone.replace(/\D/g, "")
+          rowPhone === phoneKey
         )
       );
+
     }) || {};
 
   /*
-   * 미휴무 원장 찾기
+   * 미휴무 원장 조회
    */
   const comp =
     compLedgerRows.find(function(row) {
 
       const rowName =
-        String(
-          row["이름"] ||
-          row["직원명"] ||
-          row["성명"] ||
-          row.name ||
-          ""
-        );
+        String(row.name || "");
 
       const rowPhone =
-        String(
-          row["연락처"] ||
-          row["휴대폰"] ||
-          row["전화번호"] ||
-          row.phone ||
-          ""
-        );
+        String(row.phone || "")
+          .replace(/\D/g, "");
 
       return (
         rowName === name &&
         (
-          !phone ||
+          !phoneKey ||
           !rowPhone ||
-          rowPhone.replace(/\D/g, "") ===
-          phone.replace(/\D/g, "")
+          rowPhone === phoneKey
         )
       );
+
     }) || {};
 
   /*
-   * 연월차 값
+   * 실제 연월차 원장 필드
    */
-  const leaveBase =
-    Number(
-      leave["발생"] ||
-      leave["발생연월차"] ||
-      leave["발생일수"] ||
-      0
-    );
+  const leaveGenerated =
+    Number(leave.generated || 0);
 
   const leaveUsed =
-    Number(
-      leave["승인사용"] ||
-      leave["사용"] ||
-      leave["사용일수"] ||
-      0
-    );
+    Number(leave.used || 0);
 
   const leavePending =
-    Number(
-      leave["승인대기"] ||
-      leave["대기"] ||
-      0
-    );
+    Number(leave.pending || 0);
 
   const leaveRemain =
-    Number(
-      leave["잔여"] ||
-      leave["잔여연월차"] ||
-      leave["현재잔여"] ||
-      0
-    );
+    Number(leave.remain || 0);
 
   /*
-   * 미휴무 값
+   * 실제 미휴무 원장 필드
    */
   const compEarned =
-    Number(
-      comp["승인발생"] ||
-      comp["승인 발생"] ||
-      comp["발생"] ||
-      0
-    );
+    Number(comp.approvedCreate || 0);
 
   const compUsed =
-    Number(
-      comp["승인사용"] ||
-      comp["승인 사용"] ||
-      comp["사용"] ||
-      0
-    );
+    Number(comp.approvedUse || 0);
 
   const compPendingEarned =
-    Number(
-      comp["발생승인대기"] ||
-      comp["발생 승인대기"] ||
-      0
-    );
+    Number(comp.waitCreate || 0);
 
   const compPendingUsed =
-    Number(
-      comp["사용승인대기"] ||
-      comp["사용 승인대기"] ||
-      0
-    );
+    Number(comp.waitUse || 0);
 
   const compRemain =
-    Number(
-      comp["잔여미휴무"] ||
-      comp["잔여 미휴무"] ||
-      comp["잔여"] ||
-      0
-    );
+    Number(comp.remain || 0);
 
   box.style.display = "block";
 
@@ -2363,8 +2361,7 @@ function renderEmployeeBalanceSummary() {
     <div style="
       font-size:20px;
       font-weight:900;
-      margin-bottom:6px;
-      color:#172033;
+      margin-bottom:5px;
     ">
       ${escapeHtml(name)}
     </div>
@@ -2385,88 +2382,75 @@ function renderEmployeeBalanceSummary() {
       gap:14px;
     ">
 
-      <!-- 연월차 -->
       <div style="
         padding:18px;
-        background:white;
         border:1px solid #dce3eb;
-        border-radius:15px;
+        border-radius:16px;
+        background:#fff;
       ">
 
         <div style="
+          font-size:17px;
           font-weight:900;
-          font-size:16px;
-          margin-bottom:14px;
           color:#2f5f9e;
+          margin-bottom:12px;
         ">
           연월차 현황
         </div>
 
-        <div style="line-height:2;">
-          발생 연월차
-          <strong>${leaveBase}일</strong>
-          <br>
+        발생
+        <strong>${leaveGenerated}일</strong><br><br>
 
-          승인 사용
-          <strong>${leaveUsed}일</strong>
-          <br>
+        승인 사용
+        <strong>${leaveUsed}일</strong><br><br>
 
-          승인 대기
-          <strong>${leavePending}일</strong>
-          <br>
+        승인 대기
+        <strong>${leavePending}일</strong><br><br>
 
-          <span style="
-            font-size:18px;
-            color:#178b59;
-          ">
-            현재 잔여
-            <strong>${leaveRemain}일</strong>
-          </span>
+        <div style="
+          font-size:19px;
+          color:#178b59;
+          font-weight:900;
+        ">
+          현재 잔여 ${leaveRemain}일
         </div>
 
       </div>
 
-      <!-- 미휴무 -->
       <div style="
         padding:18px;
-        background:white;
         border:1px solid #dce3eb;
-        border-radius:15px;
+        border-radius:16px;
+        background:#fff;
       ">
 
         <div style="
+          font-size:17px;
           font-weight:900;
-          font-size:16px;
-          margin-bottom:14px;
           color:#d88924;
+          margin-bottom:12px;
         ">
           미휴무 현황
         </div>
 
-        <div style="line-height:2;">
-          승인 발생
-          <strong>${compEarned}일</strong>
-          <br>
+        승인 발생
+        <strong>${compEarned}일</strong><br><br>
 
-          승인 사용
-          <strong>${compUsed}일</strong>
-          <br>
+        승인 사용
+        <strong>${compUsed}일</strong><br><br>
 
-          발생 승인대기
-          <strong>${compPendingEarned}일</strong>
-          <br>
+        발생 승인대기
+        <strong>${compPendingEarned}일</strong><br><br>
 
-          사용 승인대기
-          <strong>${compPendingUsed}일</strong>
-          <br>
+        사용 승인대기
+        <strong>${compPendingUsed}일</strong><br><br>
 
-          <span style="
-            font-size:18px;
-            color:#178b59;
-          ">
-            현재 잔여 미휴무
-            <strong>${compRemain}일</strong>
-          </span>
+        <div style="
+          font-size:19px;
+          color:#178b59;
+          font-weight:900;
+        ">
+          현재 잔여 미휴무 ${compRemain}일
         </div>
 
       </div>
