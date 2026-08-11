@@ -974,14 +974,12 @@ button:hover {
 /* 직원용 화면 메뉴 표시 */
 .employee-apply-only .tabs {
     display: grid !important;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
-/* 사용하지 않는 메뉴만 숨김 */
+/* 직원용 화면에서 연월차 내역만 숨김 */
 .employee-apply-only .tabs .tab:nth-child(4),
-.employee-apply-only .tabs .tab:nth-child(5),
-.employee-apply-only #historyTab,
-.employee-apply-only #compTab {
+.employee-apply-only #historyTab {
     display: none !important;
 }
 
@@ -992,7 +990,8 @@ button:hover {
 
 .employee-apply-only #applyTab:not(.hidden),
 .employee-apply-only #registerTab:not(.hidden),
-.employee-apply-only #pinResetTab:not(.hidden) {
+.employee-apply-only #pinResetTab:not(.hidden),
+.employee-apply-only #compTab:not(.hidden) {
     display: block;
 }
 
