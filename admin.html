@@ -1228,8 +1228,24 @@ tbody tr:hover td {
         </div>
 
         <div class="field">
-          <input id="employeeKeyword" placeholder="이름·연락처·매장 검색" oninput="renderEmployees()">
-        </div>
+  <input
+    id="employeeKeyword"
+    placeholder="직원 이름·연락처·매장 검색"
+    oninput="renderEmployees(); renderEmployeeBalanceSummary();">
+</div>
+
+<!-- 직원 연월차 / 미휴무 통합조회 -->
+<div
+  id="employeeBalanceSummary"
+  style="
+    display:none;
+    margin:0 0 20px;
+    padding:20px;
+    border:1px solid #dce3eb;
+    border-radius:18px;
+    background:#f8fafc;
+  "
+></div>
 
         <div class="table-wrap">
           <table>

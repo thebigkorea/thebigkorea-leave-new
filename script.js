@@ -2112,3 +2112,365 @@ function renderCompLedger(){
   }).join("");
 
 }
+function renderEmployeeBalanceSummary() {
+
+  const box =
+    document.getElementById(
+      "employeeBalanceSummary"
+    );
+
+  const input =
+    document.getElementById(
+      "employeeKeyword"
+    );
+
+  if (!box || !input) {
+    return;
+  }
+
+  const keyword =
+    String(input.value || "")
+      .trim()
+      .toLowerCase();
+
+  if (!keyword) {
+    box.style.display = "none";
+    box.innerHTML = "";
+    return;
+  }
+
+  /*
+   * 직원 찾기
+   */
+  const employee =
+    employeeRows.find(function(row) {
+
+      const store =
+        String(
+          row["근무지"] ||
+          row["매장"] ||
+          row["소속"] ||
+          row.store ||
+          ""
+        );
+
+      const name =
+        String(
+          row["이름"] ||
+          row["직원명"] ||
+          row["성명"] ||
+          row.name ||
+          ""
+        );
+
+      const phone =
+        String(
+          row["연락처"] ||
+          row["휴대폰"] ||
+          row["전화번호"] ||
+          row.phone ||
+          ""
+        );
+
+      return (
+        name.toLowerCase().includes(keyword) ||
+        phone.toLowerCase().includes(keyword) ||
+        store.toLowerCase().includes(keyword)
+      );
+    });
+
+  if (!employee) {
+    box.style.display = "none";
+    box.innerHTML = "";
+    return;
+  }
+
+  const store =
+    String(
+      employee["근무지"] ||
+      employee["매장"] ||
+      employee["소속"] ||
+      employee.store ||
+      ""
+    );
+
+  const name =
+    String(
+      employee["이름"] ||
+      employee["직원명"] ||
+      employee["성명"] ||
+      employee.name ||
+      ""
+    );
+
+  const phone =
+    String(
+      employee["연락처"] ||
+      employee["휴대폰"] ||
+      employee["전화번호"] ||
+      employee.phone ||
+      ""
+    );
+
+  /*
+   * 연월차 원장 찾기
+   */
+  const leave =
+    ledgerRows.find(function(row) {
+
+      const rowName =
+        String(
+          row["이름"] ||
+          row["직원명"] ||
+          row["성명"] ||
+          row.name ||
+          ""
+        );
+
+      const rowPhone =
+        String(
+          row["연락처"] ||
+          row["휴대폰"] ||
+          row["전화번호"] ||
+          row.phone ||
+          ""
+        );
+
+      return (
+        rowName === name &&
+        (
+          !phone ||
+          !rowPhone ||
+          rowPhone.replace(/\D/g, "") ===
+          phone.replace(/\D/g, "")
+        )
+      );
+    }) || {};
+
+  /*
+   * 미휴무 원장 찾기
+   */
+  const comp =
+    compLedgerRows.find(function(row) {
+
+      const rowName =
+        String(
+          row["이름"] ||
+          row["직원명"] ||
+          row["성명"] ||
+          row.name ||
+          ""
+        );
+
+      const rowPhone =
+        String(
+          row["연락처"] ||
+          row["휴대폰"] ||
+          row["전화번호"] ||
+          row.phone ||
+          ""
+        );
+
+      return (
+        rowName === name &&
+        (
+          !phone ||
+          !rowPhone ||
+          rowPhone.replace(/\D/g, "") ===
+          phone.replace(/\D/g, "")
+        )
+      );
+    }) || {};
+
+  /*
+   * 연월차 값
+   */
+  const leaveBase =
+    Number(
+      leave["발생"] ||
+      leave["발생연월차"] ||
+      leave["발생일수"] ||
+      0
+    );
+
+  const leaveUsed =
+    Number(
+      leave["승인사용"] ||
+      leave["사용"] ||
+      leave["사용일수"] ||
+      0
+    );
+
+  const leavePending =
+    Number(
+      leave["승인대기"] ||
+      leave["대기"] ||
+      0
+    );
+
+  const leaveRemain =
+    Number(
+      leave["잔여"] ||
+      leave["잔여연월차"] ||
+      leave["현재잔여"] ||
+      0
+    );
+
+  /*
+   * 미휴무 값
+   */
+  const compEarned =
+    Number(
+      comp["승인발생"] ||
+      comp["승인 발생"] ||
+      comp["발생"] ||
+      0
+    );
+
+  const compUsed =
+    Number(
+      comp["승인사용"] ||
+      comp["승인 사용"] ||
+      comp["사용"] ||
+      0
+    );
+
+  const compPendingEarned =
+    Number(
+      comp["발생승인대기"] ||
+      comp["발생 승인대기"] ||
+      0
+    );
+
+  const compPendingUsed =
+    Number(
+      comp["사용승인대기"] ||
+      comp["사용 승인대기"] ||
+      0
+    );
+
+  const compRemain =
+    Number(
+      comp["잔여미휴무"] ||
+      comp["잔여 미휴무"] ||
+      comp["잔여"] ||
+      0
+    );
+
+  box.style.display = "block";
+
+  box.innerHTML = `
+    <div style="
+      font-size:20px;
+      font-weight:900;
+      margin-bottom:6px;
+      color:#172033;
+    ">
+      ${escapeHtml(name)}
+    </div>
+
+    <div style="
+      color:#6f7785;
+      margin-bottom:18px;
+    ">
+      ${escapeHtml(store)}
+      ·
+      ${escapeHtml(formatEmployeePhone(phone))}
+    </div>
+
+    <div style="
+      display:grid;
+      grid-template-columns:
+        repeat(auto-fit,minmax(280px,1fr));
+      gap:14px;
+    ">
+
+      <!-- 연월차 -->
+      <div style="
+        padding:18px;
+        background:white;
+        border:1px solid #dce3eb;
+        border-radius:15px;
+      ">
+
+        <div style="
+          font-weight:900;
+          font-size:16px;
+          margin-bottom:14px;
+          color:#2f5f9e;
+        ">
+          연월차 현황
+        </div>
+
+        <div style="line-height:2;">
+          발생 연월차
+          <strong>${leaveBase}일</strong>
+          <br>
+
+          승인 사용
+          <strong>${leaveUsed}일</strong>
+          <br>
+
+          승인 대기
+          <strong>${leavePending}일</strong>
+          <br>
+
+          <span style="
+            font-size:18px;
+            color:#178b59;
+          ">
+            현재 잔여
+            <strong>${leaveRemain}일</strong>
+          </span>
+        </div>
+
+      </div>
+
+      <!-- 미휴무 -->
+      <div style="
+        padding:18px;
+        background:white;
+        border:1px solid #dce3eb;
+        border-radius:15px;
+      ">
+
+        <div style="
+          font-weight:900;
+          font-size:16px;
+          margin-bottom:14px;
+          color:#d88924;
+        ">
+          미휴무 현황
+        </div>
+
+        <div style="line-height:2;">
+          승인 발생
+          <strong>${compEarned}일</strong>
+          <br>
+
+          승인 사용
+          <strong>${compUsed}일</strong>
+          <br>
+
+          발생 승인대기
+          <strong>${compPendingEarned}일</strong>
+          <br>
+
+          사용 승인대기
+          <strong>${compPendingUsed}일</strong>
+          <br>
+
+          <span style="
+            font-size:18px;
+            color:#178b59;
+          ">
+            현재 잔여 미휴무
+            <strong>${compRemain}일</strong>
+          </span>
+        </div>
+
+      </div>
+
+    </div>
+  `;
+}
