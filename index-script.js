@@ -503,15 +503,48 @@ async function checkBalance() {
     }
 
     box.innerHTML =
-      "입사일: " + balance.hireDate + "<br>" +
-      "근속기간: " +
-      balance.workYears + "년 " +
-      balance.workMonths + "개월<br>" +
-      "발생 연월차: " + balance.base + "일<br>" +
-      "승인 사용: " + balance.used + "일<br>" +
-      "승인 대기: " + balance.pending + "일<br>" +
-      "<strong>현재 잔여: " +
-      balance.remain + "일</strong>";
+  "입사일: " + balance.hireDate + "<br>" +
+  "근속기간: " +
+  balance.workYears + "년 " +
+  balance.workMonths + "개월<br>" +
+  "발생 연월차: " + balance.base + "일<br>" +
+  "승인 사용: " + balance.used + "일<br>" +
+  "승인 대기: " + balance.pending + "일<br>" +
+  "<strong>현재 잔여: " +
+  balance.remain + "일</strong>" +
+
+  (
+    Number(balance.carryoverRemain || 0) > 0
+      ? `
+        <div style="
+          margin-top:14px;
+          padding:12px 14px;
+          border:1px solid #f0cf91;
+          border-radius:12px;
+          background:#fff8e8;
+          color:#8a5a16;
+          line-height:1.7;
+        ">
+          <strong>
+            ${balance.carryoverType || "전년도 미사용 연월차"}:
+            ${Number(balance.carryoverRemain || 0)}일
+          </strong>
+
+          ${
+            balance.carryoverExpireDate
+              ? `
+                <br>
+                <span style="font-size:13px;">
+                  표시기한:
+                  ${balance.carryoverExpireDate}
+                </span>
+              `
+              : ""
+          }
+        </div>
+      `
+      : ""
+  );
 
   } catch (error) {
     box.innerHTML =

@@ -2383,13 +2383,67 @@ async function renderEmployeeBalanceSummary() {
           <br><br>
 
           <div style="
-            font-size:19px;
-            color:#178b59;
-            font-weight:900;
-          ">
-            현재 잔여
-            ${Number(leave.remain || 0)}일
-          </div>
+  font-size:19px;
+  color:#178b59;
+  font-weight:900;
+">
+  현재 잔여
+  ${Number(leave.remain || 0)}일
+</div>
+
+${
+  Number(leave.carryoverRemain || 0) > 0
+    ? `
+      <div style="
+        margin-top:18px;
+        padding:14px 16px;
+        border:1px solid #f0cf91;
+        border-radius:14px;
+        background:#fff8e8;
+        color:#8a5a16;
+        line-height:1.8;
+      ">
+
+        <div style="
+          font-weight:900;
+          font-size:16px;
+          margin-bottom:4px;
+        ">
+          ${escapeHtml(
+            leave.carryoverType ||
+            "전년도 미사용 연월차"
+          )}
+        </div>
+
+        <div>
+          미사용 잔여
+          <strong>
+            ${Number(
+              leave.carryoverRemain || 0
+            )}일
+          </strong>
+        </div>
+
+        ${
+          leave.carryoverExpireDate
+            ? `
+              <div style="
+                font-size:13px;
+                color:#80663c;
+              ">
+                표시기한:
+                ${escapeHtml(
+                  leave.carryoverExpireDate
+                )}
+              </div>
+            `
+            : ""
+        }
+
+      </div>
+    `
+    : ""
+}
 
         </div>
 
