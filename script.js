@@ -586,7 +586,46 @@ function getFilteredAdminRequests() {
     }
 
     return true;
-  });
+  })
+    .slice()
+    .sort(function (a, b) {
+      const requestDateA = getRequestValue(a, [
+        "신청일시",
+        "신청일",
+        "등록일시",
+        "createdAt"
+      ]);
+
+      const requestDateB = getRequestValue(b, [
+        "신청일시",
+        "신청일",
+        "등록일시",
+        "createdAt"
+      ]);
+
+      const requestDiff =
+        getDateTimeNumber(requestDateB) -
+        getDateTimeNumber(requestDateA);
+
+      if (requestDiff !== 0) return requestDiff;
+
+      const leaveStartA = getRequestValue(a, [
+        "시작일",
+        "사용시작일",
+        "startDate"
+      ]);
+
+      const leaveStartB = getRequestValue(b, [
+        "시작일",
+        "사용시작일",
+        "startDate"
+      ]);
+
+      return (
+        getDateTimeNumber(leaveStartB) -
+        getDateTimeNumber(leaveStartA)
+      );
+    });
 }
 
 
