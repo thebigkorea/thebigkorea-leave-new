@@ -239,7 +239,7 @@
     .btn-small { min-height:34px; padding:0 12px; font-size:13px; border-radius:9px; }
 
     .table-wrap {
-      overflow:auto;
+      overflow:visible;
       border:1px solid var(--line);
       border-radius:15px;
     }
@@ -260,8 +260,8 @@
 
     th {
       position:sticky;
-      top:0;
-      z-index:3;
+      top:82px;
+      z-index:12;
       color:#fff;
       font-size:13px;
       background:#4b2920;
@@ -368,6 +368,7 @@
     @media (max-width:900px) {
       .dashboard-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
       .tabs { grid-template-columns:repeat(3,1fr); position:static; }
+      th { top:0; }
       .toolbar,.toolbar.comp-toolbar { grid-template-columns:repeat(2,1fr); }
       .hero { display:block; }
       .hero-actions { margin-top:20px; }
@@ -1337,6 +1338,6 @@ tbody tr:hover td {
   </div>
 </div>
 
-<script src="script.js?v=20260814-comp5"></script>
+<script src="script.js?v=20260814-comp6"></script>
 </body>
 </html>

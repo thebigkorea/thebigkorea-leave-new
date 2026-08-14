@@ -827,7 +827,47 @@ function updateLeaveDashboard() {
 
   if (!body) return;
 
-  const recent = adminRequests.slice(0, 8);
+  const recent = adminRequests
+    .slice()
+    .sort(function (a, b) {
+      const requestDateA = getRequestValue(a, [
+        "신청일시",
+        "신청일",
+        "등록일시",
+        "createdAt"
+      ]);
+
+      const requestDateB = getRequestValue(b, [
+        "신청일시",
+        "신청일",
+        "등록일시",
+        "createdAt"
+      ]);
+
+      const requestDiff =
+        getDateTimeNumber(requestDateB) -
+        getDateTimeNumber(requestDateA);
+
+      if (requestDiff !== 0) return requestDiff;
+
+      const startDateA = getRequestValue(a, [
+        "시작일",
+        "사용시작일",
+        "startDate"
+      ]);
+
+      const startDateB = getRequestValue(b, [
+        "시작일",
+        "사용시작일",
+        "startDate"
+      ]);
+
+      return (
+        getDateTimeNumber(startDateB) -
+        getDateTimeNumber(startDateA)
+      );
+    })
+    .slice(0, 8);
 
   if (!recent.length) {
     body.innerHTML = `
