@@ -70,6 +70,36 @@
         selectedButton.classList.add("active");
       }
     }
+
+    /* 내역 탭의 검색값을 기존 조회 기능에 연결합니다. */
+    function loadMyRequestsFromHistory_() {
+      const historyName = document.getElementById("historyName");
+      const historyPhone = document.getElementById("historyPhone");
+      const applyName = document.getElementById("name");
+      const applyPhone = document.getElementById("phone");
+
+      const nameValue = historyName ? historyName.value.trim() : "";
+      const phoneValue = historyPhone
+        ? historyPhone.value.replace(/[^0-9]/g, "")
+        : "";
+
+      if (!nameValue) {
+        alert("이름을 입력하세요.");
+        if (historyName) historyName.focus();
+        return;
+      }
+
+      if (phoneValue.length < 10) {
+        alert("연락처를 정확히 입력하세요.");
+        if (historyPhone) historyPhone.focus();
+        return;
+      }
+
+      if (applyName) applyName.value = nameValue;
+      if (applyPhone) applyPhone.value = phoneValue;
+
+      loadMyRequests();
+    }
   </script>
 </head>
 
@@ -429,13 +459,32 @@
       <h2>내 연월차 신청내역</h2>
 
       <p class="notice">
-        연월차 신청 탭에 이름과 연락처를
-        입력한 뒤 조회하세요.
+        본인의 이름과 연락처를 입력하여 신청내역을 조회하세요.
       </p>
+
+      <div class="field">
+        <label for="historyName">이름</label>
+        <input
+          id="historyName"
+          type="text"
+          autocomplete="name"
+          placeholder="이름을 입력하세요"/>
+      </div>
+
+      <div class="field">
+        <label for="historyPhone">연락처</label>
+        <input
+          id="historyPhone"
+          type="tel"
+          inputmode="numeric"
+          autocomplete="tel"
+          placeholder="010-0000-0000"
+          onkeydown="if(event.key === 'Enter') loadMyRequestsFromHistory_()"/>
+      </div>
 
       <button
         class="secondary"
-        onclick="loadMyRequests()">
+        onclick="loadMyRequestsFromHistory_()">
         조회하기
       </button>
 
