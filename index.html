@@ -73,18 +73,27 @@
 
     /* 내역 탭의 검색값을 기존 조회 기능에 연결합니다. */
     function loadMyRequestsFromHistory_() {
+      const historyStore = document.getElementById("historyStore");
       const historyName = document.getElementById("historyName");
       const historyPhone = document.getElementById("historyPhone");
       const historyPin = document.getElementById("historyPin");
       const applyName = document.getElementById("name");
       const applyPhone = document.getElementById("phone");
       const applyPin = document.getElementById("pin");
+      const applyStore = document.getElementById("store");
 
+      const storeValue = historyStore ? historyStore.value : "";
       const nameValue = historyName ? historyName.value.trim() : "";
       const phoneValue = historyPhone
         ? historyPhone.value.replace(/[^0-9]/g, "")
         : "";
       const pinValue = historyPin ? historyPin.value.trim() : "";
+
+      if (!storeValue) {
+        alert("근무지를 선택하세요.");
+        if (historyStore) historyStore.focus();
+        return;
+      }
 
       if (!nameValue) {
         alert("이름을 입력하세요.");
@@ -104,6 +113,7 @@
         return;
       }
 
+      if (applyStore) applyStore.value = storeValue;
       if (applyName) applyName.value = nameValue;
       if (applyPhone) applyPhone.value = phoneValue;
       if (applyPin) applyPin.value = pinValue;
@@ -469,8 +479,19 @@
       <h2>내 연월차 신청내역</h2>
 
       <p class="notice">
-        본인의 이름과 연락처를 입력하여 신청내역을 조회하세요.
+        근무지, 이름, 연락처와 PIN을 입력하여 본인의 신청내역을 조회하세요.
       </p>
+
+      <div class="field">
+        <label for="historyStore">근무지</label>
+        <select id="historyStore">
+          <option value="">근무지를 선택하세요</option>
+          <option value="더큰코리아 본사">더큰코리아 본사</option>
+          <option value="평촌 소바공방">평촌 소바공방</option>
+          <option value="압구정 길채정">압구정 길채정</option>
+          <option value="효종갱 파주점">효종갱 파주점</option>
+        </select>
+      </div>
 
       <div class="field">
         <label for="historyName">이름</label>
