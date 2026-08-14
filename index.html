@@ -31,6 +31,20 @@
       display:block !important;
     }
 
+    /* 직원용 연월차 내역 탭이 기존 숨김 규칙에 가려지지 않도록 복구 */
+    html body.employee-apply-only #historyTab.hidden {
+      display:none !important;
+    }
+
+    html body.employee-apply-only #historyTab:not(.hidden) {
+      display:block !important;
+    }
+
+    /* 관리자 페이지는 admin.html에서만 접근하도록 직원 화면 링크 제거 */
+    html body.employee-apply-only .footer-link {
+      display:none !important;
+    }
+
     @media (max-width:800px) {
       html body.employee-apply-only #employeeApplyTabs {
         grid-template-columns:repeat(2,minmax(0,1fr)) !important;
