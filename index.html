@@ -37,6 +37,26 @@
       }
     }
   </style>
+
+  <script>
+    /* 탭 순서를 바꿔도 실제 선택한 버튼만 활성화합니다. */
+    function showEmployeeTab_(tabName, buttonId) {
+      showTab(tabName);
+
+      document
+        .querySelectorAll("#employeeApplyTabs .tab")
+        .forEach(function (button) {
+          button.classList.remove("active");
+        });
+
+      const selectedButton =
+        document.getElementById(buttonId);
+
+      if (selectedButton) {
+        selectedButton.classList.add("active");
+      }
+    }
+  </script>
 </head>
 
 <body class="employee-apply-only">
@@ -53,20 +73,23 @@
 
     <section id="employeeApplyTabs" class="tabs">
       <button
+        id="applyTabButton"
         class="tab active"
-        onclick="showTab('apply')">
+        onclick="showEmployeeTab_('apply','applyTabButton')">
         연월차 신청
       </button>
 
       <button
+        id="compTabButton"
         class="tab"
-        onclick="showTab('comp')">
+        onclick="showEmployeeTab_('comp','compTabButton')">
         미휴무 신청
       </button>
 
       <button
+        id="registerTabButton"
         class="tab"
-        onclick="showTab('register')">
+        onclick="showEmployeeTab_('register','registerTabButton')">
         직원등록
       </button>
 
@@ -74,13 +97,14 @@
         id="pinResetTabButton"
         class="tab pin-reset-tab-button"
         style="display:block !important; visibility:visible !important;"
-        onclick="showTab('pinReset')">
+        onclick="showEmployeeTab_('pinReset','pinResetTabButton')">
        PIN 등록·변경
       </button>
 
       <button
+        id="historyTabButton"
         class="tab"
-        onclick="showTab('history')">
+        onclick="showEmployeeTab_('history','historyTabButton')">
         연월차 내역
       </button>
 
