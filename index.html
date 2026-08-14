@@ -12,25 +12,27 @@
 
   <style>
     /* 직원용 화면에서도 PIN 등록·변경 탭을 항상 사용할 수 있게 복구 */
-    body.employee-apply-only .tabs {
+    html body.employee-apply-only #employeeApplyTabs {
       display:grid !important;
       grid-template-columns:repeat(5,minmax(0,1fr)) !important;
     }
 
-    body.employee-apply-only .pin-reset-tab-button {
+    html body.employee-apply-only #pinResetTabButton {
       display:block !important;
+      visibility:visible !important;
+      opacity:1 !important;
     }
 
-    body.employee-apply-only #pinResetTab.hidden {
+    html body.employee-apply-only #pinResetTab.hidden {
       display:none !important;
     }
 
-    body.employee-apply-only #pinResetTab:not(.hidden) {
+    html body.employee-apply-only #pinResetTab:not(.hidden) {
       display:block !important;
     }
 
     @media (max-width:800px) {
-      body.employee-apply-only .tabs {
+      html body.employee-apply-only #employeeApplyTabs {
         grid-template-columns:repeat(2,minmax(0,1fr)) !important;
       }
     }
@@ -49,7 +51,7 @@
       </p>
     </section>
 
-    <section class="tabs">
+    <section id="employeeApplyTabs" class="tabs">
       <button
         class="tab active"
         onclick="showTab('apply')">
@@ -69,7 +71,9 @@
       </button>
 
       <button
+        id="pinResetTabButton"
         class="tab pin-reset-tab-button"
+        style="display:block !important; visibility:visible !important;"
         onclick="showTab('pinReset')">
        PIN 등록·변경
       </button>
