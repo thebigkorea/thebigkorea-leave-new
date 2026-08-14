@@ -50,11 +50,31 @@ function formatRequestDate(value, includeTime) {
 
   if (!text) return "-";
 
-  if (includeTime) {
-    return text
-      .replace("T", " ")
-      .replace(/\.\d{3}Z$/, "")
-      .substring(0, 16);
+  const date = new Date(text);
+
+  if (!Number.isNaN(date.getTime())) {
+    if (includeTime) {
+      return formatKoreanDateTime(date);
+    }
+
+    const parts = new Intl.DateTimeFormat("ko-KR", {
+      timeZone: "Asia/Seoul",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit"
+    }).formatToParts(date);
+
+    const dateParts = {};
+
+    parts.forEach(function (part) {
+      dateParts[part.type] = part.value;
+    });
+
+    return (
+      dateParts.year + "-" +
+      dateParts.month + "-" +
+      dateParts.day
+    );
   }
 
   return text.substring(0, 10);
