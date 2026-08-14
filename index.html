@@ -75,13 +75,16 @@
     function loadMyRequestsFromHistory_() {
       const historyName = document.getElementById("historyName");
       const historyPhone = document.getElementById("historyPhone");
+      const historyPin = document.getElementById("historyPin");
       const applyName = document.getElementById("name");
       const applyPhone = document.getElementById("phone");
+      const applyPin = document.getElementById("pin");
 
       const nameValue = historyName ? historyName.value.trim() : "";
       const phoneValue = historyPhone
         ? historyPhone.value.replace(/[^0-9]/g, "")
         : "";
+      const pinValue = historyPin ? historyPin.value.trim() : "";
 
       if (!nameValue) {
         alert("이름을 입력하세요.");
@@ -95,8 +98,15 @@
         return;
       }
 
+      if (!pinValue) {
+        alert("PIN 번호를 입력하세요.");
+        if (historyPin) historyPin.focus();
+        return;
+      }
+
       if (applyName) applyName.value = nameValue;
       if (applyPhone) applyPhone.value = phoneValue;
+      if (applyPin) applyPin.value = pinValue;
 
       loadMyRequests();
     }
@@ -479,6 +489,18 @@
           inputmode="numeric"
           autocomplete="tel"
           placeholder="010-0000-0000"
+          />
+      </div>
+
+      <div class="field">
+        <label for="historyPin">PIN</label>
+        <input
+          id="historyPin"
+          type="password"
+          inputmode="numeric"
+          maxlength="8"
+          autocomplete="current-password"
+          placeholder="PIN 번호를 입력하세요"
           onkeydown="if(event.key === 'Enter') loadMyRequestsFromHistory_()"/>
       </div>
 
