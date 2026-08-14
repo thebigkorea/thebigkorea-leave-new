@@ -1301,11 +1301,21 @@ function renderCompRequests() {
           return false;
         }
 
-        if (
-          status !== "전체" &&
-          String(row["상태"]) !== status
+        if (status === "대기") {
+          if (String(row["상태"]) !== "대기") {
+            return false;
+          }
+        } else if (status === "반려") {
+          if (String(row["상태"]) !== "반려") {
+            return false;
+          }
+        } else if (
+          status === "사용" ||
+          status === "발생"
         ) {
-          return false;
+          if (String(row["구분"]) !== status) {
+            return false;
+          }
         }
 
         return true;
