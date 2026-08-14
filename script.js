@@ -11,6 +11,7 @@ let employeeRows = [];
 let ledgerRows = [];
 let compLedgerRows = [];
 let selectedRequest = null;
+let employeeBalanceRequestId = 0;
 
 
 function $(id) {
@@ -1849,16 +1850,34 @@ function renderEmployees() {
               isRetired
                 ? "-"
                 : `
-                  <button
-                    class="btn btn-red btn-small"
-                    onclick="retireEmployee(
-                      '${encodeURIComponent(store)}',
-                      '${encodeURIComponent(name)}',
-                      '${encodeURIComponent(phone)}'
-                    )"
-                  >
-                    퇴사처리
-                  </button>
+                  <div style="
+                    display:flex;
+                    justify-content:center;
+                    flex-wrap:wrap;
+                    gap:6px;
+                  ">
+                    <button
+                      class="btn btn-secondary btn-small"
+                      onclick="resetEmployeePin(
+                        '${encodeURIComponent(store)}',
+                        '${encodeURIComponent(name)}',
+                        '${encodeURIComponent(phone)}'
+                      )"
+                    >
+                      PIN 초기화
+                    </button>
+
+                    <button
+                      class="btn btn-red btn-small"
+                      onclick="retireEmployee(
+                        '${encodeURIComponent(store)}',
+                        '${encodeURIComponent(name)}',
+                        '${encodeURIComponent(phone)}'
+                      )"
+                    >
+                      퇴사처리
+                    </button>
+                  </div>
                 `
             }
           </td>
@@ -2405,6 +2424,9 @@ async function renderEmployeeBalanceSummary() {
       .trim()
       .toLowerCase();
 
+  const requestId =
+    ++employeeBalanceRequestId;
+
   if (!keyword) {
     box.style.display = "none";
     box.innerHTML = "";
@@ -2521,6 +2543,19 @@ async function renderEmployeeBalanceSummary() {
 
     const leaveResult = results[0];
     const compResult = results[1];
+
+    /* 검색어가 바뀐 뒤 도착한 이전 직원 응답은 표시하지 않습니다. */
+    const currentKeyword =
+      String(input.value || "")
+        .trim()
+        .toLowerCase();
+
+    if (
+      requestId !== employeeBalanceRequestId ||
+      currentKeyword !== keyword
+    ) {
+      return;
+    }
 
     if (!leaveResult.ok) {
       throw new Error(
@@ -2715,6 +2750,10 @@ ${
     `;
 
   } catch (error) {
+
+    if (requestId !== employeeBalanceRequestId) {
+      return;
+    }
 
     box.innerHTML = `
       <div style="
