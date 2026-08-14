@@ -101,6 +101,44 @@ function getDateTimeNumber(value) {
 }
 
 
+/* 사용 시작일과 사용일수로 마지막 사용일을 계산합니다. */
+function getCompUsePeriod(startValue, daysValue) {
+  const startText = formatRequestDate(startValue, false);
+  const days = Number(daysValue || 0);
+
+  if (startText === "-" || !days || days <= 1) {
+    return startText;
+  }
+
+  const parts = startText.split("-").map(Number);
+
+  if (
+    parts.length !== 3 ||
+    !parts[0] ||
+    !parts[1] ||
+    !parts[2]
+  ) {
+    return startText;
+  }
+
+  const endDate = new Date(
+    Date.UTC(parts[0], parts[1] - 1, parts[2])
+  );
+
+  endDate.setUTCDate(
+    endDate.getUTCDate() + Math.ceil(days) - 1
+  );
+
+  const endText = [
+    endDate.getUTCFullYear(),
+    String(endDate.getUTCMonth() + 1).padStart(2, "0"),
+    String(endDate.getUTCDate()).padStart(2, "0")
+  ].join("-");
+
+  return startText + " ~ " + endText;
+}
+
+
 function setResult(id, message, success) {
   const box = $(id);
 
@@ -1311,6 +1349,14 @@ function renderCompRequests() {
         const dateLabel =
           isCreate ? "발생일" : "사용일";
 
+        const displayDateText =
+          isCreate
+            ? formatRequestDate(dateText, false)
+            : getCompUsePeriod(
+                dateText,
+                row["일수"]
+              );
+
         const isPending =
           String(row["상태"]) === "대기";
 
@@ -1347,9 +1393,7 @@ function renderCompRequests() {
             <td>
               <strong>${dateLabel}</strong>
               <br>
-              ${escapeHtml(
-                formatRequestDate(dateText, false)
-              )}
+              ${escapeHtml(displayDateText)}
             </td>
 
             <td>
