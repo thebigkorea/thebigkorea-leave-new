@@ -61,7 +61,7 @@ function formatRequestDate(value, includeTime) {
 }
 
 
-/* Apps Script�� ISO �좎쭨瑜� �쒓뎅 �쒓컙�쇰줈 �쒖떆�⑸땲��. */
+/* Apps Script의 ISO 날짜를 한국 시간으로 표시합니다. */
 function formatKoreanDateTime(value) {
   const text = String(value || "").trim();
 
@@ -89,9 +89,9 @@ function formatKoreanDateTime(value) {
 
 
 function getCompDateValue(row) {
-  return String(row && row["援щ텇"]) === "諛쒖깮"
-    ? row["諛쒖깮��"]
-    : row["�ъ슜��"];
+  return String(row && row["구분"]) === "발생"
+    ? row["발생일"]
+    : row["사용일"];
 }
 
 
@@ -143,7 +143,7 @@ function jsonp(params) {
       script.remove();
 
       reject(
-        new Error("�쒕쾭 �곌껐�� �ㅽ뙣�덉뒿�덈떎.")
+        new Error("서버 연결에 실패했습니다.")
       );
     };
 
@@ -165,27 +165,27 @@ async function postNoCors(data) {
 
 
 function getStatusBadge(status) {
-  const value = String(status || "��湲�");
+  const value = String(status || "대기");
 
-  if (value === "�뱀씤") {
+  if (value === "승인") {
     return `
       <span class="badge badge-approved">
-        �뱀씤
+        승인
       </span>
     `;
   }
 
-  if (value === "諛섎젮") {
+  if (value === "반려") {
     return `
       <span class="badge badge-rejected">
-        諛섎젮
+        반려
       </span>
     `;
   }
 
   return `
     <span class="badge badge-wait">
-      ��湲�
+      대기
     </span>
   `;
 }
@@ -235,7 +235,7 @@ async function adminLogin() {
   if (!password) {
     setResult(
       "adminLoginResult",
-      "愿�由ъ옄 鍮꾨�踰덊샇瑜� �낅젰�섏꽭��.",
+      "관리자 비밀번호를 입력하세요.",
       false
     );
 
@@ -250,7 +250,7 @@ async function adminLogin() {
 
     if (!result.ok) {
       throw new Error(
-        result.message || "濡쒓렇�� �ㅽ뙣"
+        result.message || "로그인 실패"
       );
     }
 
@@ -278,7 +278,7 @@ async function adminLogin() {
   } catch (error) {
     setResult(
       "adminLoginResult",
-      error.message || "愿�由ъ옄 濡쒓렇�� �ㅽ뙣",
+      error.message || "관리자 로그인 실패",
       false
     );
   }
@@ -376,7 +376,7 @@ async function loadAllAdminData() {
 
 
 /* =========================
-   �곗썡李� �뱀씤愿�由�
+   연월차 승인관리
 ========================= */
 
 async function loadAdminRequests() {
@@ -389,7 +389,7 @@ async function loadAdminRequests() {
     body.innerHTML = `
       <tr>
         <td colspan="9" class="empty">
-          �좎껌�댁뿭�� 遺덈윭�ㅻ뒗 以묒엯�덈떎.
+          신청내역을 불러오는 중입니다.
         </td>
       </tr>
     `;
@@ -404,7 +404,7 @@ async function loadAdminRequests() {
 
     if (!result.ok) {
       throw new Error(
-        result.message || "議고쉶 �ㅽ뙣"
+        result.message || "조회 실패"
       );
     }
 
@@ -441,7 +441,7 @@ function getFilteredAdminRequests() {
   const status =
     $("requestStatus")
       ? $("requestStatus").value
-      : "��湲�";
+      : "대기";
 
   const startDate =
     $("requestStartDate")
@@ -456,54 +456,54 @@ function getFilteredAdminRequests() {
   return adminRequests.filter(function (row) {
     const id = getRequestValue(row, [
       "ID",
-      "�좎껌踰덊샇",
+      "신청번호",
       "id"
     ]);
 
     const store = getRequestValue(row, [
-      "留ㅼ옣",
-      "�뚯냽",
+      "매장",
+      "소속",
       "store"
     ]);
 
     const name = getRequestValue(row, [
-      "�대쫫",
-      "吏곸썝紐�",
-      "�깅챸",
+      "이름",
+      "직원명",
+      "성명",
       "name"
     ]);
 
     const phone = getRequestValue(row, [
-      "�곕씫泥�",
-      "�대���",
-      "�꾪솕踰덊샇",
+      "연락처",
+      "휴대폰",
+      "전화번호",
       "phone"
     ]);
 
     const leaveType = getRequestValue(row, [
-      "�닿�醫낅쪟",
-      "�닿�援щ텇",
-      "�곗감援щ텇",
+      "휴가종류",
+      "휴가구분",
+      "연차구분",
       "leaveType"
     ]);
 
     const reason = getRequestValue(row, [
-      "�ъ쑀",
-      "�좎껌�ъ쑀",
+      "사유",
+      "신청사유",
       "reason"
     ]);
 
     const rowStatus = getRequestValue(row, [
-      "�곹깭",
-      "泥섎━�곹깭",
+      "상태",
+      "처리상태",
       "status"
     ]);
 
     const requestDate = formatRequestDate(
       getRequestValue(row, [
-        "�좎껌�쇱떆",
-        "�좎껌��",
-        "�깅줉�쇱떆",
+        "신청일시",
+        "신청일",
+        "등록일시",
         "createdAt"
       ]),
       false
@@ -525,7 +525,7 @@ function getFilteredAdminRequests() {
     }
 
     if (
-      status !== "�꾩껜" &&
+      status !== "전체" &&
       String(rowStatus) !== status
     ) {
       return false;
@@ -563,7 +563,7 @@ function renderAdminRequests() {
     body.innerHTML = `
       <tr>
         <td colspan="9" class="empty">
-          議곌굔�� 留욌뒗 �좎껌�댁뿭�� �놁뒿�덈떎.
+          조건에 맞는 신청내역이 없습니다.
         </td>
       </tr>
     `;
@@ -572,73 +572,73 @@ function renderAdminRequests() {
 
   body.innerHTML = rows.map(function (row) {
     const id = getRequestValue(row, [
-  "�좎껌ID",
+  "신청ID",
   "ID",
-  "�좎껌踰덊샇",
+  "신청번호",
   "id"
 ]);
 
     const requestDate = getRequestValue(row, [
-      "�좎껌�쇱떆",
-      "�좎껌��",
-      "�깅줉�쇱떆",
+      "신청일시",
+      "신청일",
+      "등록일시",
       "createdAt"
     ]);
 
     const store = getRequestValue(row, [
-      "留ㅼ옣",
-      "�뚯냽",
+      "매장",
+      "소속",
       "store"
     ]);
 
     const name = getRequestValue(row, [
-      "�대쫫",
-      "吏곸썝紐�",
-      "�깅챸",
+      "이름",
+      "직원명",
+      "성명",
       "name"
     ]);
 
     const phone = getRequestValue(row, [
-      "�곕씫泥�",
-      "�대���",
-      "�꾪솕踰덊샇",
+      "연락처",
+      "휴대폰",
+      "전화번호",
       "phone"
     ]);
 
     const leaveType = getRequestValue(row, [
-      "�닿�醫낅쪟",
-      "�닿�援щ텇",
-      "�곗감援щ텇",
+      "휴가종류",
+      "휴가구분",
+      "연차구분",
       "leaveType"
     ]);
 
     const startDate = getRequestValue(row, [
-      "�쒖옉��",
-      "�ъ슜�쒖옉��",
+      "시작일",
+      "사용시작일",
       "startDate"
     ]);
 
     const endDate = getRequestValue(row, [
-      "醫낅즺��",
-      "�ъ슜醫낅즺��",
+      "종료일",
+      "사용종료일",
       "endDate"
     ]);
 
     const days = getRequestValue(row, [
-      "�ъ슜�쇱닔",
-      "�쇱닔",
+      "사용일수",
+      "일수",
       "days"
     ]);
 
     const reason = getRequestValue(row, [
-      "�ъ쑀",
-      "�좎껌�ъ쑀",
+      "사유",
+      "신청사유",
       "reason"
     ]);
 
     const status = getRequestValue(row, [
-      "�곹깭",
-      "泥섎━�곹깭",
+      "상태",
+      "처리상태",
       "status"
     ]);
 
@@ -687,7 +687,7 @@ function renderAdminRequests() {
             class="btn btn-secondary btn-small"
             onclick="openRequestDetail('${encodeURIComponent(id)}')"
           >
-            �곸꽭
+            상세
           </button>
         </td>
       </tr>
@@ -698,7 +698,7 @@ function renderAdminRequests() {
 
 function resetRequestSearch() {
   $("requestKeyword").value = "";
-  $("requestStatus").value = "��湲�";
+  $("requestStatus").value = "대기";
   $("requestStartDate").value = "";
   $("requestEndDate").value = "";
 
@@ -710,8 +710,8 @@ function updateLeaveDashboard() {
   const getStatus = function (row) {
     return String(
       getRequestValue(row, [
-        "�곹깭",
-        "泥섎━�곹깭",
+        "상태",
+        "처리상태",
         "status"
       ])
     );
@@ -720,15 +720,15 @@ function updateLeaveDashboard() {
   const total = adminRequests.length;
 
   const pending = adminRequests.filter(function (row) {
-    return getStatus(row) === "��湲�";
+    return getStatus(row) === "대기";
   }).length;
 
   const approved = adminRequests.filter(function (row) {
-    return getStatus(row) === "�뱀씤";
+    return getStatus(row) === "승인";
   }).length;
 
   const rejected = adminRequests.filter(function (row) {
-    return getStatus(row) === "諛섎젮";
+    return getStatus(row) === "반려";
   }).length;
 
   [
@@ -756,7 +756,7 @@ function updateLeaveDashboard() {
     body.innerHTML = `
       <tr>
         <td colspan="7" class="empty">
-          �좎껌�댁뿭�� �놁뒿�덈떎.
+          신청내역이 없습니다.
         </td>
       </tr>
     `;
@@ -765,53 +765,53 @@ function updateLeaveDashboard() {
 
   body.innerHTML = recent.map(function (row) {
     const requestDate = getRequestValue(row, [
-      "�좎껌�쇱떆",
-      "�좎껌��",
-      "�깅줉�쇱떆",
+      "신청일시",
+      "신청일",
+      "등록일시",
       "createdAt"
     ]);
 
     const store = getRequestValue(row, [
-      "留ㅼ옣",
-      "�뚯냽",
+      "매장",
+      "소속",
       "store"
     ]);
 
     const name = getRequestValue(row, [
-      "�대쫫",
-      "吏곸썝紐�",
-      "�깅챸",
+      "이름",
+      "직원명",
+      "성명",
       "name"
     ]);
 
     const leaveType = getRequestValue(row, [
-      "�닿�醫낅쪟",
-      "�닿�援щ텇",
-      "�곗감援щ텇",
+      "휴가종류",
+      "휴가구분",
+      "연차구분",
       "leaveType"
     ]);
 
     const startDate = getRequestValue(row, [
-      "�쒖옉��",
-      "�ъ슜�쒖옉��",
+      "시작일",
+      "사용시작일",
       "startDate"
     ]);
 
     const endDate = getRequestValue(row, [
-      "醫낅즺��",
-      "�ъ슜醫낅즺��",
+      "종료일",
+      "사용종료일",
       "endDate"
     ]);
 
     const days = getRequestValue(row, [
-      "�ъ슜�쇱닔",
-      "�쇱닔",
+      "사용일수",
+      "일수",
       "days"
     ]);
 
     const status = getRequestValue(row, [
-      "�곹깭",
-      "泥섎━�곹깭",
+      "상태",
+      "처리상태",
       "status"
     ]);
 
@@ -862,9 +862,9 @@ function openRequestDetail(encodedId) {
 
       const requestId =
         getRequestValue(row, [
-           "�좎껌ID",
+           "신청ID",
           "ID",
-          "�좎껌踰덊샇",
+          "신청번호",
           "id"
         ]);
 
@@ -877,7 +877,7 @@ function openRequestDetail(encodedId) {
 
   if (!selectedRequest) {
     alert(
-      "�좎껌�뺣낫瑜� 李얠쓣 �� �놁뒿�덈떎."
+      "신청정보를 찾을 수 없습니다."
     );
 
     return;
@@ -887,132 +887,132 @@ function openRequestDetail(encodedId) {
     selectedRequest;
 
   const requestId = getRequestValue(row, [
-  "�좎껌ID",
+  "신청ID",
   "ID",
-  "�좎껌踰덊샇",
+  "신청번호",
   "id"
 ]);
 
 const requestDate = getRequestValue(row, [
-  "�좎껌��",
-  "�좎껌�쇱떆",
-  "�깅줉�쇱떆",
+  "신청일",
+  "신청일시",
+  "등록일시",
   "createdAt"
 ]);
 
 const store = getRequestValue(row, [
-  "�뚯냽",
-  "留ㅼ옣",
+  "소속",
+  "매장",
   "store"
 ]);
 
 const name = getRequestValue(row, [
-  "吏곸썝紐�",
-  "�대쫫",
-  "�깅챸",
+  "직원명",
+  "이름",
+  "성명",
   "name"
 ]);
 
 const phone = getRequestValue(row, [
-  "�대���",
-  "�곕씫泥�",
-  "�꾪솕踰덊샇",
+  "휴대폰",
+  "연락처",
+  "전화번호",
   "phone"
 ]);
 
 const leaveType = getRequestValue(row, [
-  "�닿�援щ텇",
-  "�닿�醫낅쪟",
-  "�곗감援щ텇",
+  "휴가구분",
+  "휴가종류",
+  "연차구분",
   "leaveType"
 ]);
 
 const startDate = getRequestValue(row, [
-  "�쒖옉��",
-  "�ъ슜�쒖옉��",
+  "시작일",
+  "사용시작일",
   "startDate"
 ]);
 
 const endDate = getRequestValue(row, [
-  "醫낅즺��",
-  "�ъ슜醫낅즺��",
+  "종료일",
+  "사용종료일",
   "endDate"
 ]);
 
 const days = getRequestValue(row, [
-  "�쇱닔",
-  "�ъ슜�쇱닔",
+  "일수",
+  "사용일수",
   "days"
 ]);
 
 const reason = getRequestValue(row, [
-  "�ъ쑀",
-  "�좎껌�ъ쑀",
+  "사유",
+  "신청사유",
   "reason"
 ]);
 
 const status = getRequestValue(row, [
-  "�곹깭",
-  "泥섎━�곹깭",
+  "상태",
+  "처리상태",
   "status"
 ]);
 
 const adminMemo = getRequestValue(row, [
-  "愿�由ъ옄硫붾え",
+  "관리자메모",
   "adminMemo"
 ]);
 
 const processedAt = getRequestValue(row, [
-  "泥섎━��",
-  "泥섎━�쇱떆",
+  "처리일",
+  "처리일시",
   "processedAt"
 ]);
 
 $("detailContent").innerHTML = `
-  <dt>�좎껌踰덊샇</dt>
+  <dt>신청번호</dt>
   <dd>${escapeHtml(requestId || "-")}</dd>
 
-  <dt>�좎껌��</dt>
+  <dt>신청일</dt>
   <dd>${escapeHtml(requestDate || "-")}</dd>
 
-  <dt>留ㅼ옣</dt>
+  <dt>매장</dt>
   <dd>${escapeHtml(store || "-")}</dd>
 
-  <dt>吏곸썝</dt>
+  <dt>직원</dt>
   <dd>
     ${escapeHtml(name || "-")}
     /
     ${escapeHtml(formatEmployeePhone(phone))}
   </dd>
 
-  <dt>�닿�醫낅쪟</dt>
+  <dt>휴가종류</dt>
   <dd>${escapeHtml(leaveType || "-")}</dd>
 
-  <dt>湲곌컙</dt>
+  <dt>기간</dt>
   <dd>
     ${escapeHtml(startDate || "-")}
     ~
     ${escapeHtml(endDate || "-")}
   </dd>
 
-  <dt>�ъ슜�쇱닔</dt>
-  <dd>${escapeHtml(days || "-")}��</dd>
+  <dt>사용일수</dt>
+  <dd>${escapeHtml(days || "-")}일</dd>
 
-  <dt>�ъ쑀</dt>
+  <dt>사유</dt>
   <dd>${escapeHtml(reason || "-")}</dd>
 
-  <dt>�곹깭</dt>
+  <dt>상태</dt>
   <dd>${getStatusBadge(status)}</dd>
 
-  <dt>愿�由ъ옄硫붾え</dt>
+  <dt>관리자메모</dt>
   <dd>${escapeHtml(adminMemo || "-")}</dd>
 
-  <dt>泥섎━�쇱떆</dt>
+  <dt>처리일시</dt>
   <dd>${escapeHtml(processedAt || "-")}</dd>
 `;
 
   const isPending =
-  String(status) === "��湲�";
+  String(status) === "대기";
 
   $("detailAdminActions").innerHTML =
     (
@@ -1022,14 +1022,14 @@ $("detailContent").innerHTML = `
             class="btn btn-green"
             onclick="approveRequest()"
           >
-            �뱀씤
+            승인
           </button>
 
           <button
             class="btn btn-red"
             onclick="rejectRequest()"
           >
-            諛섎젮
+            반려
           </button>
         `
         : ""
@@ -1039,7 +1039,7 @@ $("detailContent").innerHTML = `
         class="btn btn-secondary"
         onclick="closeDetailModal()"
       >
-        �リ린
+        닫기
       </button>
     `;
 
@@ -1072,7 +1072,7 @@ async function approveRequest() {
 
   if (
     !confirm(
-      "�� �좎껌�� �뱀씤�섏떆寃좎뒿�덇퉴?"
+      "이 신청을 승인하시겠습니까?"
     )
   ) {
     return;
@@ -1080,7 +1080,7 @@ async function approveRequest() {
 
   await updateRequestStatus(
     "approve",
-    "愿�由ъ옄 �뱀씤"
+    "관리자 승인"
   );
 }
 
@@ -1090,14 +1090,14 @@ async function rejectRequest() {
 
   const memo =
     prompt(
-      "諛섎젮 �ъ쑀瑜� �낅젰�섏꽭��.",
-      selectedRequest["愿�由ъ옄硫붾え"] || ""
+      "반려 사유를 입력하세요.",
+      selectedRequest["관리자메모"] || ""
     );
 
   if (memo === null) return;
 
   if (!memo.trim()) {
-    alert("諛섎젮 �ъ쑀瑜� �낅젰�섏꽭��.");
+    alert("반려 사유를 입력하세요.");
     return;
   }
 
@@ -1116,9 +1116,9 @@ async function updateRequestStatus(
     await postNoCors({
       action: action,
       id: getRequestValue(selectedRequest, [
-  "�좎껌ID",
+  "신청ID",
   "ID",
-  "�좎껌踰덊샇",
+  "신청번호",
   "id"
 ]),
       password: adminPassword,
@@ -1137,7 +1137,7 @@ async function updateRequestStatus(
 
   } catch (error) {
     alert(
-      "泥섎━ 以� �ㅻ쪟媛� 諛쒖깮�덉뒿�덈떎."
+      "처리 중 오류가 발생했습니다."
     );
   }
 }
@@ -1153,13 +1153,13 @@ async function refreshSummary() {
 
     if (!result.ok) {
       throw new Error(
-        result.message || "媛깆떊 �ㅽ뙣"
+        result.message || "갱신 실패"
       );
     }
 
     alert(
       result.message ||
-      "�곗썡李� �먯옣�� 媛깆떊�덉뒿�덈떎."
+      "연월차 원장을 갱신했습니다."
     );
 
     loadLedger();
@@ -1171,7 +1171,7 @@ async function refreshSummary() {
 
 
 /* =========================
-   誘명쑕臾� �뱀씤愿�由�
+   미휴무 승인관리
 ========================= */
 
 async function loadCompRequests() {
@@ -1184,7 +1184,7 @@ async function loadCompRequests() {
     body.innerHTML = `
       <tr>
         <td colspan="9" class="empty">
-          誘명쑕臾� �좎껌�댁뿭�� 遺덈윭�ㅻ뒗 以묒엯�덈떎.
+          미휴무 신청내역을 불러오는 중입니다.
         </td>
       </tr>
     `;
@@ -1199,7 +1199,7 @@ async function loadCompRequests() {
 
     if (!result.ok) {
       throw new Error(
-        result.message || "議고쉶 �ㅽ뙣"
+        result.message || "조회 실패"
       );
     }
 
@@ -1241,17 +1241,17 @@ function renderCompRequests() {
   const status =
     $("compStatus")
       ? $("compStatus").value
-      : "��湲�";
+      : "대기";
 
   const rows =
     compRequests.filter(
       function (row) {
         const text = [
-          row["留ㅼ옣"],
-          row["�대쫫"],
-          row["�곕씫泥�"],
-          row["援щ텇"],
-          row["�ъ쑀"]
+          row["매장"],
+          row["이름"],
+          row["연락처"],
+          row["구분"],
+          row["사유"]
         ]
           .join(" ")
           .toLowerCase();
@@ -1264,8 +1264,8 @@ function renderCompRequests() {
         }
 
         if (
-          status !== "�꾩껜" &&
-          String(row["�곹깭"]) !== status
+          status !== "전체" &&
+          String(row["상태"]) !== status
         ) {
           return false;
         }
@@ -1282,8 +1282,8 @@ function renderCompRequests() {
         if (dateDiff !== 0) return dateDiff;
 
         return (
-          getDateTimeNumber(b["�깅줉�쇱떆"]) -
-          getDateTimeNumber(a["�깅줉�쇱떆"])
+          getDateTimeNumber(b["등록일시"]) -
+          getDateTimeNumber(a["등록일시"])
         );
       });
 
@@ -1291,7 +1291,7 @@ function renderCompRequests() {
     body.innerHTML = `
       <tr>
         <td colspan="9" class="empty">
-          議곌굔�� 留욌뒗 誘명쑕臾� �좎껌�� �놁뒿�덈떎.
+          조건에 맞는 미휴무 신청이 없습니다.
         </td>
       </tr>
     `;
@@ -1303,42 +1303,42 @@ function renderCompRequests() {
     rows
       .map(function (row) {
         const isCreate =
-          String(row["援щ텇"]) === "諛쒖깮";
+          String(row["구분"]) === "발생";
 
         const dateText =
           getCompDateValue(row);
 
         const dateLabel =
-          isCreate ? "諛쒖깮��" : "�ъ슜��";
+          isCreate ? "발생일" : "사용일";
 
         const isPending =
-          String(row["�곹깭"]) === "��湲�";
+          String(row["상태"]) === "대기";
 
         return `
           <tr>
             <td>
               ${escapeHtml(
                 formatKoreanDateTime(
-                  row["�깅줉�쇱떆"]
+                  row["등록일시"]
                 )
               )}
             </td>
 
             <td>
-              ${escapeHtml(row["援щ텇"])}
+              ${escapeHtml(row["구분"])}
             </td>
 
             <td>
-              ${escapeHtml(row["留ㅼ옣"])}
+              ${escapeHtml(row["매장"])}
             </td>
 
             <td>
-              ${escapeHtml(row["�대쫫"])}
+              ${escapeHtml(row["이름"])}
               <br>
               <small>
                 ${escapeHtml(
                   formatEmployeePhone(
-                    row["�곕씫泥�"]
+                    row["연락처"]
                   )
                 )}
               </small>
@@ -1353,17 +1353,17 @@ function renderCompRequests() {
             </td>
 
             <td>
-              ${escapeHtml(row["�쇱닔"])}
+              ${escapeHtml(row["일수"])}
             </td>
 
             <td>
               ${escapeHtml(
-                row["�ъ쑀"] || "-"
+                row["사유"] || "-"
               )}
             </td>
 
             <td>
-              ${getStatusBadge(row["�곹깭"])}
+              ${getStatusBadge(row["상태"])}
             </td>
 
             <td>
@@ -1374,14 +1374,14 @@ function renderCompRequests() {
                       class="btn btn-green btn-small"
                       onclick="processCompRequest('${row.rowNo}','approve')"
                     >
-                      �뱀씤
+                      승인
                     </button>
 
                     <button
                       class="btn btn-red btn-small"
                       onclick="processCompRequest('${row.rowNo}','reject')"
                     >
-                      諛섎젮
+                      반려
                     </button>
                   `
                   : "-"
@@ -1396,7 +1396,7 @@ function renderCompRequests() {
 
 function resetCompSearch() {
   $("compKeyword").value = "";
-  $("compStatus").value = "��湲�";
+  $("compStatus").value = "대기";
 
   renderCompRequests();
 }
@@ -1409,21 +1409,21 @@ function updateCompDashboard() {
   const pending =
     compRequests.filter(
       function (row) {
-        return String(row["�곹깭"]) === "��湲�";
+        return String(row["상태"]) === "대기";
       }
     ).length;
 
   const approved =
     compRequests.filter(
       function (row) {
-        return String(row["�곹깭"]) === "�뱀씤";
+        return String(row["상태"]) === "승인";
       }
     ).length;
 
   const rejected =
     compRequests.filter(
       function (row) {
-        return String(row["�곹깭"]) === "諛섎젮";
+        return String(row["상태"]) === "반려";
       }
     ).length;
 
@@ -1440,8 +1440,8 @@ async function processCompRequest(
 ) {
   const message =
     processType === "approve"
-      ? "�� 誘명쑕臾� �좎껌�� �뱀씤�섏떆寃좎뒿�덇퉴?"
-      : "�� 誘명쑕臾� �좎껌�� 諛섎젮�섏떆寃좎뒿�덇퉴?";
+      ? "이 미휴무 신청을 승인하시겠습니까?"
+      : "이 미휴무 신청을 반려하시겠습니까?";
 
   if (!confirm(message)) return;
 
@@ -1456,13 +1456,13 @@ async function processCompRequest(
 
     if (!result.ok) {
       throw new Error(
-        result.message || "泥섎━ �ㅽ뙣"
+        result.message || "처리 실패"
       );
     }
 
     alert(
       result.message ||
-      "泥섎━�섏뿀�듬땲��."
+      "처리되었습니다."
     );
 
     await Promise.all([
@@ -1473,14 +1473,14 @@ async function processCompRequest(
   } catch (error) {
     alert(
       error.message ||
-      "泥섎━ 以� �ㅻ쪟媛� 諛쒖깮�덉뒿�덈떎."
+      "처리 중 오류가 발생했습니다."
     );
   }
 }
 
 
 /* =========================
-   吏곸썝愿�由�
+   직원관리
 ========================= */
 
 async function loadEmployees() {
@@ -1492,7 +1492,7 @@ async function loadEmployees() {
   body.innerHTML = `
     <tr>
       <td colspan="7" class="empty">
-        吏곸썝紐⑸줉�� 遺덈윭�ㅻ뒗 以묒엯�덈떎.
+        직원목록을 불러오는 중입니다.
       </td>
     </tr>
   `;
@@ -1507,7 +1507,7 @@ async function loadEmployees() {
     if (!result.ok) {
       throw new Error(
         result.message ||
-        "吏곸썝紐⑸줉 議고쉶 �ㅽ뙣"
+        "직원목록 조회 실패"
       );
     }
 
@@ -1547,32 +1547,32 @@ function renderEmployees() {
 
       const store = String(
         row.store ||
-        row["洹쇰Т吏�"] ||
-        row["留ㅼ옣"] ||
-        row["�뚯냽"] ||
+        row["근무지"] ||
+        row["매장"] ||
+        row["소속"] ||
         ""
       );
 
       const name = String(
         row.name ||
-        row["�대쫫"] ||
-        row["吏곸썝紐�"] ||
-        row["�깅챸"] ||
+        row["이름"] ||
+        row["직원명"] ||
+        row["성명"] ||
         ""
       );
 
       const phone = String(
         row.phone ||
-        row["�곕씫泥�"] ||
-        row["�대���"] ||
-        row["�꾪솕踰덊샇"] ||
+        row["연락처"] ||
+        row["휴대폰"] ||
+        row["전화번호"] ||
         ""
       );
 
       const status = String(
         row.status ||
-        row["�곹깭"] ||
-        row["�ъ쭅�곹깭"] ||
+        row["상태"] ||
+        row["재직상태"] ||
         ""
       );
 
@@ -1595,7 +1595,7 @@ function renderEmployees() {
     body.innerHTML = `
       <tr>
         <td colspan="7" class="empty">
-          寃��� 議곌굔�� 留욌뒗 吏곸썝�� �놁뒿�덈떎.
+          검색 조건에 맞는 직원이 없습니다.
         </td>
       </tr>
     `;
@@ -1608,45 +1608,45 @@ function renderEmployees() {
 
       const store =
         row.store ||
-        row["洹쇰Т吏�"] ||
-        row["留ㅼ옣"] ||
-        row["�뚯냽"] ||
+        row["근무지"] ||
+        row["매장"] ||
+        row["소속"] ||
         "";
 
       const name =
         row.name ||
-        row["�대쫫"] ||
-        row["吏곸썝紐�"] ||
-        row["�깅챸"] ||
+        row["이름"] ||
+        row["직원명"] ||
+        row["성명"] ||
         "";
 
       const phone =
         row.phone ||
-        row["�곕씫泥�"] ||
-        row["�대���"] ||
-        row["�꾪솕踰덊샇"] ||
+        row["연락처"] ||
+        row["휴대폰"] ||
+        row["전화번호"] ||
         "";
 
       const hireDate =
         row.hireDate ||
-        row["�낆궗��"] ||
+        row["입사일"] ||
         "";
 
       const status =
         row.status ||
-        row["�곹깭"] ||
-        row["�ъ쭅�곹깭"] ||
-        "�ъ쭅";
+        row["상태"] ||
+        row["재직상태"] ||
+        "재직";
 
       const updatedAt =
         row.updatedAt ||
-        row["理쒖쥌�섏젙"] ||
-        row["�섏젙�쇱떆"] ||
-        row["理쒖쥌媛깆떊"] ||
+        row["최종수정"] ||
+        row["수정일시"] ||
+        row["최종갱신"] ||
         "";
 
       const isRetired =
-        String(status) === "�댁궗";
+        String(status) === "퇴사";
 
       return `
         <tr>
@@ -1676,7 +1676,7 @@ function renderEmployees() {
               isRetired
                 ? `
                   <span class="badge badge-rejected">
-                    �댁궗
+                    퇴사
                   </span>
                 `
                 : `
@@ -1704,7 +1704,7 @@ function renderEmployees() {
                       '${encodeURIComponent(phone)}'
                     )"
                   >
-                    �댁궗泥섎━
+                    퇴사처리
                   </button>
                 `
             }
@@ -1734,7 +1734,7 @@ async function retireEmployee(
   if (
     !confirm(
       decodedName +
-      " 吏곸썝�� �댁궗 泥섎━�섏떆寃좎뒿�덇퉴?"
+      " 직원을 퇴사 처리하시겠습니까?"
     )
   ) {
     return;
@@ -1759,7 +1759,7 @@ async function retireEmployee(
 
   } catch (error) {
     alert(
-      "�댁궗 泥섎━ 以� �ㅻ쪟媛� 諛쒖깮�덉뒿�덈떎."
+      "퇴사 처리 중 오류가 발생했습니다."
     );
   }
 }
@@ -1781,7 +1781,7 @@ async function resetEmployeePin(
   if (
     !confirm(
       decodedName +
-      " 吏곸썝�� PIN�� 1234濡� 珥덇린�뷀븯�쒓쿋�듬땲源�?"
+      " 직원의 PIN을 1234로 초기화하시겠습니까?"
     )
   ) {
     return;
@@ -1800,13 +1800,13 @@ async function resetEmployeePin(
     if (!result.ok) {
       throw new Error(
         result.message ||
-        "PIN 珥덇린�� �ㅽ뙣"
+        "PIN 초기화 실패"
       );
     }
 
     alert(
       result.message ||
-      "PIN�� 1234濡� 珥덇린�붾릺�덉뒿�덈떎."
+      "PIN이 1234로 초기화되었습니다."
     );
 
     loadEmployees();
@@ -1814,14 +1814,14 @@ async function resetEmployeePin(
   } catch (error) {
     alert(
       error.message ||
-      "PIN 珥덇린�� 以� �ㅻ쪟媛� 諛쒖깮�덉뒿�덈떎."
+      "PIN 초기화 중 오류가 발생했습니다."
     );
   }
 }
 
 
 /* =========================
-   �곗썡李� �먯옣
+   연월차 원장
 ========================= */
 
 async function loadLedger() {
@@ -1833,7 +1833,7 @@ async function loadLedger() {
   body.innerHTML = `
     <tr>
       <td colspan="11" class="empty">
-        �곗썡李� �먯옣�� 遺덈윭�ㅻ뒗 以묒엯�덈떎.
+        연월차 원장을 불러오는 중입니다.
       </td>
     </tr>
   `;
@@ -1848,7 +1848,7 @@ async function loadLedger() {
     if (!result.ok) {
       throw new Error(
         result.message ||
-        "�먯옣 議고쉶 �ㅽ뙣"
+        "원장 조회 실패"
       );
     }
 
@@ -1907,14 +1907,14 @@ function renderLedger() {
         }
 
         if (
-          status !== "�꾩껜" &&
+          status !== "전체" &&
           String(row.status) !== status
         ) {
           return false;
         }
 
         if (
-          memo !== "�꾩껜" &&
+          memo !== "전체" &&
           String(row.memo) !== memo
         ) {
           return false;
@@ -1928,7 +1928,7 @@ function renderLedger() {
     body.innerHTML = `
       <tr>
         <td colspan="11" class="empty">
-          議곌굔�� 留욌뒗 �먯옣 �곗씠�곌� �놁뒿�덈떎.
+          조건에 맞는 원장 데이터가 없습니다.
         </td>
       </tr>
     `;
@@ -1999,8 +1999,8 @@ function renderLedger() {
 
 function resetLedgerSearch() {
   $("ledgerKeyword").value = "";
-  $("ledgerStatus").value = "�꾩껜";
-  $("ledgerMemo").value = "�꾩껜";
+  $("ledgerStatus").value = "전체";
+  $("ledgerMemo").value = "전체";
 
   renderLedger();
 }
@@ -2013,7 +2013,7 @@ async function loadMyCompHistory() {
     $("compPhone").value.trim();
 
   if(!name || !phone){
-    alert("�대쫫怨� �곕씫泥섎� �낅젰�섏꽭��.");
+    alert("이름과 연락처를 입력하세요.");
     return;
   }
 
@@ -2035,7 +2035,7 @@ async function loadMyCompHistory() {
 
   }catch(err){
 
-    alert("誘명쑕臾� �댁뿭�� 遺덈윭�ㅼ� 紐삵뻽�듬땲��.");
+    alert("미휴무 내역을 불러오지 못했습니다.");
 
   }
 
@@ -2050,7 +2050,7 @@ function renderMyCompHistory(rows){
     box.innerHTML=
     `
     <div class="empty">
-      �깅줉�� 誘명쑕臾� �댁뿭�� �놁뒿�덈떎.
+      등록된 미휴무 내역이 없습니다.
     </div>
     `;
 
@@ -2066,7 +2066,7 @@ function renderMyCompHistory(rows){
 
 ${r.type}
 
-<span class="badge ${r.status=="�뱀씤"?"ok":r.status=="諛섎젮"?"no":"wait"}">
+<span class="badge ${r.status=="승인"?"ok":r.status=="반려"?"no":"wait"}">
 
 ${r.status}
 
@@ -2076,17 +2076,17 @@ ${r.status}
 
 <div class="item-meta">
 
-�좎쭨 :
+날짜 :
 ${r.date}
 
 <br>
 
-�쇱닔 :
-${r.days}��
+일수 :
+${r.days}일
 
 <br>
 
-�ъ쑀 :
+사유 :
 ${r.reason || "-"}
 
 </div>
@@ -2105,7 +2105,7 @@ async function loadCompLedger(){
   `
   <tr>
     <td colspan="10" class="empty">
-      誘명쑕臾� �먯옣�� 遺덈윭�ㅻ뒗 以묒엯�덈떎.
+      미휴무 원장을 불러오는 중입니다.
     </td>
   </tr>
   `;
@@ -2192,7 +2192,7 @@ function renderCompLedger(){
 
       <td colspan="10" class="empty">
 
-      議고쉶 寃곌낵媛� �놁뒿�덈떎.
+      조회 결과가 없습니다.
 
       </td>
 
@@ -2264,27 +2264,27 @@ async function renderEmployeeBalanceSummary() {
       const store =
         String(
           row.store ||
-          row["洹쇰Т吏�"] ||
-          row["留ㅼ옣"] ||
-          row["�뚯냽"] ||
+          row["근무지"] ||
+          row["매장"] ||
+          row["소속"] ||
           ""
         );
 
       const name =
         String(
           row.name ||
-          row["�대쫫"] ||
-          row["吏곸썝紐�"] ||
-          row["�깅챸"] ||
+          row["이름"] ||
+          row["직원명"] ||
+          row["성명"] ||
           ""
         );
 
       const phone =
         String(
           row.phone ||
-          row["�곕씫泥�"] ||
-          row["�대���"] ||
-          row["�꾪솕踰덊샇"] ||
+          row["연락처"] ||
+          row["휴대폰"] ||
+          row["전화번호"] ||
           ""
         );
 
@@ -2307,27 +2307,27 @@ async function renderEmployeeBalanceSummary() {
   const store =
     String(
       employee.store ||
-      employee["洹쇰Т吏�"] ||
-      employee["留ㅼ옣"] ||
-      employee["�뚯냽"] ||
+      employee["근무지"] ||
+      employee["매장"] ||
+      employee["소속"] ||
       ""
     );
 
   const name =
     String(
       employee.name ||
-      employee["�대쫫"] ||
-      employee["吏곸썝紐�"] ||
-      employee["�깅챸"] ||
+      employee["이름"] ||
+      employee["직원명"] ||
+      employee["성명"] ||
       ""
     );
 
   const phone =
     String(
       employee.phone ||
-      employee["�곕씫泥�"] ||
-      employee["�대���"] ||
-      employee["�꾪솕踰덊샇"] ||
+      employee["연락처"] ||
+      employee["휴대폰"] ||
+      employee["전화번호"] ||
       ""
     );
 
@@ -2339,7 +2339,7 @@ async function renderEmployeeBalanceSummary() {
       text-align:center;
       color:#6f7785;
     ">
-      �곗썡李⑥� 誘명쑕臾� �꾪솴�� 議고쉶 以묒엯�덈떎.
+      연월차와 미휴무 현황을 조회 중입니다.
     </div>
   `;
 
@@ -2372,14 +2372,14 @@ async function renderEmployeeBalanceSummary() {
     if (!leaveResult.ok) {
       throw new Error(
         leaveResult.message ||
-        "�곗썡李� 議고쉶 �ㅽ뙣"
+        "연월차 조회 실패"
       );
     }
 
     if (!compResult.ok) {
       throw new Error(
         compResult.message ||
-        "誘명쑕臾� 議고쉶 �ㅽ뙣"
+        "미휴무 조회 실패"
       );
     }
 
@@ -2400,7 +2400,7 @@ async function renderEmployeeBalanceSummary() {
         margin-bottom:18px;
       ">
         ${escapeHtml(store)}
-        쨌
+        ·
         ${escapeHtml(formatEmployeePhone(phone))}
       </div>
 
@@ -2424,30 +2424,30 @@ async function renderEmployeeBalanceSummary() {
             color:#2f5f9e;
             margin-bottom:12px;
           ">
-            �곗썡李� �꾪솴
+            연월차 현황
           </div>
 
-          �낆궗��
+          입사일
           <strong>${escapeHtml(leave.hireDate || "-")}</strong>
           <br><br>
 
-          洹쇱냽湲곌컙
+          근속기간
           <strong>
-            ${Number(leave.workYears || 0)}��
-            ${Number(leave.workMonths || 0)}媛쒖썡
+            ${Number(leave.workYears || 0)}년
+            ${Number(leave.workMonths || 0)}개월
           </strong>
           <br><br>
 
-          諛쒖깮
-          <strong>${Number(leave.base || 0)}��</strong>
+          발생
+          <strong>${Number(leave.base || 0)}일</strong>
           <br><br>
 
-          �뱀씤 �ъ슜
-          <strong>${Number(leave.used || 0)}��</strong>
+          승인 사용
+          <strong>${Number(leave.used || 0)}일</strong>
           <br><br>
 
-          �뱀씤 ��湲�
-          <strong>${Number(leave.pending || 0)}��</strong>
+          승인 대기
+          <strong>${Number(leave.pending || 0)}일</strong>
           <br><br>
 
           <div style="
@@ -2455,8 +2455,8 @@ async function renderEmployeeBalanceSummary() {
   color:#178b59;
   font-weight:900;
 ">
-  �꾩옱 �붿뿬
-  ${Number(leave.remain || 0)}��
+  현재 잔여
+  ${Number(leave.remain || 0)}일
 </div>
 
 ${
@@ -2479,16 +2479,16 @@ ${
         ">
           ${escapeHtml(
             leave.carryoverType ||
-            "�꾨뀈�� 誘몄궗�� �곗썡李�"
+            "전년도 미사용 연월차"
           )}
         </div>
 
         <div>
-          誘몄궗�� �붿뿬
+          미사용 잔여
           <strong>
             ${Number(
               leave.carryoverRemain || 0
-            )}��
+            )}일
           </strong>
         </div>
 
@@ -2499,7 +2499,7 @@ ${
                 font-size:13px;
                 color:#80663c;
               ">
-                �쒖떆湲고븳:
+                표시기한:
                 ${escapeHtml(
                   leave.carryoverExpireDate
                 )}
@@ -2528,23 +2528,23 @@ ${
             color:#d88924;
             margin-bottom:12px;
           ">
-            誘명쑕臾� �꾪솴
+            미휴무 현황
           </div>
 
-          �뱀씤 諛쒖깮
-          <strong>${Number(compResult.earned || 0)}��</strong>
+          승인 발생
+          <strong>${Number(compResult.earned || 0)}일</strong>
           <br><br>
 
-          �뱀씤 �ъ슜
-          <strong>${Number(compResult.used || 0)}��</strong>
+          승인 사용
+          <strong>${Number(compResult.used || 0)}일</strong>
           <br><br>
 
-          諛쒖깮 �뱀씤��湲�
-          <strong>${Number(compResult.pendingEarned || 0)}��</strong>
+          발생 승인대기
+          <strong>${Number(compResult.pendingEarned || 0)}일</strong>
           <br><br>
 
-          �ъ슜 �뱀씤��湲�
-          <strong>${Number(compResult.pendingUsed || 0)}��</strong>
+          사용 승인대기
+          <strong>${Number(compResult.pendingUsed || 0)}일</strong>
           <br><br>
 
           <div style="
@@ -2552,8 +2552,8 @@ ${
             color:#178b59;
             font-weight:900;
           ">
-            �꾩옱 �붿뿬 誘명쑕臾�
-            ${Number(compResult.balance || 0)}��
+            현재 잔여 미휴무
+            ${Number(compResult.balance || 0)}일
           </div>
 
         </div>
@@ -2572,7 +2572,7 @@ ${
       ">
         ${escapeHtml(
           error.message ||
-          "吏곸썝 �꾪솴 議고쉶 以� �ㅻ쪟媛� 諛쒖깮�덉뒿�덈떎."
+          "직원 현황 조회 중 오류가 발생했습니다."
         )}
       </div>
     `;
