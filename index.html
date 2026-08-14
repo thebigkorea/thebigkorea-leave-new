@@ -1,556 +1,1341 @@
 <!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>더큰코리아 연월차 관리자</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#651c1c">
 
-  <title>더큰코리아 임직원 연월차 신청</title>
+  <style>
+    * { box-sizing: border-box; }
 
-  <link rel="manifest" href="manifest.json"/>
-  <link rel="stylesheet" href="style.css?v=20260806-pin1"/>
-  <meta name="theme-color" content="#7b1e1e"/>
+    :root {
+      --primary:#741f1f;
+      --primary-dark:#4a1818;
+      --primary-soft:#f5eaea;
+      --background:#f7f2eb;
+      --card:#fff;
+      --line:#eadbca;
+      --text:#2b1710;
+      --muted:#856f63;
+      --green:#14984f;
+      --red:#c13c32;
+      --orange:#d47b19;
+      --blue:#356ab4;
+      --shadow:0 10px 35px rgba(76,42,25,.08);
+    }
+
+    body {
+      margin:0;
+      background:var(--background);
+      color:var(--text);
+      font-family:"Pretendard","Noto Sans KR","Apple SD Gothic Neo",Arial,sans-serif;
+    }
+
+    button,input,select,textarea { font:inherit; }
+    button { cursor:pointer; }
+
+    .app {
+      width:min(1240px,calc(100% - 32px));
+      margin:0 auto;
+      padding:24px 0 80px;
+    }
+
+    .hero {
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-end;
+      gap:24px;
+      padding:30px 34px;
+      color:#fff;
+      border-radius:26px;
+      background:linear-gradient(135deg,#7a1f1f 0%,#4b1818 100%);
+      box-shadow:var(--shadow);
+    }
+
+    .brand {
+      margin-bottom:6px;
+      font-size:14px;
+      font-weight:800;
+      opacity:.8;
+    }
+
+    .hero h1 {
+      margin:0;
+      font-size:clamp(28px,4vw,42px);
+      line-height:1.2;
+    }
+
+    .hero p {
+      margin:10px 0 0;
+      opacity:.88;
+    }
+
+    .hero-actions {
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+    }
+
+    .top-button {
+      min-height:44px;
+      padding:0 18px;
+      color:#fff;
+      font-weight:800;
+      border:1px solid rgba(255,255,255,.35);
+      border-radius:13px;
+      background:rgba(255,255,255,.12);
+    }
+
+    .tabs {
+      position:sticky;
+      top:0;
+      z-index:20;
+      display:grid;
+      grid-template-columns:repeat(5,minmax(110px,1fr));
+      gap:8px;
+      margin:18px 0;
+      padding:10px;
+      border:1px solid var(--line);
+      border-radius:18px;
+      background:rgba(247,242,235,.96);
+      backdrop-filter:blur(10px);
+    }
+
+    .tab {
+      min-height:48px;
+      padding:10px 12px;
+      color:#4d2c20;
+      font-weight:900;
+      border:0;
+      border-radius:13px;
+      background:#eee2d5;
+    }
+
+    .tab.active {
+      color:#fff;
+      background:var(--primary);
+    }
+
+    .page { display:none; }
+    .page.active { display:block; }
+
+    .dashboard-grid {
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:14px;
+      margin-bottom:18px;
+    }
+
+    .stat-card {
+      padding:22px;
+      border:1px solid var(--line);
+      border-radius:20px;
+      background:var(--card);
+      box-shadow:var(--shadow);
+    }
+
+    .stat-label {
+      color:var(--muted);
+      font-size:14px;
+      font-weight:800;
+    }
+
+    .stat-value {
+      margin-top:10px;
+      font-size:34px;
+      font-weight:950;
+    }
+
+    .card {
+      padding:24px;
+      border:1px solid var(--line);
+      border-radius:22px;
+      background:var(--card);
+      box-shadow:var(--shadow);
+    }
+
+    .card + .card { margin-top:18px; }
+
+    .card-header {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:14px;
+      margin-bottom:20px;
+    }
+
+    .card-header h2 { margin:0; }
+
+    .description {
+      margin:7px 0 0;
+      color:var(--muted);
+      line-height:1.6;
+    }
+
+    .admin-lock {
+      max-width:450px;
+      margin:45px auto;
+      text-align:center;
+    }
+
+    .field { margin-bottom:16px; }
+
+    .field label {
+      display:block;
+      margin-bottom:7px;
+      font-size:14px;
+      font-weight:900;
+    }
+
+    input,select,textarea {
+      width:100%;
+      min-height:48px;
+      padding:12px 14px;
+      color:var(--text);
+      border:1px solid #decdbd;
+      border-radius:13px;
+      outline:none;
+      background:#fff;
+    }
+
+    input:focus,select:focus,textarea:focus {
+      border-color:var(--primary);
+      box-shadow:0 0 0 3px rgba(116,31,31,.1);
+    }
+
+    .toolbar {
+      display:grid;
+      grid-template-columns:1.3fr 1fr 1fr 1fr auto;
+      gap:10px;
+      margin-bottom:16px;
+    }
+
+    .toolbar.comp-toolbar {
+      grid-template-columns:1.3fr 1fr auto;
+    }
+
+    .section-actions {
+      display:flex;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+      gap:8px;
+    }
+
+    .btn {
+      min-height:46px;
+      padding:0 18px;
+      font-weight:900;
+      border-radius:12px;
+      border:1px solid transparent;
+    }
+
+    .btn-primary { color:#fff; background:var(--primary); }
+    .btn-secondary { color:var(--text); border-color:var(--line); background:#f0e5d8; }
+    .btn-green { color:#fff; background:var(--green); }
+    .btn-red { color:#fff; background:var(--red); }
+    .btn-outline { color:var(--primary); border-color:var(--primary); background:#fff; }
+    .btn-small { min-height:34px; padding:0 12px; font-size:13px; border-radius:9px; }
+
+    .table-wrap {
+      overflow:auto;
+      border:1px solid var(--line);
+      border-radius:15px;
+    }
+
+    table {
+      width:100%;
+      min-width:900px;
+      border-collapse:collapse;
+      background:#fff;
+    }
+
+    th,td {
+      padding:13px 12px;
+      border-bottom:1px solid #eee2d8;
+      text-align:center;
+      white-space:nowrap;
+    }
+
+    th {
+      position:sticky;
+      top:0;
+      z-index:3;
+      color:#fff;
+      font-size:13px;
+      background:#4b2920;
+    }
+
+    tr:last-child td { border-bottom:0; }
+    tr:hover td { background:#fffaf6; }
+
+    .empty {
+      padding:50px 16px !important;
+      color:var(--muted);
+    }
+
+    .badge {
+      display:inline-flex;
+      justify-content:center;
+      align-items:center;
+      min-width:58px;
+      min-height:29px;
+      padding:4px 10px;
+      font-size:12px;
+      font-weight:900;
+      border-radius:999px;
+    }
+
+    .badge-wait { color:#8c5300; background:#fff0c9; }
+    .badge-approved { color:#116237; background:#dff5e8; }
+    .badge-rejected { color:#9b2723; background:#fbe2df; }
+    .badge-active { color:#205c9c; background:#e0ecfa; }
+
+    .result {
+      display:none;
+      margin-top:15px;
+      padding:14px 16px;
+      line-height:1.5;
+      border-radius:12px;
+    }
+
+    .result.show { display:block; }
+    .result.success { color:#126235; background:#e5f6eb; }
+    .result.error { color:#a12724; background:#fce7e5; }
+
+    .admin-area { display:none; }
+    .admin-area.show { display:block; }
+
+    .modal {
+      position:fixed;
+      inset:0;
+      z-index:100;
+      display:none;
+      justify-content:center;
+      align-items:center;
+      padding:20px;
+      background:rgba(30,17,12,.55);
+    }
+
+    .modal.show { display:flex; }
+
+    .modal-box {
+      width:min(520px,100%);
+      max-height:90vh;
+      overflow:auto;
+      padding:24px;
+      border-radius:20px;
+      background:#fff;
+      box-shadow:0 24px 70px rgba(0,0,0,.25);
+    }
+
+    .modal-header {
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:20px;
+    }
+
+    .modal-header h3 { margin:0; }
+
+    .modal-close {
+      width:38px;
+      height:38px;
+      font-size:20px;
+      border:0;
+      border-radius:50%;
+      background:#eee3d8;
+    }
+
+    .detail-list {
+      display:grid;
+      grid-template-columns:110px 1fr;
+      gap:12px;
+      line-height:1.5;
+    }
+
+    .detail-list dt {
+      color:var(--muted);
+      font-weight:900;
+    }
+
+    .detail-list dd {
+      margin:0;
+      word-break:break-word;
+    }
+
+    @media (max-width:900px) {
+      .dashboard-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+      .tabs { grid-template-columns:repeat(3,1fr); position:static; }
+      .toolbar,.toolbar.comp-toolbar { grid-template-columns:repeat(2,1fr); }
+      .hero { display:block; }
+      .hero-actions { margin-top:20px; }
+    }
+
+    @media (max-width:580px) {
+      .app { width:min(100% - 20px,1240px); padding-top:10px; }
+      .hero { padding:24px 20px; border-radius:20px; }
+      .tabs { grid-template-columns:repeat(2,1fr); }
+      .card { padding:18px; border-radius:18px; }
+      .dashboard-grid,.toolbar,.toolbar.comp-toolbar { grid-template-columns:1fr; }
+      .section-actions { justify-content:stretch; }
+      .section-actions .btn { width:100%; }
+    }
+    /* ==================================================
+   관리자 화면 디자인 개선
+   기존 기능과 HTML 구조는 변경하지 않습니다.
+================================================== */
+
+:root {
+  --primary: #2f5f9e;
+  --primary-dark: #1f3f70;
+  --primary-light: #5f89bd;
+
+  --background: #f3f6fa;
+  --card: #ffffff;
+  --line: #dce3eb;
+
+  --text: #172033;
+  --muted: #6f7785;
+
+  --background: #f3f5f8;
+  --card: #ffffff;
+  --line: #dfe5ec;
+
+  --text: #172033;
+  --muted: #6f7785;
+
+  --green: #178b59;
+  --red: #d14949;
+  --orange: #d88924;
+  --blue: #3269b2;
+
+  --shadow:
+    0 12px 32px
+    rgba(24, 39, 75, 0.08);
+}
+
+
+/* 전체 화면 폭 확대 */
+.app {
+  width: min(
+    1480px,
+    calc(100% - 40px)
+  );
+
+  padding:
+    28px 0
+    90px;
+}
+
+
+/* 전체 배경 */
+body {
+  background:
+    radial-gradient(
+      circle at top left,
+      rgba(122, 32, 41, 0.07),
+      transparent 32%
+    ),
+    linear-gradient(
+      180deg,
+      #f7f8fa 0%,
+      #eef1f5 100%
+    );
+}
+
+
+/* 상단 헤더 */
+.hero {
+  position: relative;
+  overflow: hidden;
+
+  padding:
+    34px 38px;
+
+  border-radius: 28px;
+
+  background:
+  linear-gradient(
+    125deg,
+    #2f5f9e 0%,
+    #274f85 50%,
+    #1d385f 100%
+  );
+
+  box-shadow:
+  0 20px 45px
+  rgba(31, 63, 112, 0.20);
+}
+
+.hero::before {
+  content: "";
+
+  position: absolute;
+  top: -90px;
+  right: -40px;
+
+  width: 340px;
+  height: 340px;
+
+  border-radius: 50%;
+
+  background:
+    rgba(255, 255, 255, 0.07);
+}
+
+.hero::after {
+  content: "";
+
+  position: absolute;
+  right: 250px;
+  bottom: -130px;
+
+  width: 260px;
+  height: 260px;
+
+  border-radius: 50%;
+
+  background:
+    rgba(255, 196, 128, 0.06);
+}
+
+.hero > * {
+  position: relative;
+  z-index: 1;
+}
+
+.hero h1 {
+  font-size:
+    clamp(
+      32px,
+      4vw,
+      46px
+    );
+
+  letter-spacing: -0.04em;
+}
+
+.hero p {
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.brand {
+  color: #dcecff;
+  opacity: 1;
+}
+
+
+/* 헤더 버튼 */
+.top-button {
+  min-height: 46px;
+
+  padding:
+    0 20px;
+
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.32);
+
+  background:
+    rgba(255, 255, 255, 0.11);
+
+  box-shadow:
+    inset 0 1px 0
+    rgba(255, 255, 255, 0.12);
+
+  transition:
+    transform 0.15s ease,
+    background 0.15s ease;
+}
+
+.top-button:hover {
+  transform:
+    translateY(-2px);
+
+  background:
+    rgba(255, 255, 255, 0.2);
+}
+
+
+/* 탭 6개를 한 줄로 표시 */
+.tabs {
+  grid-template-columns:
+    repeat(
+      6,
+      minmax(120px, 1fr)
+    );
+
+  padding: 9px;
+
+  border:
+    1px solid
+    rgba(213, 219, 227, 0.95);
+
+  border-radius: 20px;
+
+  background:
+    rgba(255, 255, 255, 0.9);
+
+  box-shadow:
+    0 8px 24px
+    rgba(31, 45, 70, 0.07);
+}
+
+.tab {
+  min-height: 50px;
+
+  color: #586171;
+
+  border:
+    1px solid transparent;
+
+  background: transparent;
+
+  transition:
+    transform 0.15s ease,
+    background 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.tab:hover {
+  color: var(--primary);
+
+  background: #f8ecee;
+}
+
+.tab.active {
+  color: #fff;
+
+  background:
+    linear-gradient(
+      135deg,
+      #356fb5,
+      #234f86
+    );
+
+  box-shadow:
+    0 7px 18px
+    rgba(47, 95, 158, 0.24);
+}
+
+
+/* 통계 카드 */
+.dashboard-grid {
+  gap: 18px;
+  margin-bottom: 22px;
+}
+
+.stat-card {
+  position: relative;
+  overflow: hidden;
+
+  min-height: 126px;
+
+  padding:
+    23px 24px;
+
+  border:
+    1px solid
+    var(--line);
+
+  border-radius: 22px;
+
+  box-shadow: var(--shadow);
+
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.stat-card:hover {
+  transform:
+    translateY(-3px);
+
+  box-shadow:
+    0 18px 38px
+    rgba(24, 39, 75, 0.12);
+}
+
+.stat-card::before {
+  content: "";
+
+  position: absolute;
+  top: 0;
+  left: 0;
+
+  width: 100%;
+  height: 5px;
+
+  background: var(--primary);
+}
+
+/* 통계 카드별 포인트 색상 */
+.stat-card:nth-child(1)::before {
+  background: var(--blue);
+}
+
+.stat-card:nth-child(2)::before {
+  background: var(--orange);
+}
+
+.stat-card:nth-child(3)::before {
+  background: var(--green);
+}
+
+.stat-card:nth-child(4)::before {
+  background: var(--red);
+}
+
+.stat-card:nth-child(1) {
+  background:
+    linear-gradient(
+      145deg,
+      #ffffff,
+      #f3f7ff
+    );
+}
+
+.stat-card:nth-child(2) {
+  background:
+    linear-gradient(
+      145deg,
+      #ffffff,
+      #fff9ed
+    );
+}
+
+.stat-card:nth-child(3) {
+  background:
+    linear-gradient(
+      145deg,
+      #ffffff,
+      #effaf5
+    );
+}
+
+.stat-card:nth-child(4) {
+  background:
+    linear-gradient(
+      145deg,
+      #ffffff,
+      #fff3f3
+    );
+}
+
+.stat-label {
+  font-size: 14px;
+  letter-spacing: -0.02em;
+}
+
+.stat-value {
+  margin-top: 12px;
+
+  font-size: 36px;
+  letter-spacing: -0.04em;
+}
+
+
+/* 본문 카드 */
+.card {
+  padding: 28px;
+
+  border:
+    1px solid
+    var(--line);
+
+  border-radius: 24px;
+
+  box-shadow: var(--shadow);
+}
+
+.card-header {
+  padding-bottom: 18px;
+
+  border-bottom:
+    1px solid
+    #edf0f4;
+}
+
+.card-header h2 {
+  font-size: 23px;
+  letter-spacing: -0.035em;
+}
+
+
+/* 버튼 */
+.btn {
+  transition:
+    transform 0.14s ease,
+    box-shadow 0.14s ease,
+    filter 0.14s ease;
+}
+
+.btn:hover {
+  transform:
+    translateY(-1px);
+
+  filter: brightness(1.02);
+}
+
+.btn-primary {
+  background:
+    linear-gradient(
+      135deg,
+      var(--primary),
+      var(--primary-dark)
+    );
+
+  box-shadow:
+    0 7px 16px
+    rgba(116, 31, 31, 0.2);
+}
+
+.btn-secondary {
+  color: #4c5564;
+
+  border-color: #dce2e9;
+
+  background:
+    #f5f7f9;
+}
+
+.btn-outline {
+  background:
+    #fff8f8;
+}
+
+
+/* 검색 입력창 */
+input,
+select,
+textarea {
+  border-color: #d9e0e7;
+  background: #fbfcfd;
+
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    background 0.15s ease;
+}
+
+input:hover,
+select:hover,
+textarea:hover {
+  border-color: #bcc7d3;
+  background: #fff;
+}
+
+
+/* 표 */
+.table-wrap {
+  border:
+    1px solid
+    #dde3ea;
+
+  border-radius: 18px;
+
+  background: #fff;
+
+  box-shadow:
+    inset 0 1px 0
+    rgba(255, 255, 255, 0.9);
+}
+
+table {
+  min-width: 980px;
+}
+
+th {
+  padding:
+    15px 13px;
+
+  font-size: 13px;
+
+  background:
+    linear-gradient(
+      180deg,
+      #345f91,
+      #274b76
+    );
+}
+
+td {
+  padding:
+    15px 13px;
+
+  color: #263044;
+}
+
+tbody tr:nth-child(even) td {
+  background: #fafbfc;
+}
+
+tbody tr:hover td {
+  background: #fff5f3;
+}
+
+
+/* 상태 배지 */
+.badge {
+  min-width: 64px;
+
+  min-height: 30px;
+
+  box-shadow:
+    inset 0 0 0 1px
+    rgba(0, 0, 0, 0.035);
+}
+
+.badge-wait {
+  color: #875100;
+  background: #fff0c7;
+}
+
+.badge-approved {
+  color: #11603d;
+  background: #dcf5e8;
+}
+
+.badge-rejected {
+  color: #9e2929;
+  background: #fde3e2;
+}
+
+.badge-active {
+  color: #225d9d;
+  background: #e4effd;
+}
+
+
+/* 태블릿 */
+@media (max-width: 1100px) {
+  .tabs {
+    grid-template-columns:
+      repeat(
+        3,
+        minmax(0, 1fr)
+      );
+  }
+}
+
+
+/* 모바일 */
+@media (max-width: 580px) {
+  .app {
+    width:
+      calc(100% - 20px);
+  }
+
+  .hero {
+    padding:
+      25px 21px;
+  }
+
+  .tabs {
+    grid-template-columns:
+      repeat(
+        2,
+        minmax(0, 1fr)
+      );
+  }
+
+  .dashboard-grid {
+    gap: 10px;
+  }
+
+  .stat-card {
+    min-height: 105px;
+  }
+}
+
+  </style>
 </head>
 
-<body class="employee-apply-only">
-  <main class="app">
+<body>
+<main class="app">
 
-    <section class="hero">
-      <div class="brand">더큰코리아 임직원</div>
-      <h1>연월차 신청</h1>
-      <p>
-        본인의 연월차 잔여일수를 확인하고
-        연월차를 신청합니다.
-      </p>
-    </section>
-
-    <section class="tabs">
-      <button
-        class="tab active"
-        onclick="showTab('apply')">
-        연월차 신청
-      </button>
-
-      <button
-        class="tab"
-        onclick="showTab('register')">
-        직원등록
-      </button>
-
-      <button
-        class="tab"
-        onclick="showTab('pinReset')">
-       PIN 등록·변경
-      </button>
-
-      <button
-        class="tab"
-        onclick="showTab('history')">
-        연월차 내역
-      </button>
-
-      <button
-        class="tab"
-        onclick="showTab('comp')">
-        미휴무 신청
-      </button>
-    </section>
-
-
-    <!-- =========================
-         연월차 신청
-    ========================== -->
-    <section id="applyTab" class="card">
-
-  <div class="field">
-    <label>근무지</label>
-
-    <select id="store">
-      <option value="">
-        근무지를 선택하세요
-      </option>
-
-      <option value="더큰코리아 본사">
-        더큰코리아 본사
-      </option>
-
-      <option value="평촌 소바공방">
-        평촌 소바공방
-      </option>
-
-      <option value="압구정 길채정">
-        압구정 길채정
-      </option>
-
-      <option value="효종갱 파주점">
-        효종갱 파주점
-      </option>
-    </select>
-  </div>
-
-
-  <div class="field">
-    <label>이름</label>
-
-    <input
-      id="name"
-      placeholder="예: 홍길동">
-  </div>
-
-
-  <div class="field">
-    <label>연락처</label>
-
-    <input
-      id="phone"
-      placeholder="010-0000-0000"
-      inputmode="tel">
-  </div>
-
-
-  <div class="field">
-    <label>PIN</label>
-
-    <input
-      id="pin"
-      type="password"
-      inputmode="numeric"
-      maxlength="8"
-      placeholder="PIN 입력">
-  </div>
-
-
-  <button
-    class="secondary"
-    onclick="checkBalance()">
-    잔여 연월차 확인
-  </button>
-
-
-  <div
-    id="balanceBox"
-    class="balance-box">
-  </div>
-
-
-  <div class="field">
-    <label>휴가 종류</label>
-
-    <select id="leaveType">
-      <option value="">
-        선택하세요
-      </option>
-
-      <option>연차</option>
-      <option>월차</option>
-      <option>오전 반차</option>
-      <option>오후 반차</option>
-      <option>경조휴가</option>
-      <option>병가</option>
-    </select>
-  </div>
-
-
-  <div class="field">
-    <label>사용일수</label>
-
-    <input
-      id="days"
-      type="number"
-      readonly>
-  </div>
-
-
-  <div class="grid2">
-
+  <section class="hero">
     <div>
-      <label>시작일</label>
-
-      <input
-        id="startDate"
-        type="date">
+      <div class="brand">더큰코리아 본사</div>
+      <h1>연월차 관리자</h1>
+      <p>연월차 승인·미휴무 승인·직원관리·연월차 원장을 통합 관리합니다.</p>
     </div>
 
-    <div>
-      <label>종료일</label>
-
-      <input
-        id="endDate"
-        type="date">
+    <div class="hero-actions">
+      <button class="top-button" onclick="location.href='index.html'">직원 신청 페이지</button>
+      <button class="top-button" onclick="loadCurrentPage()">현재 화면 새로고침</button>
     </div>
+  </section>
 
-  </div>
+  <nav class="tabs">
+    <button class="tab active" data-page="dashboard" onclick="openPage('dashboard')">대시보드</button>
+    <button class="tab" data-page="leave" onclick="openPage('leave')">연월차 승인</button>
+    <button class="tab" data-page="comp" onclick="openPage('comp')">미휴무 승인</button>
+    <button class="tab" data-page="compLedger" onclick="openPage('compLedger')">미휴무 원장</button>
+    <button class="tab" data-page="employees" onclick="openPage('employees')">직원관리</button>
+    <button class="tab" data-page="ledger" onclick="openPage('ledger')">연월차 원장</button>
+  </nav>
 
+  <section id="loginPage" class="page active">
+    <section class="card admin-lock">
+      <h2>관리자 로그인</h2>
+      <p class="description">관리자 비밀번호를 입력하면 모든 관리자 기능을 사용할 수 있습니다.</p>
 
-  <div class="field full">
-    <label>사유</label>
-
-    <textarea
-      id="reason"
-      placeholder="간단히 입력하세요"></textarea>
-  </div>
-
-
-  <button
-    class="primary"
-    onclick="submitLeave()">
-    신청하기
-  </button>
-
-
-  <div
-    id="result"
-    class="result">
-  </div>
-
-</section>
-
-
-    <!-- =========================
-         직원등록
-    ========================== -->
-    <section
-      id="registerTab"
-      class="card hidden">
-
-      <h2>직원 등록</h2>
-
-      <p class="notice">
-        최초 1회 등록하면 입사일 기준으로
-        연차가 자동 계산됩니다.
-      </p>
-
-      <label>근무지</label>
-      <select id="regStore">
-        <option value="">근무지를 선택하세요</option>
-        <option value="더큰코리아 본사">더큰코리아 본사</option>
-        <option value="평촌 소바공방">평촌 소바공방</option>
-        <option value="압구정 길채정">압구정 길채정</option>
-        <option value="효종갱 파주점">효종갱 파주점</option>
-      </select>
-
-      <label>이름</label>
-      <input
-        id="regName"
-        placeholder="예: 홍길동"/>
-
-      <label>연락처</label>
-      <input
-        id="regPhone"
-        placeholder="010-0000-0000"
-        inputmode="tel"/>
-      
-      <label>입사일</label>
-      <input
-        id="hireDate"
-        type="date"/>
-
-      <label>PIN</label>
-      <input
-        id="regPin"
-        type="password"
-        inputmode="numeric"
-        maxlength="8"
-        autocomplete="new-password"
-        placeholder="숫자 4~8자리"/>
-
-      <label>PIN 확인</label>
-      <input
-        id="regPinConfirm"
-        type="password"
-        inputmode="numeric"
-        maxlength="8"
-        autocomplete="new-password"
-        placeholder="PIN을 다시 입력하세요"/>  
-
-      <button
-        class="primary"
-        onclick="registerEmployee()">
-        직원 등록 / 수정
-      </button>
-
-      <div
-        id="registerResult"
-        class="result">
+      <div class="field">
+        <input id="adminPassword" type="password" placeholder="관리자 비밀번호"
+          onkeydown="if(event.key==='Enter') adminLogin()">
       </div>
 
+      <button class="btn btn-primary" style="width:100%;" onclick="adminLogin()">관리자 로그인</button>
+      <div id="adminLoginResult" class="result"></div>
+    </section>
+  </section>
+
+  <div id="adminArea" class="admin-area">
+
+    <section id="dashboardPage" class="page">
+      <div class="dashboard-grid">
+        <article class="stat-card">
+          <div class="stat-label">전체 신청</div>
+          <div id="statTotal" class="stat-value">0</div>
+        </article>
+        <article class="stat-card">
+          <div class="stat-label">승인 대기</div>
+          <div id="statPending" class="stat-value">0</div>
+        </article>
+        <article class="stat-card">
+          <div class="stat-label">승인 완료</div>
+          <div id="statApproved" class="stat-value">0</div>
+        </article>
+        <article class="stat-card">
+          <div class="stat-label">반려</div>
+          <div id="statRejected" class="stat-value">0</div>
+        </article>
+      </div>
+
+      <section class="card">
+        <div class="card-header">
+          <div>
+            <h2>최근 연월차 신청</h2>
+          </div>
+          <button class="btn btn-secondary" onclick="openPage('leave')">전체 승인관리</button>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>신청일</th>
+                <th>매장</th>
+                <th>직원</th>
+                <th>휴가종류</th>
+                <th>기간</th>
+                <th>일수</th>
+                <th>상태</th>
+              </tr>
+            </thead>
+            <tbody id="dashboardRequestBody">
+              <tr><td colspan="7" class="empty">관리자 로그인 후 확인할 수 있습니다.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
     </section>
 
-    <!-- =========================
-     PIN 재설정
-========================== -->
-<section
-  id="pinResetTab"
-  class="card hidden">
+    <section id="leavePage" class="page">
+      <div class="dashboard-grid">
+        <article class="stat-card"><div class="stat-label">전체 신청</div><div id="adminTotal" class="stat-value">0</div></article>
+        <article class="stat-card"><div class="stat-label">승인 대기</div><div id="adminPending" class="stat-value">0</div></article>
+        <article class="stat-card"><div class="stat-label">승인 완료</div><div id="adminApproved" class="stat-value">0</div></article>
+        <article class="stat-card"><div class="stat-label">반려</div><div id="adminRejected" class="stat-value">0</div></article>
+      </div>
 
-  <h2>PIN 등록·변경</h2>
+      <section class="card">
+        <div class="card-header">
+          <div>
+            <h2>신청 승인관리</h2>
+            <p class="description">전체·대기·승인·반려 신청내역을 조회하고 처리합니다.</p>
+          </div>
 
-  <p class="notice">
-    관리자에게 PIN 초기화를 요청한 뒤,
-    임시 PIN 1234를 입력하여 새 PIN으로 변경하세요.
-  </p>
+          <div class="section-actions">
+            <button class="btn btn-secondary" onclick="loadAdminRequests()">새로고침</button>
+            <button class="btn btn-outline" onclick="refreshSummary()">원장 재계산</button>
+          </div>
+        </div>
 
-  <label>근무지</label>
-  <select id="pinResetStore">
-    <option value="">근무지를 선택하세요</option>
-    <option value="더큰코리아 본사">더큰코리아 본사</option>
-    <option value="평촌 소바공방">평촌 소바공방</option>
-    <option value="압구정 길채정">압구정 길채정</option>
-    <option value="효종갱 파주점">효종갱 파주점</option>
-  </select>
+        <div class="toolbar">
+          <input id="requestKeyword" placeholder="이름·연락처·신청번호" oninput="renderAdminRequests()">
+          <select id="requestStatus" onchange="renderAdminRequests()">
+            <option value="대기" selected>승인 대기</option>
+            <option value="전체">전체 상태</option>
+            <option value="승인">승인 완료</option>
+            <option value="반려">반려</option>
+          </select>
+          <input id="requestStartDate" type="date" onchange="renderAdminRequests()">
+          <input id="requestEndDate" type="date" onchange="renderAdminRequests()">
+          <button class="btn btn-secondary" onclick="resetRequestSearch()">초기화</button>
+        </div>
 
-  <label>이름</label>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>신청일</th>
+                <th>매장</th>
+                <th>직원</th>
+                <th>휴가종류</th>
+                <th>기간</th>
+                <th>일수</th>
+                <th>사유</th>
+                <th>상태</th>
+                <th>관리</th>
+              </tr>
+            </thead>
+            <tbody id="adminRequestBody">
+              <tr><td colspan="9" class="empty">신청내역을 불러오는 중입니다.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+
+    <section id="compPage" class="page">
+      <div class="dashboard-grid">
+        <article class="stat-card"><div class="stat-label">전체 신청</div><div id="compTotal" class="stat-value">0</div></article>
+        <article class="stat-card"><div class="stat-label">승인 대기</div><div id="compPending" class="stat-value">0</div></article>
+        <article class="stat-card"><div class="stat-label">승인 완료</div><div id="compApproved" class="stat-value">0</div></article>
+        <article class="stat-card"><div class="stat-label">반려</div><div id="compRejected" class="stat-value">0</div></article>
+      </div>
+
+      <section class="card">
+        <div class="card-header">
+          <div>
+            <h2>미휴무 승인관리</h2>
+            <p class="description">추가근무 발생 및 미휴무 사용신청을 승인 또는 반려합니다.</p>
+          </div>
+          <button class="btn btn-secondary" onclick="loadCompRequests()">새로고침</button>
+        </div>
+
+        <div class="toolbar comp-toolbar">
+          <input id="compKeyword" placeholder="이름·연락처·매장 검색" oninput="renderCompRequests()">
+          <select id="compStatus" onchange="renderCompRequests()">
+            <option value="대기" selected>승인 대기</option>
+            <option value="전체">전체 상태</option>
+            <option value="승인">승인 완료</option>
+            <option value="반려">반려</option>
+          </select>
+          <button class="btn btn-secondary" onclick="resetCompSearch()">초기화</button>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>등록일시</th>
+                <th>구분</th>
+                <th>매장</th>
+                <th>직원</th>
+                <th>발생일 / 사용일</th>
+                <th>일수</th>
+                <th>사유</th>
+                <th>상태</th>
+                <th>관리</th>
+              </tr>
+            </thead>
+            <tbody id="compRequestBody">
+              <tr><td colspan="9" class="empty">미휴무 신청내역을 불러오는 중입니다.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+
+        <section id="compLedgerPage" class="page">
+      <section class="card">
+
+        <div class="card-header">
+          <div>
+            <h2>미휴무 원장</h2>
+            <p class="description">
+              직원별 미휴무 발생·사용·승인대기·잔여 현황을 조회합니다.
+            </p>
+          </div>
+
+          <div class="section-actions">
+            <button
+              class="btn btn-secondary"
+              onclick="loadCompLedger()">
+              새로고침
+            </button>
+
+            <button
+              class="btn btn-outline"
+              onclick="window.print()">
+              인쇄
+            </button>
+          </div>
+        </div>
+
+        <div class="field">
+          <input
+            id="compLedgerKeyword"
+            placeholder="이름·연락처·매장 검색"
+            oninput="renderCompLedger()">
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>근무지</th>
+                <th>이름</th>
+                <th>연락처</th>
+                <th>승인 발생</th>
+                <th>승인 사용</th>
+                <th>발생 승인대기</th>
+                <th>사용 승인대기</th>
+                <th>잔여 미휴무</th>
+                <th>최근 발생일</th>
+                <th>최근 사용일</th>
+              </tr>
+            </thead>
+
+            <tbody id="compLedgerBody">
+              <tr>
+                <td colspan="10" class="empty">
+                  미휴무 원장을 불러오는 중입니다.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+      </section>
+    </section>
+
+    <section id="employeesPage" class="page">
+      <section class="card">
+        <div class="card-header">
+          <div>
+            <h2>등록 직원목록</h2>
+            <p class="description">직원 조회·검색·퇴사처리를 관리합니다.</p>
+          </div>
+          <button class="btn btn-secondary" onclick="loadEmployees()">새로고침</button>
+        </div>
+
+        <div class="field">
   <input
-    id="pinResetName"
-    placeholder="예: 홍길동"/>
+    id="employeeKeyword"
+    placeholder="직원 이름·연락처·매장 검색"
+    oninput="renderEmployees(); renderEmployeeBalanceSummary();">
+</div>
 
-  <label>연락처</label>
-  <input
-    id="pinResetPhone"
-    placeholder="010-0000-0000"
-    inputmode="tel"/>
+<!-- 직원 연월차 / 미휴무 통합조회 -->
+<div
+  id="employeeBalanceSummary"
+  style="
+    display:none;
+    margin:0 0 20px;
+    padding:20px;
+    border:1px solid #dce3eb;
+    border-radius:18px;
+    background:#f8fafc;
+  "
+></div>
 
-  <label>임시 PIN</label>
-  <input
-    id="pinResetCurrentPin"
-    type="password"
-    inputmode="numeric"
-    maxlength="8"
-    autocomplete="current-password"
-    placeholder="관리자가 초기화한 PIN 입력"/>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>매장</th>
+                <th>이름</th>
+                <th>연락처</th>
+                <th>입사일</th>
+                <th>상태</th>
+                <th>최종수정</th>
+                <th>관리</th>
+              </tr>
+            </thead>
+            <tbody id="employeeBody">
+              <tr><td colspan="7" class="empty">직원목록을 불러오는 중입니다.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </section>
 
-  <label>새 PIN</label>
-  <input
-    id="pinResetNewPin"
-    type="password"
-    inputmode="numeric"
-    maxlength="8"
-    autocomplete="new-password"
-    placeholder="숫자 4~8자리"/>
+    <section id="ledgerPage" class="page">
+      <section class="card">
+        <div class="card-header">
+          <div>
+            <h2>연월차 관리원장</h2>
+          </div>
+          <div class="section-actions">
+            <button class="btn btn-secondary" onclick="loadLedger()">새로고침</button>
+            <button class="btn btn-outline" onclick="window.print()">인쇄</button>
+          </div>
+        </div>
 
-  <label>새 PIN 확인</label>
-  <input
-    id="pinResetNewPinConfirm"
-    type="password"
-    inputmode="numeric"
-    maxlength="8"
-    autocomplete="new-password"
-    placeholder="새 PIN을 다시 입력하세요"/>
+        <div class="toolbar">
+          <input id="ledgerKeyword" placeholder="이름·연락처·매장 검색" oninput="renderLedger()">
+          <select id="ledgerStatus" onchange="renderLedger()">
+            <option value="전체">전체 상태</option>
+            <option value="재직">재직</option>
+            <option value="휴직">휴직</option>
+          </select>
+          <select id="ledgerMemo" onchange="renderLedger()">
+            <option value="전체">전체 구분</option>
+            <option value="정상">정상</option>
+            <option value="승인대기 있음">승인대기 있음</option>
+            <option value="잔여 3일 이하">잔여 3일 이하</option>
+            <option value="잔여 없음">잔여 없음</option>
+          </select>
+          <button class="btn btn-secondary" onclick="resetLedgerSearch()">초기화</button>
+        </div>
 
-  <button
-    class="primary"
-    onclick="resetMyPin()">
-    새 PIN 등록
-  </button>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>매장</th>
+                <th>이름</th>
+                <th>연락처</th>
+                <th>입사일</th>
+                <th>근속기간</th>
+                <th>발생</th>
+                <th>승인사용</th>
+                <th>승인대기</th>
+                <th>잔여</th>
+                <th>상태</th>
+                <th>비고</th>
+              </tr>
+            </thead>
+            <tbody id="ledgerBody">
+              <tr><td colspan="11" class="empty">연월차 원장을 불러오는 중입니다.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </section>
 
-  <div
-    id="pinResetResult"
-    class="result">
   </div>
+</main>
 
-</section>
+<div id="detailModal" class="modal" onclick="closeModalByOutside(event)">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>연월차 신청 상세</h3>
+      <button class="modal-close" onclick="closeDetailModal()">×</button>
+    </div>
+    <dl id="detailContent" class="detail-list"></dl>
+    <div id="detailAdminActions" class="section-actions" style="margin-top:22px;"></div>
+  </div>
+</div>
 
-
-    <!-- =========================
-         내 연월차 신청내역
-    ========================== -->
-    <section
-      id="historyTab"
-      class="card small hidden">
-
-      <h2>내 연월차 신청내역</h2>
-
-      <p class="notice">
-        연월차 신청 탭에 이름과 연락처를
-        입력한 뒤 조회하세요.
-      </p>
-
-      <button
-        class="secondary"
-        onclick="loadMyRequests()">
-        조회하기
-      </button>
-
-      <div
-        id="myList"
-        class="list">
-      </div>
-
-    </section>
-
-
-    <!-- =========================
-         미휴무 관리
-    ========================== -->
-    <section
-      id="compTab"
-      class="card hidden">
-
-      <h2>미휴무 관리</h2>
-
-      <p class="notice">
-        추가근무로 발생한 미휴무를 등록하고,
-        승인된 잔여 미휴무에서 사용할 날짜를 신청합니다.
-      </p>
-
-      <label>근무지</label>
-      <select id="compStore">
-        <option value="">근무지를 선택하세요</option>
-        <option value="더큰코리아 본사">더큰코리아 본사</option>
-        <option value="평촌 소바공방">평촌 소바공방</option>
-        <option value="압구정 길채정">압구정 길채정</option>
-        <option value="효종갱 파주점">효종갱 파주점</option>
-      </select>
-
-      <label>이름</label>
-      <input
-        id="compName"
-        placeholder="예: 홍길동"/>
-
-      <label>연락처</label>
-      <input
-        id="compPhone"
-        placeholder="010-0000-0000"
-        inputmode="tel"/>
-
-        <label>PIN</label>
-<input
-  id="compPin"
-  type="password"
-  inputmode="numeric"
-  maxlength="8"
-  placeholder="PIN 입력"/>
-
-      <div class="grid2">
-
-        <button
-          class="secondary"
-          onclick="checkCompBalance()">
-          잔여 미휴무 확인
-        </button>
-
-        <button
-          class="secondary"
-          onclick="loadMyCompHistory()">
-          발생·사용내역 조회
-        </button>
-
-      </div>
-
-      <div
-        id="compBalanceBox"
-        class="balance-box">
-      </div>
-
-      <div
-        id="compHistoryList"
-        class="list">
-      </div>
-
-
-      <hr
-        style="
-          margin:28px 0;
-          border:none;
-          border-top:1px solid #eadfd6;
-        ">
-
-
-      <!-- 추가근무 발생 -->
-      <h3>추가근무 발생 등록</h3>
-
-      <p class="notice">
-        등록 후 관리자 승인이 완료되어야
-        잔여 미휴무에 포함됩니다.
-      </p>
-
-      <label>추가근무일</label>
-      <input
-        id="extraWorkDate"
-        type="date"/>
-
-      <label>발생일수</label>
-      <input
-        id="extraDays"
-        type="number"
-        min="0.5"
-        step="0.5"
-        placeholder="예: 1 또는 0.5"/>
-
-      <label>추가근무 사유</label>
-      <textarea
-        id="extraReason"
-        placeholder="예: 휴무일 추가근무, 인력부족 등">
-      </textarea>
-
-      <button
-        class="primary"
-        onclick="submitExtraWork()">
-        추가근무 발생 등록
-      </button>
-
-      <div
-        id="extraResult"
-        class="result">
-      </div>
-
-
-      <hr
-        style="
-          margin:28px 0;
-          border:none;
-          border-top:1px solid #eadfd6;
-        ">
-
-
-      <!-- 미휴무 사용 -->
-      <h3>미휴무 사용신청</h3>
-
-      <p class="notice">
-        위에서 잔여 미휴무를 먼저 확인한 뒤
-        실제 사용할 날짜를 선택하세요.
-      </p>
-
-      <label>사용 예정일</label>
-      <input
-        id="compUseDate"
-        type="date"/>
-
-      <label>사용일수</label>
-      <input
-        id="compUseDays"
-        type="number"
-        min="0.5"
-        step="0.5"
-        placeholder="예: 1 또는 0.5"/>
-
-      <label>사용 사유</label>
-      <textarea
-        id="compUseReason"
-        placeholder="예: 미휴무 사용">
-      </textarea>
-
-      <button
-        class="primary"
-        onclick="submitCompUse()">
-        미휴무 사용신청
-      </button>
-
-      <div
-        id="compUseResult"
-        class="result">
-      </div>
-
-    </section>
-
-
-    <section class="footer-link">
-      <a href="admin.html">
-        관리자 승인 페이지
-      </a>
-    </section>
-
-  </main>
-
-  <script src="index-script.js?v=20260806-pin1"></script>
+<script src="script.js?v=20260730-reset1"></script>
 </body>
 </html>
