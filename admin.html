@@ -1016,6 +1016,46 @@ tbody tr:hover td {
       background:#f5f8fc;
     }
 
+  
+    /* 원장 상세 모달: 헤더가 본문 중간에 겹치지 않도록 모달 내부 sticky 기준을 분리 */
+    #compLedgerDetailModal .table-wrap,
+    #leaveLedgerDetailModal .table-wrap {
+      position:relative;
+      overflow:auto !important;
+    }
+
+    #compLedgerDetailModal table,
+    #leaveLedgerDetailModal table {
+      border-collapse:separate;
+      border-spacing:0;
+    }
+
+    #compLedgerDetailModal thead,
+    #leaveLedgerDetailModal thead {
+      position:static !important;
+    }
+
+    #compLedgerDetailModal th,
+    #leaveLedgerDetailModal th {
+      position:sticky !important;
+      top:0 !important;
+      z-index:5 !important;
+      background:#2f5f93 !important;
+      box-shadow:0 1px 0 #dbe5ef;
+    }
+
+    #compLedgerDetailModal td,
+    #leaveLedgerDetailModal td {
+      position:relative;
+      z-index:1;
+      background:#fff;
+    }
+
+    #compLedgerDetailModal tbody tr:nth-child(even) td,
+    #leaveLedgerDetailModal tbody tr:nth-child(even) td {
+      background:#fbfcfe;
+    }
+
   </style>
 </head>
 
@@ -1458,7 +1498,7 @@ tbody tr:hover td {
       <button class="modal-close" onclick="closeLeaveLedgerDetail()">×</button>
     </div>
 
-    <div class="table-wrap" style="overflow:auto;max-height:60vh;">
+    <div class="table-wrap" style="overflow:auto;max-height:62vh;">
       <table style="min-width:820px;">
         <thead>
           <tr>
@@ -1490,7 +1530,7 @@ tbody tr:hover td {
       </div>
       <button class="modal-close" onclick="closeCompLedgerDetail()">×</button>
     </div>
-    <div class="table-wrap" style="overflow:auto;max-height:60vh;">
+    <div class="table-wrap" style="overflow:auto;max-height:62vh;">
       <table style="min-width:760px;">
         <thead><tr><th>등록일시</th><th>구분</th><th>발생/사용일</th><th>일수</th><th>사유</th><th>상태</th></tr></thead>
         <tbody id="compLedgerDetailBody"><tr><td colspan="6" class="empty">직원을 선택하세요.</td></tr></tbody>
@@ -1499,6 +1539,6 @@ tbody tr:hover td {
   </div>
 </div>
 
-<script src="script.js?v=20260825-approval-ui3"></script>
+<script src="script.js?v=20260825-modalheaderfix4"></script>
 </body>
 </html>
