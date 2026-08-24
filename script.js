@@ -657,6 +657,36 @@ function renderAdminRequests() {
 
   const rows = getFilteredAdminRequests();
 
+  const pendingTotal =
+    adminRequests.filter(function (row) {
+      return String(
+        getRequestValue(row, [
+          "상태",
+          "처리상태",
+          "status"
+        ])
+      ) === "대기";
+    }).length;
+
+  const guide = $("requestApprovalGuide");
+
+  if (guide) {
+    if (pendingTotal > 0) {
+      guide.className = "approval-guide";
+      guide.innerHTML =
+        '<div><strong>승인 대기 ' +
+        pendingTotal +
+        '건이 있습니다.</strong><br>' +
+        '노란색 행을 확인한 뒤 오른쪽 <b>승인하기</b> 또는 <b>반려하기</b> 버튼으로 바로 처리하세요. ' +
+        '내용을 더 확인하려면 <b>상세보기</b>를 누르세요.</div>';
+    } else {
+      guide.className = "approval-guide done";
+      guide.innerHTML =
+        '<div><strong>현재 승인 대기 신청이 없습니다.</strong><br>' +
+        '새 신청이 들어오면 이 화면에 노란색 행과 승인 버튼이 표시됩니다.</div>';
+    }
+  }
+
   if (!rows.length) {
     body.innerHTML = `
       <tr>
@@ -740,8 +770,11 @@ function renderAdminRequests() {
       "status"
     ]);
 
+    const isPending =
+      String(status) === "대기";
+
     return `
-      <tr>
+      <tr class="${isPending ? "approval-pending-row" : ""}">
         <td>
           ${escapeHtml(formatRequestDate(requestDate, true))}
         </td>
@@ -781,16 +814,129 @@ function renderAdminRequests() {
         </td>
 
         <td>
-          <button
-            class="btn btn-secondary btn-small"
-            onclick="openRequestDetail('${encodeURIComponent(id)}')"
-          >
-            상세
-          </button>
+          <div class="approval-actions">
+            ${
+              isPending
+                ? `
+                  <button
+                    class="btn btn-small btn-approve-strong"
+                    onclick="quickApproveRequest('${encodeURIComponent(id)}')"
+                  >
+                    ✓ 승인하기
+                  </button>
+
+                  <button
+                    class="btn btn-small btn-reject-strong"
+                    onclick="quickRejectRequest('${encodeURIComponent(id)}')"
+                  >
+                    반려하기
+                  </button>
+                `
+                : ""
+            }
+
+            <button
+              class="btn btn-small btn-detail-soft"
+              onclick="openRequestDetail('${encodeURIComponent(id)}')"
+            >
+              상세보기
+            </button>
+          </div>
         </td>
       </tr>
     `;
   }).join("");
+}
+
+
+
+function selectRequestByEncodedId_(encodedId) {
+  const id = decodeURIComponent(encodedId);
+
+  selectedRequest =
+    adminRequests.find(function (row) {
+      const requestId =
+        getRequestValue(row, [
+          "신청ID",
+          "ID",
+          "신청번호",
+          "id"
+        ]);
+
+      return String(requestId) === String(id);
+    });
+
+  return selectedRequest;
+}
+
+
+async function quickApproveRequest(encodedId) {
+  const row = selectRequestByEncodedId_(encodedId);
+
+  if (!row) {
+    alert("신청정보를 찾을 수 없습니다.");
+    return;
+  }
+
+  const name =
+    getRequestValue(row, [
+      "이름",
+      "직원명",
+      "성명",
+      "name"
+    ]) || "직원";
+
+  const leaveType =
+    getRequestValue(row, [
+      "휴가종류",
+      "휴가구분",
+      "연차구분",
+      "leaveType"
+    ]) || "휴가";
+
+  if (!confirm(name + "님의 " + leaveType + " 신청을 승인하시겠습니까?")) {
+    selectedRequest = null;
+    return;
+  }
+
+  await updateRequestStatus(
+    "approve",
+    "관리자 승인"
+  );
+}
+
+
+async function quickRejectRequest(encodedId) {
+  const row = selectRequestByEncodedId_(encodedId);
+
+  if (!row) {
+    alert("신청정보를 찾을 수 없습니다.");
+    return;
+  }
+
+  const memo = prompt(
+    "반려 사유를 입력하세요.",
+    getRequestValue(row, [
+      "관리자메모",
+      "adminMemo"
+    ]) || ""
+  );
+
+  if (memo === null) {
+    selectedRequest = null;
+    return;
+  }
+
+  if (!memo.trim()) {
+    alert("반려 사유를 입력하세요.");
+    selectedRequest = null;
+    return;
+  }
+
+  await updateRequestStatus(
+    "reject",
+    memo.trim()
+  );
 }
 
 
@@ -1435,6 +1581,29 @@ function renderCompRequests() {
         );
       });
 
+  const compPendingTotal =
+    compRequests.filter(function (row) {
+      return String(row["상태"] || "") === "대기";
+    }).length;
+
+  const compGuide = $("compApprovalGuide");
+
+  if (compGuide) {
+    if (compPendingTotal > 0) {
+      compGuide.className = "approval-guide";
+      compGuide.innerHTML =
+        '<div><strong>승인 대기 ' +
+        compPendingTotal +
+        '건이 있습니다.</strong><br>' +
+        '노란색 행을 확인한 뒤 오른쪽 <b>승인하기</b> 또는 <b>반려하기</b> 버튼으로 바로 처리하세요.</div>';
+    } else {
+      compGuide.className = "approval-guide done";
+      compGuide.innerHTML =
+        '<div><strong>현재 승인 대기 미휴무 신청이 없습니다.</strong><br>' +
+        '새 신청이 들어오면 이 화면에 노란색 행과 승인 버튼이 표시됩니다.</div>';
+    }
+  }
+
   if (!rows.length) {
     body.innerHTML = `
       <tr>
@@ -1471,7 +1640,7 @@ function renderCompRequests() {
           String(row["상태"]) === "대기";
 
         return `
-          <tr>
+          <tr class="${isPending ? "approval-pending-row" : ""}">
             <td>
               ${escapeHtml(
                 formatKoreanDateTime(
@@ -1524,19 +1693,21 @@ function renderCompRequests() {
               ${
                 isPending
                   ? `
-                    <button
-                      class="btn btn-green btn-small"
-                      onclick="processCompRequest('${row.rowNo}','approve')"
-                    >
-                      승인
-                    </button>
+                    <div class="approval-actions">
+                      <button
+                        class="btn btn-small btn-approve-strong"
+                        onclick="processCompRequest('${row.rowNo}','approve')"
+                      >
+                        ✓ 승인하기
+                      </button>
 
-                    <button
-                      class="btn btn-red btn-small"
-                      onclick="processCompRequest('${row.rowNo}','reject')"
-                    >
-                      반려
-                    </button>
+                      <button
+                        class="btn btn-small btn-reject-strong"
+                        onclick="processCompRequest('${row.rowNo}','reject')"
+                      >
+                        반려하기
+                      </button>
+                    </div>
                   `
                   : "-"
               }

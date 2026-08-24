@@ -953,6 +953,69 @@ tbody tr:hover td {
   }
 }
 
+  
+    .approval-guide {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:16px;
+      margin:0 0 16px;
+      padding:15px 18px;
+      border:1px solid #f1d69b;
+      border-radius:14px;
+      background:#fff8e8;
+      color:#744d0b;
+      line-height:1.55;
+    }
+
+    .approval-guide strong {
+      color:#9a5c00;
+      font-size:16px;
+    }
+
+    .approval-guide.done {
+      border-color:#bfe3cf;
+      background:#eef9f3;
+      color:#276348;
+    }
+
+    .approval-guide.done strong {
+      color:#16734b;
+    }
+
+    tr.approval-pending-row td {
+      background:#fffaf0 !important;
+    }
+
+    tr.approval-pending-row td:first-child {
+      box-shadow:inset 4px 0 0 #e7a21a;
+    }
+
+    .approval-actions {
+      display:flex;
+      flex-wrap:wrap;
+      justify-content:center;
+      gap:6px;
+      min-width:190px;
+    }
+
+    .btn-approve-strong {
+      color:#fff;
+      background:#14984f;
+      box-shadow:0 4px 10px rgba(20,152,79,.18);
+    }
+
+    .btn-reject-strong {
+      color:#fff;
+      background:#c13c32;
+    }
+
+    .btn-detail-soft {
+      color:#365a8c;
+      border-color:#c8d6e8;
+      background:#f5f8fc;
+    }
+
   </style>
 </head>
 
@@ -1024,6 +1087,13 @@ tbody tr:hover td {
             <h2>최근 연월차 신청</h2>
           </div>
           <button class="btn btn-secondary" onclick="openPage('leave')">전체 승인관리</button>
+        </div>
+
+        <div id="requestApprovalGuide" class="approval-guide">
+          <div>
+            <strong>승인할 신청을 확인하세요.</strong><br>
+            승인 대기 건은 연한 노란색으로 표시되며, 오른쪽 <b>승인하기</b> 또는 <b>반려하기</b> 버튼으로 바로 처리할 수 있습니다.
+          </div>
         </div>
 
         <div class="table-wrap">
@@ -1131,6 +1201,13 @@ tbody tr:hover td {
             <option value="반려">반려</option>
           </select>
           <button class="btn btn-secondary" onclick="resetCompSearch()">초기화</button>
+        </div>
+
+        <div id="compApprovalGuide" class="approval-guide">
+          <div>
+            <strong>승인할 미휴무 신청을 확인하세요.</strong><br>
+            승인 대기 건은 연한 노란색으로 표시되며, 오른쪽 <b>승인하기</b> 또는 <b>반려하기</b> 버튼으로 바로 처리할 수 있습니다.
+          </div>
         </div>
 
         <div class="table-wrap">
@@ -1422,6 +1499,6 @@ tbody tr:hover td {
   </div>
 </div>
 
-<script src="script.js?v=20260825-ledgerdetail2"></script>
+<script src="script.js?v=20260825-approval-ui3"></script>
 </body>
 </html>
