@@ -2119,7 +2119,21 @@ function renderLedger() {
             </td>
 
             <td>
-              ${escapeHtml(row.name)}
+              <button
+                type="button"
+                onclick='openLeaveLedgerDetail(${JSON.stringify(row)})'
+                style="
+                  padding:0;
+                  border:0;
+                  background:transparent;
+                  color:#235a9f;
+                  font-weight:900;
+                  text-decoration:underline;
+                  cursor:pointer;
+                "
+              >
+                ${escapeHtml(row.name)}
+              </button>
             </td>
 
             <td>
@@ -2167,6 +2181,191 @@ function renderLedger() {
         `;
       })
       .join("");
+}
+
+
+
+async function openLeaveLedgerDetail(summaryRow) {
+  const modal = $('leaveLedgerDetailModal');
+  const title = $('leaveLedgerDetailTitle');
+  const summary = $('leaveLedgerDetailSummary');
+  const body = $('leaveLedgerDetailBody');
+
+  if (!modal || !body) return;
+
+  title.textContent =
+    (summaryRow.name || '') + ' 연월차 사용내역';
+
+  summary.innerHTML =
+    '<strong>' +
+    escapeHtml(summaryRow.store || '') +
+    ' · ' +
+    escapeHtml(summaryRow.name || '') +
+    '</strong>' +
+    ' &nbsp; 발생 ' +
+    Number(summaryRow.generated || 0) +
+    '일 / 승인사용 ' +
+    Number(summaryRow.used || 0) +
+    '일 / 승인대기 ' +
+    Number(summaryRow.pending || 0) +
+    '일 / 잔여 <strong>' +
+    Number(summaryRow.remain || 0) +
+    '일</strong>';
+
+  body.innerHTML =
+    '<tr><td colspan="6" class="empty">사용내역을 불러오는 중입니다.</td></tr>';
+
+  modal.classList.add('show');
+
+  try {
+    if (!Array.isArray(adminRequests) || !adminRequests.length) {
+      await loadAdminRequests();
+    }
+
+    const targetStore =
+      String(summaryRow.store || '').trim();
+
+    const targetName =
+      String(summaryRow.name || '').trim();
+
+    const targetPhone =
+      String(summaryRow.phone || '')
+        .replace(/[^0-9]/g, '');
+
+    const rows =
+      (adminRequests || [])
+        .filter(function (r) {
+          const rowStore =
+            String(
+              r['매장'] ||
+              r['소속'] ||
+              ''
+            ).trim();
+
+          const rowName =
+            String(
+              r['이름'] ||
+              r['직원명'] ||
+              ''
+            ).trim();
+
+          const rowPhone =
+            String(
+              r['연락처'] ||
+              r['휴대폰'] ||
+              ''
+            ).replace(/[^0-9]/g, '');
+
+          return (
+            rowStore === targetStore &&
+            rowName === targetName &&
+            (!targetPhone || rowPhone === targetPhone)
+          );
+        })
+        .sort(function (a, b) {
+          return String(
+            a['시작일'] || ''
+          ).localeCompare(
+            String(
+              b['시작일'] || ''
+            )
+          );
+        });
+
+    if (!rows.length) {
+      body.innerHTML =
+        '<tr><td colspan="6" class="empty">' +
+        '등록된 연월차 신청·사용내역이 없습니다.' +
+        '</td></tr>';
+      return;
+    }
+
+    body.innerHTML =
+      rows.map(function (r) {
+        const leaveType =
+          String(
+            r['휴가종류'] ||
+            r['휴가구분'] ||
+            '-'
+          );
+
+        const start =
+          formatRequestDate(
+            r['시작일'],
+            false
+          );
+
+        const end =
+          formatRequestDate(
+            r['종료일'],
+            false
+          );
+
+        const period =
+          start === end
+            ? start
+            : start + ' ~ ' + end;
+
+        const days =
+          Number(
+            r['사용일수'] ||
+            r['일수'] ||
+            0
+          );
+
+        const reason =
+          String(
+            r['사유'] ||
+            '-'
+          );
+
+        const status =
+          String(
+            r['상태'] ||
+            '대기'
+          );
+
+        return (
+          '<tr>' +
+            '<td>' + escapeHtml(period) + '</td>' +
+            '<td>' + escapeHtml(leaveType) + '</td>' +
+            '<td>' + days + '일</td>' +
+            '<td>' + escapeHtml(reason) + '</td>' +
+            '<td>' + getStatusBadge(status) + '</td>' +
+            '<td>' +
+              escapeHtml(
+                r['관리자메모'] ||
+                '-'
+              ) +
+            '</td>' +
+          '</tr>'
+        );
+      }).join('');
+
+  } catch (e) {
+    body.innerHTML =
+      '<tr><td colspan="6" class="empty">' +
+      escapeHtml(
+        e.message ||
+        '조회 중 오류가 발생했습니다.'
+      ) +
+      '</td></tr>';
+  }
+}
+
+function closeLeaveLedgerDetail() {
+  const modal = $('leaveLedgerDetailModal');
+  if (modal) modal.classList.remove('show');
+}
+
+function closeLeaveLedgerDetailByOutside(event) {
+  if (
+    event &&
+    event.target &&
+    event.target.id === 'leaveLedgerDetailModal'
+  ) {
+    closeLeaveLedgerDetail();
+  }
 }
 
 
@@ -2871,57 +3070,181 @@ async function openCompLedgerDetail(summaryRow) {
   const title = $('compLedgerDetailTitle');
   const summary = $('compLedgerDetailSummary');
   const body = $('compLedgerDetailBody');
+
   if (!modal || !body) return;
 
-  title.textContent = (summaryRow.name || '') + ' 미휴무 사용내역';
+  title.textContent =
+    (summaryRow.name || '') + ' 미휴무 사용내역';
+
   summary.innerHTML =
-    '<strong>' + escapeHtml(summaryRow.store || '') + ' · ' + escapeHtml(summaryRow.name || '') + '</strong>' +
-    ' &nbsp; 승인발생 ' + Number(summaryRow.approvedCreate || 0) + '일' +
-    ' / 승인사용 ' + Number(summaryRow.approvedUse || 0) + '일' +
-    ' / 잔여 <strong>' + Number(summaryRow.remain || 0) + '일</strong>';
-  body.innerHTML = '<tr><td colspan="6" class="empty">사용내역을 불러오는 중입니다.</td></tr>';
+    '<strong>' +
+    escapeHtml(summaryRow.store || '') +
+    ' · ' +
+    escapeHtml(summaryRow.name || '') +
+    '</strong>' +
+    ' &nbsp; 승인발생 ' +
+    Number(summaryRow.approvedCreate || 0) +
+    '일 / 승인사용 ' +
+    Number(summaryRow.approvedUse || 0) +
+    '일 / 잔여 <strong>' +
+    Number(summaryRow.remain || 0) +
+    '일</strong>';
+
+  body.innerHTML =
+    '<tr><td colspan="6" class="empty">사용내역을 불러오는 중입니다.</td></tr>';
+
   modal.classList.add('show');
 
   try {
-    const result = await jsonp({ action:'compList', password:adminPassword, t:Date.now() });
-    if (!result.ok) throw new Error(result.message || '미휴무 내역 조회 실패');
+    if (!Array.isArray(compRequests) || !compRequests.length) {
+      await loadCompRequests();
+    }
 
-    const targetPhone = String(summaryRow.phone || '').replace(/[^0-9]/g,'');
-    const rows = (result.rows || []).filter(function(r) {
-      const rowPhone = String(r['연락처'] || r.phone || '').replace(/[^0-9]/g,'');
-      const rowStore = String(r['매장'] || r.store || '').trim();
-      const rowName = String(r['이름'] || r.name || '').trim();
-      return rowStore === String(summaryRow.store || '').trim() &&
-             rowName === String(summaryRow.name || '').trim() &&
-             rowPhone === targetPhone;
-    }).sort(function(a,b) {
-      return getDateTimeNumber(b['등록일시'] || b.registeredAt || b['발생일'] || b['사용일']) -
-             getDateTimeNumber(a['등록일시'] || a.registeredAt || a['발생일'] || a['사용일']);
-    });
+    const targetStore =
+      String(summaryRow.store || '').trim();
+
+    const targetName =
+      String(summaryRow.name || '').trim();
+
+    const targetPhone =
+      String(summaryRow.phone || '')
+        .replace(/[^0-9]/g, '');
+
+    const rows =
+      (compRequests || [])
+        .filter(function (r) {
+          const rowStore =
+            String(
+              r['매장'] ||
+              r['소속'] ||
+              r.store ||
+              ''
+            ).trim();
+
+          const rowName =
+            String(
+              r['이름'] ||
+              r['직원명'] ||
+              r.name ||
+              ''
+            ).trim();
+
+          const rowPhone =
+            String(
+              r['연락처'] ||
+              r['휴대폰'] ||
+              r.phone ||
+              ''
+            ).replace(/[^0-9]/g, '');
+
+          return (
+            rowStore === targetStore &&
+            rowName === targetName &&
+            (!targetPhone || rowPhone === targetPhone)
+          );
+        })
+        .sort(function (a, b) {
+          const aDate =
+            a['사용일'] ||
+            a['발생일'] ||
+            a['등록일시'] ||
+            '';
+
+          const bDate =
+            b['사용일'] ||
+            b['발생일'] ||
+            b['등록일시'] ||
+            '';
+
+          return getDateTimeNumber(aDate) - getDateTimeNumber(bDate);
+        });
 
     if (!rows.length) {
-      body.innerHTML = '<tr><td colspan="6" class="empty">등록된 미휴무 발생·사용내역이 없습니다.</td></tr>';
+      body.innerHTML =
+        '<tr><td colspan="6" class="empty">' +
+        '등록된 미휴무 발생·사용내역이 없습니다.' +
+        '</td></tr>';
       return;
     }
 
-    body.innerHTML = rows.map(function(r) {
-      const type = String(r['구분'] || r.type || '-');
-      const date = type === '발생' ? (r['발생일'] || r.workDate || '-') : (r['사용일'] || r.useDate || '-');
-      const days = Number(r['일수'] || r.days || 0);
-      const reason = String(r['사유'] || r.reason || '-');
-      const status = String(r['상태'] || r.status || '대기');
-      const registered = r['등록일시'] || r.registeredAt || '-';
-      return '<tr>' +
-        '<td>' + escapeHtml(formatRequestDate(registered, true)) + '</td>' +
-        '<td>' + escapeHtml(type) + '</td>' +
-        '<td>' + escapeHtml(formatRequestDate(date, false)) + '</td>' +
-        '<td>' + days + '일</td>' +
-        '<td>' + escapeHtml(reason) + '</td>' +
-        '<td>' + getStatusBadge(status) + '</td>' +
-      '</tr>';
-    }).join('');
+    body.innerHTML =
+      rows.map(function (r) {
+        const type =
+          String(
+            r['구분'] ||
+            r.type ||
+            '-'
+          );
+
+        const rawDate =
+          type === '발생'
+            ? (r['발생일'] || r.workDate || '-')
+            : (r['사용일'] || r.useDate || '-');
+
+        const date =
+          type === '사용'
+            ? getCompUsePeriod(
+                rawDate,
+                r['일수'] || r.days
+              )
+            : formatRequestDate(
+                rawDate,
+                false
+              );
+
+        const days =
+          Number(
+            r['일수'] ||
+            r.days ||
+            0
+          );
+
+        const reason =
+          String(
+            r['사유'] ||
+            r.reason ||
+            '-'
+          );
+
+        const status =
+          String(
+            r['상태'] ||
+            r.status ||
+            '대기'
+          );
+
+        const registered =
+          r['등록일시'] ||
+          r.registeredAt ||
+          '-';
+
+        return (
+          '<tr>' +
+            '<td>' +
+              escapeHtml(
+                formatRequestDate(
+                  registered,
+                  true
+                )
+              ) +
+            '</td>' +
+            '<td>' + escapeHtml(type) + '</td>' +
+            '<td>' + escapeHtml(date) + '</td>' +
+            '<td>' + days + '일</td>' +
+            '<td>' + escapeHtml(reason) + '</td>' +
+            '<td>' + getStatusBadge(status) + '</td>' +
+          '</tr>'
+        );
+      }).join('');
+
   } catch (e) {
-    body.innerHTML = '<tr><td colspan="6" class="empty">' + escapeHtml(e.message || '조회 중 오류가 발생했습니다.') + '</td></tr>';
+    body.innerHTML =
+      '<tr><td colspan="6" class="empty">' +
+      escapeHtml(
+        e.message ||
+        '조회 중 오류가 발생했습니다.'
+      ) +
+      '</td></tr>';
   }
 }
 

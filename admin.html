@@ -1371,6 +1371,39 @@ tbody tr:hover td {
 </div>
 
 
+<div id="leaveLedgerDetailModal" class="modal" onclick="closeLeaveLedgerDetailByOutside(event)">
+  <div class="modal-box" style="width:min(980px,96vw);max-width:980px;">
+    <div class="modal-header">
+      <div>
+        <h3 id="leaveLedgerDetailTitle" style="margin:0;">연월차 사용내역</h3>
+        <div id="leaveLedgerDetailSummary" style="margin-top:8px;color:var(--muted);line-height:1.6;"></div>
+      </div>
+      <button class="modal-close" onclick="closeLeaveLedgerDetail()">×</button>
+    </div>
+
+    <div class="table-wrap" style="overflow:auto;max-height:60vh;">
+      <table style="min-width:820px;">
+        <thead>
+          <tr>
+            <th>사용일</th>
+            <th>휴가종류</th>
+            <th>일수</th>
+            <th>사유</th>
+            <th>상태</th>
+            <th>관리자메모</th>
+          </tr>
+        </thead>
+        <tbody id="leaveLedgerDetailBody">
+          <tr>
+            <td colspan="6" class="empty">직원을 선택하세요.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
 <div id="compLedgerDetailModal" class="modal" onclick="closeCompLedgerDetailByOutside(event)">
   <div class="modal-box" style="width:min(920px,96vw);max-width:920px;">
     <div class="modal-header">
@@ -1389,6 +1422,6 @@ tbody tr:hover td {
   </div>
 </div>
 
-<script src="script.js?v=20260825-compdetail1"></script>
+<script src="script.js?v=20260825-ledgerdetail2"></script>
 </body>
 </html>
