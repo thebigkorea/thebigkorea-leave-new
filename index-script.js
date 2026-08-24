@@ -692,8 +692,8 @@ async function loadMyRequests(selectedYear) {
         return startDate.substring(0, 4) === String(year);
       })
       .sort(function (a, b) {
-        return String(b["시작일"] || "").localeCompare(
-          String(a["시작일"] || "")
+        return String(a["시작일"] || "").localeCompare(
+          String(b["시작일"] || "")
         );
       });
 
@@ -764,9 +764,9 @@ async function loadMyRequests(selectedYear) {
     }
 
     list.innerHTML =
-      '<div class="item" style="font-weight:900;">' +
+      '<div class="item" style="font-weight:900;font-size:17px;">' +
       year +
-      '년 신청 및 사용내역</div>' +
+      '년 사용내역</div>' +
       rows.map(renderLeaveHistoryItem).join("");
 
   } catch (error) {
@@ -784,38 +784,45 @@ async function loadMyRequests(selectedYear) {
 
 function renderLeaveHistoryItem(row) {
   const status = String(row["상태"] || "대기").trim();
-  const statusLabel = status === "승인" ? "사용완료" : status;
+  const leaveType = row["휴가종류"] || row["휴가구분"] || "-";
+  const days = Number(row["사용일수"] || row["일수"] || 0);
+
+  const start = formatDate(row["시작일"]);
+  const end = formatDate(row["종료일"]);
+
+  const shortStart = start && start !== "-" ? start.substring(5) : "-";
+  const shortEnd = end && end !== "-" ? end.substring(5) : "-";
+
+  const period =
+    shortStart === shortEnd
+      ? shortStart
+      : shortStart + " ~ " + shortEnd;
 
   return `
-    <div class="item">
-      <div class="item-title">
-        ${row["휴가종류"] || "-"}
+    <div class="item" style="padding:10px 12px;">
+      <div style="
+        display:flex;
+        flex-wrap:wrap;
+        align-items:center;
+        gap:7px;
+        font-size:15px;
+        line-height:1.7;
+      ">
+        <strong>${period}</strong>
+        <span>|</span>
+        <span>${leaveType}</span>
+        <span>|</span>
+        <span>${days}일</span>
+        <span>|</span>
         ${renderStatusBadge(status)}
       </div>
-
-      <div class="item-meta">
-        기간:
-        ${formatDate(row["시작일"])}
-        ~
-        ${formatDate(row["종료일"])}
-        <br>
-
-        사용일수:
-        <strong>${row["사용일수"] || 0}일</strong>
-        <br>
-
-        처리상태:
-        ${statusLabel}
-        <br>
-
-        사유:
-        ${row["사유"] || "-"}
-        ${
-          row["관리자메모"]
-            ? `<br>관리자 메모: ${row["관리자메모"]}`
-            : ""
-        }
-      </div>
+      ${
+        row["사유"]
+          ? `<div style="margin-top:3px;color:#6b7280;font-size:13px;">
+               ${row["사유"]}
+             </div>`
+          : ""
+      }
     </div>
   `;
 }
