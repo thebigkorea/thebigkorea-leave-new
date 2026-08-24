@@ -502,49 +502,34 @@ async function checkBalance() {
       return;
     }
 
-    box.innerHTML =
-  "입사일: " + balance.hireDate + "<br>" +
-  "근속기간: " +
-  balance.workYears + "년 " +
-  balance.workMonths + "개월<br>" +
-  "발생 연월차: " + balance.base + "일<br>" +
-  "승인 사용: " + balance.used + "일<br>" +
-  "승인 대기: " + balance.pending + "일<br>" +
-  "<strong>현재 잔여: " +
-  balance.remain + "일</strong>" +
+    box.innerHTML = `
+      입사일: ${balance.hireDate}<br>
+      근속기간: ${Number(balance.workYears || 0)}년 ${Number(balance.workMonths || 0)}개월<br>
+      발생 연월차: ${Number(balance.base || 0)}일<br>
+      승인 사용: ${Number(balance.used || 0)}일<br>
+      승인 대기: ${Number(balance.pending || 0)}일<br>
+      <strong>현재 잔여: ${Number(balance.remain || 0)}일</strong>
 
-  (
-    Number(balance.carryoverRemain || 0) > 0
-      ? `
-        <div style="
-          margin-top:14px;
-          padding:12px 14px;
-          border:1px solid #f0cf91;
-          border-radius:12px;
-          background:#fff8e8;
-          color:#8a5a16;
-          line-height:1.7;
-        ">
-          <strong>
-            ${balance.carryoverType || "전년도 미사용 연월차"}:
-            ${Number(balance.carryoverRemain || 0)}일
-          </strong>
+      <div style="margin-top:14px;padding:12px 14px;border:1px solid #d9c8b7;border-radius:12px;background:#fffaf5;line-height:1.7;">
+        <strong>특별휴가</strong><br>
+        부여 ${Number(balance.specialGenerated || balance.carryoverGenerated || 0)}일 ·
+        승인 사용 ${Number(balance.specialUsed || balance.carryoverUsed || 0)}일 ·
+        승인 대기 ${Number(balance.specialPending || 0)}일<br>
+        <strong>현재 잔여 ${Number(balance.specialRemain || balance.carryoverRemain || 0)}일</strong>
+      </div>
 
-          ${
-            balance.carryoverExpireDate
-              ? `
-                <br>
-                <span style="font-size:13px;">
-                  표시기한:
-                  ${balance.carryoverExpireDate}
-                </span>
-              `
-              : ""
-          }
+      ${balance.spouseBirthRegistered ? `
+        <div style="margin-top:10px;padding:12px 14px;border:1px solid #c9d9ef;border-radius:12px;background:#f4f8fd;line-height:1.7;">
+          <strong>배우자 출산휴가</strong><br>
+          배우자 출산일 ${balance.spouseBirthDate || '-'}<br>
+          발생 ${Number(balance.spouseBirthGenerated || 20)}일 ·
+          승인 사용 ${Number(balance.spouseBirthUsed || 0)}일 ·
+          승인 대기 ${Number(balance.spouseBirthPending || 0)}일<br>
+          <strong>현재 잔여 ${Number(balance.spouseBirthRemain || 0)}일</strong>
+          ${balance.spouseBirthExpireDate ? `<br><span style="font-size:13px;">사용기한: ${balance.spouseBirthExpireDate}</span>` : ''}
         </div>
-      `
-      : ""
-  );
+      ` : ''}
+    `;
 
   } catch (error) {
     box.innerHTML =
@@ -627,58 +612,168 @@ async function submitLeave() {
 
 
 /* =========================
-   내 연월차 신청내역
+   내 연월차 사용내역
 ========================= */
 
-async function loadMyRequests() {
+async function loadMyRequests(selectedYear) {
 
   if (!verifyEmployee()) {
     return;
-}  
+  }
+
   const name = $("name").value.trim();
   const phone = $("phone").value.trim();
+  const store = $("store").value;
+  const pin = $("pin").value.trim();
   const list = $("myList");
+  const summary = $("historySummary");
+
+  const currentYear = new Date().getFullYear();
+  const year = Number(
+    selectedYear ||
+    ($("historyYear") ? $("historyYear").value : currentYear)
+  ) || currentYear;
 
   if (!name || !phone) {
     list.innerHTML =
-      '<div class="item">' +
-      "연월차 신청 탭에 이름과 연락처를 입력하세요." +
-      "</div>";
+      '<div class="item">이름과 연락처를 입력하세요.</div>';
     return;
   }
 
-  list.innerHTML =
-    '<div class="item">조회 중입니다.</div>';
+  list.innerHTML = '<div class="item">조회 중입니다.</div>';
+  if (summary) {
+    summary.innerHTML = "조회 중입니다.";
+    summary.classList.add("show");
+  }
 
   try {
-    const result = await jsonp({
-  action: "my",
-  store: $("store").value,
-  name: name,
-  phone: phone,
-  pin: $("pin").value.trim(),
-  t: Date.now()
-});
+    const today = new Date();
+    const asOfDate =
+      year === currentYear
+        ? [
+            today.getFullYear(),
+            String(today.getMonth() + 1).padStart(2, "0"),
+            String(today.getDate()).padStart(2, "0")
+          ].join("-")
+        : year + "-12-31";
 
-    if (!result.ok) {
-      throw new Error(
-        result.message || "조회 실패"
-      );
+    const [requestResult, balanceResult] = await Promise.all([
+      jsonp({
+        action: "my",
+        store: store,
+        name: name,
+        phone: phone,
+        pin: pin,
+        t: Date.now()
+      }),
+      jsonp({
+        action: "balance",
+        store: store,
+        name: name,
+        phone: phone,
+        pin: pin,
+        asOfDate: asOfDate,
+        t: Date.now() + 1
+      })
+    ]);
+
+    if (!requestResult.ok) {
+      throw new Error(requestResult.message || "신청내역 조회 실패");
     }
 
-    const rows = result.rows || [];
+    if (!balanceResult.ok) {
+      throw new Error(balanceResult.message || "연월차 현황 조회 실패");
+    }
+
+    const allRows = requestResult.rows || [];
+    const rows = allRows
+      .filter(function (row) {
+        const startDate = String(row["시작일"] || "").substring(0, 10);
+        return startDate.substring(0, 4) === String(year);
+      })
+      .sort(function (a, b) {
+        return String(b["시작일"] || "").localeCompare(
+          String(a["시작일"] || "")
+        );
+      });
+
+    const approvedDays = rows.reduce(function (sum, row) {
+      if (String(row["상태"] || "").trim() !== "승인") return sum;
+      return sum + Number(row["사용일수"] || 0);
+    }, 0);
+
+    const pendingDays = rows.reduce(function (sum, row) {
+      if (String(row["상태"] || "").trim() !== "대기") return sum;
+      return sum + Number(row["사용일수"] || 0);
+    }, 0);
+
+    const approvedCount = rows.filter(function (row) {
+      return String(row["상태"] || "").trim() === "승인";
+    }).length;
+
+    const pendingCount = rows.filter(function (row) {
+      return String(row["상태"] || "").trim() === "대기";
+    }).length;
+
+    const balance = balanceResult.balance || {};
+
+    if (summary) {
+      summary.innerHTML = `
+        <div style="font-weight:900;font-size:18px;margin-bottom:10px;">
+          ${year}년 연월차 현황
+        </div>
+        <div style="line-height:1.8;">
+          발생 연월차: <strong>${Number(balance.base || 0)}일</strong><br>
+          연월차 승인 사용: <strong>${Number(balance.used || 0)}일</strong><br>
+          연월차 승인 대기: <strong>${Number(balance.pending || 0)}일</strong><br>
+          현재 잔여: <strong>${Number(balance.remain || 0)}일</strong>
+        </div>
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid #d9e2ec;line-height:1.8;">
+          ${year}년 신청건수: <strong>${rows.length}건</strong><br>
+          승인된 휴가: <strong>${approvedCount}건 / ${approvedDays}일</strong><br>
+          승인 대기: <strong>${pendingCount}건 / ${pendingDays}일</strong>
+        </div>
+        ${
+          Number(balance.specialGenerated || 0) > 0
+            ? `<div style="margin-top:12px;line-height:1.8;">
+                 특별휴가 부여 ${Number(balance.specialGenerated || 0)}일 /
+                 사용 ${Number(balance.specialUsed || 0)}일 /
+                 잔여 <strong>${Number(balance.specialRemain || 0)}일</strong>
+               </div>`
+            : ""
+        }
+        ${
+          balance.spouseBirthRegistered
+            ? `<div style="margin-top:8px;line-height:1.8;">
+                 배우자 출산휴가 발생 ${Number(balance.spouseBirthGenerated || 0)}일 /
+                 사용 ${Number(balance.spouseBirthUsed || 0)}일 /
+                 잔여 <strong>${Number(balance.spouseBirthRemain || 0)}일</strong>
+               </div>`
+            : ""
+        }
+      `;
+      summary.classList.add("show");
+    }
 
     if (!rows.length) {
       list.innerHTML =
-        '<div class="item">신청내역이 없습니다.</div>';
+        '<div class="item">' +
+        year +
+        '년에 등록된 연월차 신청·사용내역이 없습니다.</div>';
       return;
     }
 
-    list.innerHTML = rows
-      .map(renderLeaveHistoryItem)
-      .join("");
+    list.innerHTML =
+      '<div class="item" style="font-weight:900;">' +
+      year +
+      '년 신청 및 사용내역</div>' +
+      rows.map(renderLeaveHistoryItem).join("");
 
   } catch (error) {
+    if (summary) {
+      summary.innerHTML = error.message || "조회 중 오류가 발생했습니다.";
+      summary.classList.add("show");
+    }
     list.innerHTML =
       '<div class="item">' +
       (error.message || "조회 중 오류가 발생했습니다.") +
@@ -688,11 +783,14 @@ async function loadMyRequests() {
 
 
 function renderLeaveHistoryItem(row) {
+  const status = String(row["상태"] || "대기").trim();
+  const statusLabel = status === "승인" ? "사용완료" : status;
+
   return `
     <div class="item">
       <div class="item-title">
         ${row["휴가종류"] || "-"}
-        ${renderStatusBadge(row["상태"])}
+        ${renderStatusBadge(status)}
       </div>
 
       <div class="item-meta">
@@ -703,15 +801,20 @@ function renderLeaveHistoryItem(row) {
         <br>
 
         사용일수:
-        ${row["사용일수"] || 0}일
+        <strong>${row["사용일수"] || 0}일</strong>
+        <br>
+
+        처리상태:
+        ${statusLabel}
         <br>
 
         사유:
         ${row["사유"] || "-"}
-        <br>
-
-        관리자 메모:
-        ${row["관리자메모"] || "-"}
+        ${
+          row["관리자메모"]
+            ? `<br>관리자 메모: ${row["관리자메모"]}`
+            : ""
+        }
       </div>
     </div>
   `;
@@ -1068,3 +1171,26 @@ function verifyCompEmployee() {
 
   return true;
 }
+
+/* =========================
+   연월차 사용내역 조회년도
+========================= */
+function initializeHistoryYear() {
+  const select = $("historyYear");
+  if (!select) return;
+
+  const currentYear = new Date().getFullYear();
+  const startYear = Math.max(2020, currentYear - 6);
+  select.innerHTML = "";
+
+  for (let year = currentYear; year >= startYear; year--) {
+    const option = document.createElement("option");
+    option.value = String(year);
+    option.textContent = year + "년";
+    select.appendChild(option);
+  }
+
+  select.value = String(currentYear);
+}
+
+document.addEventListener("DOMContentLoaded", initializeHistoryYear);

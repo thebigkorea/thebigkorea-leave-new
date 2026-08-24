@@ -75,8 +75,8 @@
           description: "본인 확인에 사용할 PIN 번호를 등록하거나 변경합니다."
         },
         history: {
-          title: "연월차 신청내역 확인",
-          description: "본인의 연월차 신청내역과 승인 상태를 확인합니다."
+          title: "연월차 사용내역 조회",
+          description: "조회연도의 연월차 신청·승인·사용내역과 잔여일수를 확인합니다."
         }
       };
 
@@ -107,6 +107,7 @@
       const historyName = document.getElementById("historyName");
       const historyPhone = document.getElementById("historyPhone");
       const historyPin = document.getElementById("historyPin");
+      const historyYear = document.getElementById("historyYear");
       const applyName = document.getElementById("name");
       const applyPhone = document.getElementById("phone");
       const applyPin = document.getElementById("pin");
@@ -118,6 +119,7 @@
         ? historyPhone.value.replace(/[^0-9]/g, "")
         : "";
       const pinValue = historyPin ? historyPin.value.trim() : "";
+      const yearValue = historyYear ? historyYear.value : String(new Date().getFullYear());
 
       if (!storeValue) {
         alert("근무지를 선택하세요.");
@@ -148,7 +150,7 @@
       if (applyPhone) applyPhone.value = phoneValue;
       if (applyPin) applyPin.value = pinValue;
 
-      loadMyRequests();
+      loadMyRequests(yearValue);
     }
   </script>
 </head>
@@ -199,7 +201,7 @@
         id="historyTabButton"
         class="tab"
         onclick="showEmployeeTab_('history','historyTabButton')">
-        연월차 신청내역 조회
+        연월차 사용내역 조회
       </button>
 
     </section>
@@ -508,10 +510,10 @@
       id="historyTab"
       class="card small hidden">
 
-      <h2>내 연월차 신청내역</h2>
+      <h2>내 연월차 사용내역</h2>
 
       <p class="notice">
-        근무지, 이름, 연락처와 PIN을 입력하여 본인의 신청내역을 조회하세요.
+        조회년도와 본인정보를 입력하면 해당 연도의 연월차 신청·승인·사용내역을 확인할 수 있습니다.
       </p>
 
       <div class="field">
@@ -546,6 +548,11 @@
       </div>
 
       <div class="field">
+        <label for="historyYear">조회년도</label>
+        <select id="historyYear"></select>
+      </div>
+
+      <div class="field">
         <label for="historyPin">PIN</label>
         <input
           id="historyPin"
@@ -562,6 +569,11 @@
         onclick="loadMyRequestsFromHistory_()">
         조회하기
       </button>
+
+      <div
+        id="historySummary"
+        class="balance-box">
+      </div>
 
       <div
         id="myList"
@@ -744,6 +756,6 @@
 
   </main>
 
-  <script src="index-script.js?v=20260806-pin1"></script>
+  <script src="index-script.js?v=20260825-history1"></script>
 </body>
 </html>
