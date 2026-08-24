@@ -1669,6 +1669,7 @@ async function loadEmployees() {
       result.rows || [];
 
     renderEmployees();
+    refreshLeaveGrantEmployeeOptions_();
 
   } catch (error) {
     body.innerHTML = `
@@ -2380,11 +2381,11 @@ function renderCompLedger(){
 
     return`
 
-<tr>
+<tr class="comp-ledger-row" onclick='openCompLedgerDetail(${JSON.stringify(r)})' style="cursor:pointer;">
 
 <td>${escapeHtml(r.store)}</td>
 
-<td>${escapeHtml(r.name)}</td>
+<td><strong style="color:#235a9f;text-decoration:underline;">${escapeHtml(r.name)}</strong></td>
 
 <td>${escapeHtml(formatEmployeePhone(r.phone))}</td>
 
@@ -2666,13 +2667,12 @@ ${
           margin-bottom:4px;
         ">
           ${escapeHtml(
-            leave.carryoverType ||
-            "전년도 미사용 연월차"
+            "특별휴가"
           )}
         </div>
 
         <div>
-          미사용 잔여
+          특별휴가 잔여
           <strong>
             ${Number(
               leave.carryoverRemain || 0
@@ -2687,7 +2687,7 @@ ${
                 font-size:13px;
                 color:#80663c;
               ">
-                표시기한:
+                사용기한:
                 ${escapeHtml(
                   leave.carryoverExpireDate
                 )}
@@ -2769,4 +2769,166 @@ ${
       </div>
     `;
   }
+}
+
+
+/* =========================================================
+   특별휴가 / 배우자 출산휴가 관리자 기능
+========================================================= */
+function refreshLeaveGrantEmployeeOptions_() {
+  const selects = [$("specialEmployeeSelect"), $("spouseEmployeeSelect")].filter(Boolean);
+  if (!selects.length) return;
+  const active = (employeeRows || []).filter(function(row) {
+    return String(row.status || row["상태"] || "재직").trim() !== "퇴사";
+  });
+  const html = '<option value="">직원을 선택하세요</option>' + active.map(function(row, index) {
+    const store = String(row.store || row["근무지"] || row["매장"] || row["소속"] || "");
+    const name = String(row.name || row["이름"] || row["직원명"] || row["성명"] || "");
+    const phone = String(row.phone || row["연락처"] || row["휴대폰"] || row["전화번호"] || "");
+    return '<option value="' + index + '">' + escapeHtml(store + ' · ' + name + ' · ' + formatEmployeePhone(phone)) + '</option>';
+  }).join('');
+  selects.forEach(function(sel){ sel.innerHTML = html; sel._leaveGrantRows = active; });
+}
+
+function fillLeaveGrantEmployee_(selectId, prefix) {
+  const sel = $(selectId); if (!sel || sel.value === "") return;
+  const row = (sel._leaveGrantRows || [])[Number(sel.value)]; if (!row) return;
+  $(prefix + "Store").value = String(row.store || row["근무지"] || row["매장"] || row["소속"] || "");
+  $(prefix + "Name").value = String(row.name || row["이름"] || row["직원명"] || row["성명"] || "");
+  $(prefix + "Phone").value = String(row.phone || row["연락처"] || row["휴대폰"] || row["전화번호"] || "");
+}
+function fillSpecialEmployee_(){ fillLeaveGrantEmployee_("specialEmployeeSelect","special"); }
+function fillSpouseEmployee_(){ fillLeaveGrantEmployee_("spouseEmployeeSelect","spouse"); }
+
+async function grantSpecialLeaveAdmin_() {
+  fillSpecialEmployee_();
+  const days = Number($("specialDays").value || 0);
+  if (!$("specialName").value || !days) { setResult("specialGrantResult","직원과 부여일수를 입력하세요.",false); return; }
+  try {
+    const r = await jsonp({action:"grantSpecialLeave",password:adminPassword,store:$("specialStore").value,name:$("specialName").value,phone:$("specialPhone").value,grantDate:$("specialGrantDate").value,days:days,reason:$("specialReason").value,t:Date.now()});
+    if (!r.ok) throw new Error(r.message || "특별휴가 부여 실패");
+    setResult("specialGrantResult",r.message || "특별휴가를 부여했습니다.",true);
+    $("specialDays").value=""; $("specialReason").value=""; loadLedger();
+  } catch(e) { setResult("specialGrantResult",e.message || "특별휴가 부여 실패",false); }
+}
+
+async function registerSpouseBirthAdmin_() {
+  fillSpouseEmployee_();
+  if (!$("spouseName").value || !$("spouseBirthDate").value) { setResult("spouseBirthResult","직원과 배우자 출산일을 입력하세요.",false); return; }
+  try {
+    const r = await jsonp({action:"registerSpouseBirth",password:adminPassword,store:$("spouseStore").value,name:$("spouseName").value,phone:$("spousePhone").value,birthDate:$("spouseBirthDate").value,memo:$("spouseBirthMemo").value,t:Date.now()});
+    if (!r.ok) throw new Error(r.message || "배우자 출산 등록 실패");
+    setResult("spouseBirthResult",r.message || "배우자 출산휴가 20일이 발생했습니다.",true);
+    $("spouseBirthMemo").value=""; loadLedger();
+  } catch(e) { setResult("spouseBirthResult",e.message || "배우자 출산 등록 실패",false); }
+}
+
+
+
+/* =========================================================
+   직원 선택목록 / 미휴무 원장 상세보기 보강
+========================================================= */
+function refreshLeaveGrantEmployeeOptions_() {
+  const selects = [$('specialEmployeeSelect'), $('spouseEmployeeSelect')].filter(Boolean);
+  if (!selects.length) return;
+
+  const active = (employeeRows || [])
+    .filter(function(row) {
+      const status = String(row.status || row['상태'] || '재직').trim();
+      return status !== '퇴사';
+    })
+    .sort(function(a, b) {
+      const sa = String(a.store || a['매장'] || a['근무지'] || '');
+      const sb = String(b.store || b['매장'] || b['근무지'] || '');
+      const sc = sa.localeCompare(sb, 'ko');
+      if (sc !== 0) return sc;
+      return String(a.name || a['이름'] || '').localeCompare(String(b.name || b['이름'] || ''), 'ko');
+    });
+
+  const options = ['<option value="">직원을 선택하세요</option>'];
+  active.forEach(function(row, index) {
+    const store = String(row.store || row['근무지'] || row['매장'] || row['소속'] || '').trim();
+    const name = String(row.name || row['이름'] || row['직원명'] || row['성명'] || '').trim();
+    const phone = String(row.phone || row['연락처'] || row['휴대폰'] || row['전화번호'] || '').trim();
+    if (!name) return;
+    options.push(
+      '<option value="' + index + '">' +
+      escapeHtml((store ? store + ' · ' : '') + name + (phone ? ' · ' + formatEmployeePhone(phone) : '')) +
+      '</option>'
+    );
+  });
+
+  selects.forEach(function(sel) {
+    const before = sel.value;
+    sel.innerHTML = options.join('');
+    sel._leaveGrantRows = active;
+    if (before && Number(before) < active.length) sel.value = before;
+  });
+}
+
+async function openCompLedgerDetail(summaryRow) {
+  const modal = $('compLedgerDetailModal');
+  const title = $('compLedgerDetailTitle');
+  const summary = $('compLedgerDetailSummary');
+  const body = $('compLedgerDetailBody');
+  if (!modal || !body) return;
+
+  title.textContent = (summaryRow.name || '') + ' 미휴무 사용내역';
+  summary.innerHTML =
+    '<strong>' + escapeHtml(summaryRow.store || '') + ' · ' + escapeHtml(summaryRow.name || '') + '</strong>' +
+    ' &nbsp; 승인발생 ' + Number(summaryRow.approvedCreate || 0) + '일' +
+    ' / 승인사용 ' + Number(summaryRow.approvedUse || 0) + '일' +
+    ' / 잔여 <strong>' + Number(summaryRow.remain || 0) + '일</strong>';
+  body.innerHTML = '<tr><td colspan="6" class="empty">사용내역을 불러오는 중입니다.</td></tr>';
+  modal.classList.add('show');
+
+  try {
+    const result = await jsonp({ action:'compList', password:adminPassword, t:Date.now() });
+    if (!result.ok) throw new Error(result.message || '미휴무 내역 조회 실패');
+
+    const targetPhone = String(summaryRow.phone || '').replace(/[^0-9]/g,'');
+    const rows = (result.rows || []).filter(function(r) {
+      const rowPhone = String(r['연락처'] || r.phone || '').replace(/[^0-9]/g,'');
+      const rowStore = String(r['매장'] || r.store || '').trim();
+      const rowName = String(r['이름'] || r.name || '').trim();
+      return rowStore === String(summaryRow.store || '').trim() &&
+             rowName === String(summaryRow.name || '').trim() &&
+             rowPhone === targetPhone;
+    }).sort(function(a,b) {
+      return getDateTimeNumber(b['등록일시'] || b.registeredAt || b['발생일'] || b['사용일']) -
+             getDateTimeNumber(a['등록일시'] || a.registeredAt || a['발생일'] || a['사용일']);
+    });
+
+    if (!rows.length) {
+      body.innerHTML = '<tr><td colspan="6" class="empty">등록된 미휴무 발생·사용내역이 없습니다.</td></tr>';
+      return;
+    }
+
+    body.innerHTML = rows.map(function(r) {
+      const type = String(r['구분'] || r.type || '-');
+      const date = type === '발생' ? (r['발생일'] || r.workDate || '-') : (r['사용일'] || r.useDate || '-');
+      const days = Number(r['일수'] || r.days || 0);
+      const reason = String(r['사유'] || r.reason || '-');
+      const status = String(r['상태'] || r.status || '대기');
+      const registered = r['등록일시'] || r.registeredAt || '-';
+      return '<tr>' +
+        '<td>' + escapeHtml(formatRequestDate(registered, true)) + '</td>' +
+        '<td>' + escapeHtml(type) + '</td>' +
+        '<td>' + escapeHtml(formatRequestDate(date, false)) + '</td>' +
+        '<td>' + days + '일</td>' +
+        '<td>' + escapeHtml(reason) + '</td>' +
+        '<td>' + getStatusBadge(status) + '</td>' +
+      '</tr>';
+    }).join('');
+  } catch (e) {
+    body.innerHTML = '<tr><td colspan="6" class="empty">' + escapeHtml(e.message || '조회 중 오류가 발생했습니다.') + '</td></tr>';
+  }
+}
+
+function closeCompLedgerDetail() {
+  const modal = $('compLedgerDetailModal');
+  if (modal) modal.classList.remove('show');
+}
+function closeCompLedgerDetailByOutside(event) {
+  if (event && event.target && event.target.id === 'compLedgerDetailModal') closeCompLedgerDetail();
 }
