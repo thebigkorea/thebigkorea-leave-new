@@ -1056,6 +1056,91 @@ tbody tr:hover td {
       background:#fbfcfe;
     }
 
+  
+    /* 원장 상세 팝업 확대 */
+    #leaveLedgerDetailModal .modal-box,
+    #compLedgerDetailModal .modal-box {
+      width:min(1220px,96vw) !important;
+      max-width:1220px !important;
+      max-height:92vh !important;
+      padding:26px 28px !important;
+    }
+
+    #leaveLedgerDetailModal .table-wrap,
+    #compLedgerDetailModal .table-wrap {
+      max-height:70vh !important;
+    }
+
+    .ledger-modal-top-actions {
+      display:flex;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+      align-items:center;
+      gap:8px;
+      margin-left:auto;
+    }
+
+    .kakao-image-btn {
+      min-height:38px;
+      padding:0 14px;
+      border:0;
+      border-radius:10px;
+      color:#191919;
+      background:#fee500;
+      font-weight:900;
+      cursor:pointer;
+    }
+
+    .kakao-image-btn:hover {
+      filter:brightness(.97);
+    }
+
+    .kakao-preview-wrap {
+      margin-top:14px;
+      padding:14px;
+      border:1px solid #dfe7f0;
+      border-radius:14px;
+      background:#f8fafc;
+    }
+
+    .kakao-preview-wrap.hidden {
+      display:none;
+    }
+
+    .kakao-preview-title {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      margin-bottom:10px;
+      font-weight:900;
+    }
+
+    .kakao-preview-img {
+      display:block;
+      width:min(100%,760px);
+      max-height:58vh;
+      object-fit:contain;
+      margin:0 auto;
+      border:1px solid #e5e7eb;
+      border-radius:12px;
+      background:#fff;
+    }
+
+    @media (max-width:760px) {
+      #leaveLedgerDetailModal .modal-box,
+      #compLedgerDetailModal .modal-box {
+        width:98vw !important;
+        padding:18px 14px !important;
+      }
+
+      .ledger-modal-top-actions {
+        width:100%;
+        justify-content:flex-start;
+        margin-top:10px;
+      }
+    }
+
   </style>
 </head>
 
@@ -1490,12 +1575,23 @@ tbody tr:hover td {
 
 <div id="leaveLedgerDetailModal" class="modal" onclick="closeLeaveLedgerDetailByOutside(event)">
   <div class="modal-box" style="width:min(980px,96vw);max-width:980px;">
-    <div class="modal-header">
+    <div class="modal-header" style="align-items:flex-start;">
       <div>
         <h3 id="leaveLedgerDetailTitle" style="margin:0;">연월차 사용내역</h3>
         <div id="leaveLedgerDetailSummary" style="margin-top:8px;color:var(--muted);line-height:1.6;"></div>
       </div>
-      <button class="modal-close" onclick="closeLeaveLedgerDetail()">×</button>
+
+      <div class="ledger-modal-top-actions">
+        <button
+          type="button"
+          class="kakao-image-btn"
+          onclick="makeLedgerKakaoImage('leave')"
+        >
+          💬 카톡 이미지 만들기
+        </button>
+
+        <button class="modal-close" onclick="closeLeaveLedgerDetail()">×</button>
+      </div>
     </div>
 
     <div class="table-wrap" style="overflow:auto;max-height:62vh;">
@@ -1517,18 +1613,43 @@ tbody tr:hover td {
         </tbody>
       </table>
     </div>
+
+    <div id="leaveKakaoPreviewWrap" class="kakao-preview-wrap hidden">
+      <div class="kakao-preview-title">
+        <span>카톡 전송용 이미지 미리보기</span>
+        <button
+          type="button"
+          class="btn btn-secondary btn-small"
+          onclick="copyLedgerKakaoImage('leave')"
+        >
+          이미지 복사
+        </button>
+      </div>
+      <img id="leaveKakaoPreviewImg" class="kakao-preview-img" alt="연월차 카톡 이미지 미리보기">
+    </div>
   </div>
 </div>
 
 
 <div id="compLedgerDetailModal" class="modal" onclick="closeCompLedgerDetailByOutside(event)">
   <div class="modal-box" style="width:min(920px,96vw);max-width:920px;">
-    <div class="modal-header">
+    <div class="modal-header" style="align-items:flex-start;">
       <div>
         <h3 id="compLedgerDetailTitle" style="margin:0;">미휴무 상세내역</h3>
         <div id="compLedgerDetailSummary" style="margin-top:8px;color:var(--muted);line-height:1.6;"></div>
       </div>
-      <button class="modal-close" onclick="closeCompLedgerDetail()">×</button>
+
+      <div class="ledger-modal-top-actions">
+        <button
+          type="button"
+          class="kakao-image-btn"
+          onclick="makeLedgerKakaoImage('comp')"
+        >
+          💬 카톡 이미지 만들기
+        </button>
+
+        <button class="modal-close" onclick="closeCompLedgerDetail()">×</button>
+      </div>
     </div>
     <div class="table-wrap" style="overflow:auto;max-height:62vh;">
       <table style="min-width:760px;">
@@ -1536,9 +1657,23 @@ tbody tr:hover td {
         <tbody id="compLedgerDetailBody"><tr><td colspan="6" class="empty">직원을 선택하세요.</td></tr></tbody>
       </table>
     </div>
+
+    <div id="compKakaoPreviewWrap" class="kakao-preview-wrap hidden">
+      <div class="kakao-preview-title">
+        <span>카톡 전송용 이미지 미리보기</span>
+        <button
+          type="button"
+          class="btn btn-secondary btn-small"
+          onclick="copyLedgerKakaoImage('comp')"
+        >
+          이미지 복사
+        </button>
+      </div>
+      <img id="compKakaoPreviewImg" class="kakao-preview-img" alt="미휴무 카톡 이미지 미리보기">
+    </div>
   </div>
 </div>
 
-<script src="script.js?v=20260825-modalheaderfix4"></script>
+<script src="script.js?v=20260825-kakaoimage5"></script>
 </body>
 </html>

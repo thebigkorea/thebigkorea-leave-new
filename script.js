@@ -2356,6 +2356,567 @@ function renderLedger() {
 
 
 
+
+/* =========================
+   원장 상세 카톡 이미지
+========================= */
+
+const ledgerKakaoCanvasCache = {
+  leave: null,
+  comp: null
+};
+
+
+function cleanLedgerText_(value) {
+  return String(value == null ? "" : value)
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+
+function getLedgerKakaoData_(type) {
+  const isLeave = type === "leave";
+
+  const titleEl = $(
+    isLeave
+      ? "leaveLedgerDetailTitle"
+      : "compLedgerDetailTitle"
+  );
+
+  const summaryEl = $(
+    isLeave
+      ? "leaveLedgerDetailSummary"
+      : "compLedgerDetailSummary"
+  );
+
+  const body = $(
+    isLeave
+      ? "leaveLedgerDetailBody"
+      : "compLedgerDetailBody"
+  );
+
+  const rows = [];
+
+  if (body) {
+    body.querySelectorAll("tr").forEach(function (tr) {
+      const cells =
+        Array.from(
+          tr.querySelectorAll("td")
+        )
+          .map(function (td) {
+            return cleanLedgerText_(td.textContent);
+          });
+
+      if (
+        cells.length &&
+        !cells.join(" ").includes("내역이 없습니다") &&
+        !cells.join(" ").includes("불러오는 중")
+      ) {
+        rows.push(cells);
+      }
+    });
+  }
+
+  return {
+    type: type,
+    title:
+      cleanLedgerText_(
+        titleEl ? titleEl.textContent : ""
+      ),
+    summary:
+      cleanLedgerText_(
+        summaryEl ? summaryEl.textContent : ""
+      ),
+    rows: rows
+  };
+}
+
+
+function wrapCanvasText_(ctx, text, maxWidth) {
+  const words =
+    String(text || "")
+      .split(/\s+/)
+      .filter(Boolean);
+
+  if (!words.length) {
+    return [""];
+  }
+
+  const lines = [];
+  let current = "";
+
+  words.forEach(function (word) {
+    const test =
+      current
+        ? current + " " + word
+        : word;
+
+    if (
+      ctx.measureText(test).width <= maxWidth ||
+      !current
+    ) {
+      current = test;
+    } else {
+      lines.push(current);
+      current = word;
+    }
+  });
+
+  if (current) {
+    lines.push(current);
+  }
+
+  return lines;
+}
+
+
+function makeLedgerKakaoImage(type) {
+  const data =
+    getLedgerKakaoData_(type);
+
+  if (!data.rows.length) {
+    alert("이미지로 만들 사용내역이 없습니다.");
+    return;
+  }
+
+  const isLeave =
+    type === "leave";
+
+  const canvas =
+    document.createElement("canvas");
+
+  const ctx =
+    canvas.getContext("2d");
+
+  const width = 1080;
+  const side = 64;
+  const top = 64;
+  const rowGap = 18;
+
+  canvas.width = width;
+
+  ctx.font =
+    '700 28px "Pretendard","Noto Sans KR",Arial,sans-serif';
+
+  const summaryLines =
+    wrapCanvasText_(
+      ctx,
+      data.summary,
+      width - side * 2
+    );
+
+  const normalizedRows =
+    data.rows.map(function (cells) {
+      if (isLeave) {
+        return {
+          date: cells[0] || "-",
+          type: cells[1] || "-",
+          days: cells[2] || "-",
+          reason: cells[3] || "-",
+          status: cells[4] || "-"
+        };
+      }
+
+      return {
+        date: cells[2] || "-",
+        type: cells[1] || "-",
+        days: cells[3] || "-",
+        reason: cells[4] || "-",
+        status: cells[5] || "-"
+      };
+    });
+
+  ctx.font =
+    '500 25px "Pretendard","Noto Sans KR",Arial,sans-serif';
+
+  let calculatedHeight =
+    top +
+    76 +
+    summaryLines.length * 38 +
+    54;
+
+  normalizedRows.forEach(function (row) {
+    const reasonLines =
+      wrapCanvasText_(
+        ctx,
+        row.reason,
+        width - side * 2 - 38
+      );
+
+    calculatedHeight +=
+      108 +
+      Math.max(
+        0,
+        reasonLines.length - 1
+      ) * 32 +
+      rowGap;
+  });
+
+  calculatedHeight += 76;
+
+  canvas.height =
+    Math.max(
+      720,
+      calculatedHeight
+    );
+
+  /* 배경 */
+  ctx.fillStyle = "#f3f6fa";
+  ctx.fillRect(
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
+
+  /* 상단 카드 */
+  ctx.fillStyle = "#ffffff";
+  roundRectCanvas_(
+    ctx,
+    34,
+    34,
+    width - 68,
+    canvas.height - 68,
+    28
+  );
+  ctx.fill();
+
+  /* 타이틀 */
+  ctx.fillStyle = "#24588f";
+  ctx.font =
+    '800 24px "Pretendard","Noto Sans KR",Arial,sans-serif';
+  ctx.fillText(
+    "더큰코리아",
+    side,
+    92
+  );
+
+  ctx.fillStyle = "#172033";
+  ctx.font =
+    '900 42px "Pretendard","Noto Sans KR",Arial,sans-serif';
+  ctx.fillText(
+    data.title ||
+      (
+        isLeave
+          ? "연월차 사용내역"
+          : "미휴무 사용내역"
+      ),
+    side,
+    148
+  );
+
+  /* 요약 */
+  ctx.fillStyle = "#5f6b7a";
+  ctx.font =
+    '600 25px "Pretendard","Noto Sans KR",Arial,sans-serif';
+
+  let y = 198;
+
+  summaryLines.forEach(function (line) {
+    ctx.fillText(
+      line,
+      side,
+      y
+    );
+    y += 38;
+  });
+
+  y += 18;
+
+  /* 안내 라벨 */
+  ctx.fillStyle = "#eaf2fb";
+  roundRectCanvas_(
+    ctx,
+    side,
+    y,
+    width - side * 2,
+    54,
+    14
+  );
+  ctx.fill();
+
+  ctx.fillStyle = "#24588f";
+  ctx.font =
+    '800 23px "Pretendard","Noto Sans KR",Arial,sans-serif';
+  ctx.fillText(
+    isLeave
+      ? "날짜별 연월차 사용내역"
+      : "날짜별 미휴무 발생·사용내역",
+    side + 22,
+    y + 36
+  );
+
+  y += 78;
+
+  normalizedRows.forEach(function (row, index) {
+    const cardX = side;
+    const cardW =
+      width - side * 2;
+
+    ctx.font =
+      '500 23px "Pretendard","Noto Sans KR",Arial,sans-serif';
+
+    const reasonLines =
+      wrapCanvasText_(
+        ctx,
+        row.reason,
+        cardW - 44
+      );
+
+    const cardH =
+      108 +
+      Math.max(
+        0,
+        reasonLines.length - 1
+      ) * 32;
+
+    ctx.fillStyle =
+      index % 2 === 0
+        ? "#ffffff"
+        : "#f8fafc";
+
+    ctx.strokeStyle = "#dde5ee";
+    ctx.lineWidth = 2;
+
+    roundRectCanvas_(
+      ctx,
+      cardX,
+      y,
+      cardW,
+      cardH,
+      16
+    );
+    ctx.fill();
+    ctx.stroke();
+
+    /* 첫 줄 */
+    ctx.fillStyle = "#172033";
+    ctx.font =
+      '800 26px "Pretendard","Noto Sans KR",Arial,sans-serif';
+
+    ctx.fillText(
+      row.date,
+      cardX + 22,
+      y + 38
+    );
+
+    ctx.fillStyle = "#24588f";
+    ctx.font =
+      '800 24px "Pretendard","Noto Sans KR",Arial,sans-serif';
+
+    ctx.fillText(
+      row.type + " · " + row.days,
+      cardX + 360,
+      y + 38
+    );
+
+    const statusText =
+      row.status || "-";
+
+    const approved =
+      statusText.includes("승인");
+
+    ctx.fillStyle =
+      approved
+        ? "#e2f5ea"
+        : statusText.includes("반려")
+          ? "#fde7e5"
+          : "#fff0c9";
+
+    roundRectCanvas_(
+      ctx,
+      cardX + cardW - 142,
+      y + 13,
+      116,
+      40,
+      20
+    );
+    ctx.fill();
+
+    ctx.fillStyle =
+      approved
+        ? "#16734b"
+        : statusText.includes("반려")
+          ? "#aa2d27"
+          : "#8a5a00";
+
+    ctx.font =
+      '800 20px "Pretendard","Noto Sans KR",Arial,sans-serif';
+
+    ctx.textAlign = "center";
+    ctx.fillText(
+      statusText,
+      cardX + cardW - 84,
+      y + 40
+    );
+    ctx.textAlign = "left";
+
+    /* 사유 */
+    ctx.fillStyle = "#5f6b7a";
+    ctx.font =
+      '500 22px "Pretendard","Noto Sans KR",Arial,sans-serif';
+
+    let reasonY =
+      y + 78;
+
+    reasonLines.forEach(function (line) {
+      ctx.fillText(
+        "사유: " + line,
+        cardX + 22,
+        reasonY
+      );
+      reasonY += 32;
+    });
+
+    y +=
+      cardH +
+      rowGap;
+  });
+
+  ctx.fillStyle = "#8793a2";
+  ctx.font =
+    '500 20px "Pretendard","Noto Sans KR",Arial,sans-serif';
+
+  ctx.fillText(
+    "더큰코리아 인사관리 · 조회 시점 기준",
+    side,
+    canvas.height - 62
+  );
+
+  ledgerKakaoCanvasCache[type] =
+    canvas;
+
+  const image =
+    $(
+      isLeave
+        ? "leaveKakaoPreviewImg"
+        : "compKakaoPreviewImg"
+    );
+
+  const wrap =
+    $(
+      isLeave
+        ? "leaveKakaoPreviewWrap"
+        : "compKakaoPreviewWrap"
+    );
+
+  if (image) {
+    image.src =
+      canvas.toDataURL("image/png");
+  }
+
+  if (wrap) {
+    wrap.classList.remove("hidden");
+    wrap.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest"
+    });
+  }
+
+  copyLedgerKakaoImage(type, true);
+}
+
+
+function roundRectCanvas_(ctx, x, y, w, h, r) {
+  const radius =
+    Math.min(
+      r,
+      w / 2,
+      h / 2
+    );
+
+  ctx.beginPath();
+  ctx.moveTo(
+    x + radius,
+    y
+  );
+  ctx.arcTo(
+    x + w,
+    y,
+    x + w,
+    y + h,
+    radius
+  );
+  ctx.arcTo(
+    x + w,
+    y + h,
+    x,
+    y + h,
+    radius
+  );
+  ctx.arcTo(
+    x,
+    y + h,
+    x,
+    y,
+    radius
+  );
+  ctx.arcTo(
+    x,
+    y,
+    x + w,
+    y,
+    radius
+  );
+  ctx.closePath();
+}
+
+
+async function copyLedgerKakaoImage(type, silent) {
+  const canvas =
+    ledgerKakaoCanvasCache[type];
+
+  if (!canvas) {
+    if (!silent) {
+      alert("먼저 카톡 이미지를 만들어주세요.");
+    }
+    return;
+  }
+
+  try {
+    const blob =
+      await new Promise(function (resolve) {
+        canvas.toBlob(
+          resolve,
+          "image/png"
+        );
+      });
+
+    if (
+      navigator.clipboard &&
+      window.ClipboardItem &&
+      blob
+    ) {
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          "image/png": blob
+        })
+      ]);
+
+      if (!silent) {
+        alert(
+          "이미지가 복사되었습니다. 카카오톡 대화창에 붙여넣기(Ctrl+V) 하세요."
+        );
+      }
+      return;
+    }
+
+    if (!silent) {
+      alert(
+        "이 브라우저에서는 이미지 자동 복사가 지원되지 않습니다. 미리보기 이미지를 우클릭해 복사해 주세요."
+      );
+    }
+
+  } catch (error) {
+    if (!silent) {
+      alert(
+        "이미지 복사가 제한되었습니다. 미리보기 이미지를 우클릭해 복사해 주세요."
+      );
+    }
+  }
+}
+
+
 async function openLeaveLedgerDetail(summaryRow) {
   const modal = $('leaveLedgerDetailModal');
   const title = $('leaveLedgerDetailTitle');
@@ -2385,6 +2946,10 @@ async function openLeaveLedgerDetail(summaryRow) {
 
   body.innerHTML =
     '<tr><td colspan="6" class="empty">사용내역을 불러오는 중입니다.</td></tr>';
+
+  const previewWrap = $("leaveKakaoPreviewWrap");
+  if (previewWrap) previewWrap.classList.add("hidden");
+  ledgerKakaoCanvasCache.leave = null;
 
   modal.classList.add('show');
 
@@ -3263,6 +3828,10 @@ async function openCompLedgerDetail(summaryRow) {
 
   body.innerHTML =
     '<tr><td colspan="6" class="empty">사용내역을 불러오는 중입니다.</td></tr>';
+
+  const previewWrap = $("compKakaoPreviewWrap");
+  if (previewWrap) previewWrap.classList.add("hidden");
+  ledgerKakaoCanvasCache.comp = null;
 
   modal.classList.add('show');
 
