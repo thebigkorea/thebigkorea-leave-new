@@ -2470,6 +2470,433 @@ function wrapCanvasText_(ctx, text, maxWidth) {
 }
 
 
+
+function makeCompLedgerKakaoImageSplit_(data) {
+  const rows = (data.rows || []).map(function(cells) {
+    return {
+      date: cells[2] || "-",
+      type: cells[1] || "-",
+      days: cells[3] || "-",
+      reason: cells[4] || "-",
+      status: cells[5] || "-"
+    };
+  });
+
+  const createRows = rows.filter(function(row) {
+    return String(row.type).includes("발생");
+  });
+
+  const useRows = rows.filter(function(row) {
+    return String(row.type).includes("사용");
+  });
+
+  function numberFromDays_(value) {
+    const n = parseFloat(String(value || "").replace(/[^0-9.]/g, ""));
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  function approvedDays_(items) {
+    return items.reduce(function(sum, row) {
+      return sum + (
+        String(row.status).includes("승인")
+          ? numberFromDays_(row.days)
+          : 0
+      );
+    }, 0);
+  }
+
+  function formatDays_(value) {
+    const n = numberFromDays_(value);
+    return Number.isInteger(n) ? String(n) : String(n);
+  }
+
+  const createApproved = approvedDays_(createRows);
+  const useApproved = approvedDays_(useRows);
+
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+
+  const width = 1080;
+  const outer = 40;
+  const side = 62;
+  const columnGap = 16;
+  const contentWidth = width - side * 2;
+  const columnWidth = (contentWidth - columnGap) / 2;
+
+  canvas.width = width;
+
+  ctx.font = '700 27px "Pretendard","Noto Sans KR",Arial,sans-serif';
+  const summaryLines = wrapCanvasText_(
+    ctx,
+    data.summary,
+    contentWidth
+  );
+
+  const panelHeaderH = 62;
+  const tableHeaderH = 54;
+  const baseRowH = 112;
+  const rowGap = 0;
+
+  function rowHeight_(row) {
+    ctx.font = '500 18px "Pretendard","Noto Sans KR",Arial,sans-serif';
+    const reasonLines = wrapCanvasText_(
+      ctx,
+      row.reason,
+      columnWidth - 36
+    );
+    return baseRowH + Math.max(0, reasonLines.length - 1) * 25;
+  }
+
+  const createHeights = createRows.map(rowHeight_);
+  const useHeights = useRows.map(rowHeight_);
+
+  const createPanelH =
+    panelHeaderH +
+    tableHeaderH +
+    createHeights.reduce(function(a, b) { return a + b + rowGap; }, 0);
+
+  const usePanelH =
+    panelHeaderH +
+    tableHeaderH +
+    useHeights.reduce(function(a, b) { return a + b + rowGap; }, 0);
+
+  const topAreaH =
+    170 +
+    summaryLines.length * 36 +
+    28;
+
+  const panelH = Math.max(createPanelH, usePanelH, 430);
+
+  canvas.height =
+    Math.max(
+      820,
+      topAreaH + panelH + 110
+    );
+
+  /* 배경 */
+  ctx.fillStyle = "#f3f6fa";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  /* 바깥 흰 카드 */
+  ctx.fillStyle = "#ffffff";
+  roundRectCanvas_(
+    ctx,
+    30,
+    30,
+    width - 60,
+    canvas.height - 60,
+    26
+  );
+  ctx.fill();
+
+  /* 브랜드 */
+  ctx.fillStyle = "#24588f";
+  ctx.font = '800 23px "Pretendard","Noto Sans KR",Arial,sans-serif';
+  ctx.fillText("더큰코리아", side, 83);
+
+  /* 제목 */
+  ctx.fillStyle = "#172033";
+  ctx.font = '900 39px "Pretendard","Noto Sans KR",Arial,sans-serif';
+  ctx.fillText(
+    data.title || "미휴무 상세내역",
+    side,
+    135
+  );
+
+  /* 요약 */
+  ctx.fillStyle = "#5f6b7a";
+  ctx.font = '700 22px "Pretendard","Noto Sans KR",Arial,sans-serif';
+
+  let y = 177;
+
+  summaryLines.forEach(function(line) {
+    ctx.fillText(line, side, y);
+    y += 36;
+  });
+
+  y += 18;
+
+  function drawPanel_(x, panelY, panelW, title, approvedDays, count, rows, rowHeights, mode) {
+    const isCreate = mode === "create";
+
+    /* 패널 외곽 */
+    ctx.fillStyle = "#ffffff";
+    ctx.strokeStyle = "#d8e2ee";
+    ctx.lineWidth = 2;
+    roundRectCanvas_(
+      ctx,
+      x,
+      panelY,
+      panelW,
+      panelH,
+      16
+    );
+    ctx.fill();
+    ctx.stroke();
+
+    /* 패널 제목 영역 */
+    ctx.fillStyle = isCreate ? "#eef5fd" : "#fff1ef";
+    roundRectCanvas_(
+      ctx,
+      x,
+      panelY,
+      panelW,
+      panelHeaderH,
+      16
+    );
+    ctx.fill();
+
+    /* 아래쪽 둥근 모서리 보정 */
+    ctx.fillRect(
+      x,
+      panelY + 30,
+      panelW,
+      panelHeaderH - 30
+    );
+
+    ctx.fillStyle = isCreate ? "#24588f" : "#ad4d46";
+    ctx.fillRect(x + 18, panelY + 20, 18, 18);
+
+    ctx.font = '900 20px "Pretendard","Noto Sans KR",Arial,sans-serif';
+    ctx.fillText(
+      title,
+      x + 46,
+      panelY + 38
+    );
+
+    const badgeText =
+      "승인 " +
+      formatDays_(approvedDays) +
+      "일 · " +
+      count +
+      "건";
+
+    ctx.font = '800 16px "Pretendard","Noto Sans KR",Arial,sans-serif';
+    const badgeW = Math.max(
+      116,
+      ctx.measureText(badgeText).width + 24
+    );
+
+    ctx.fillStyle = "rgba(255,255,255,.92)";
+    roundRectCanvas_(
+      ctx,
+      x + panelW - badgeW - 16,
+      panelY + 14,
+      badgeW,
+      34,
+      17
+    );
+    ctx.fill();
+
+    ctx.fillStyle = isCreate ? "#24588f" : "#ad4d46";
+    ctx.textAlign = "center";
+    ctx.fillText(
+      badgeText,
+      x + panelW - badgeW / 2 - 16,
+      panelY + 37
+    );
+    ctx.textAlign = "left";
+
+    /* 표 헤더 */
+    const headY = panelY + panelHeaderH;
+    ctx.fillStyle = isCreate ? "#447caf" : "#b65e58";
+    ctx.fillRect(
+      x,
+      headY,
+      panelW,
+      tableHeaderH
+    );
+
+    ctx.fillStyle = "#ffffff";
+    ctx.font = '800 15px "Pretendard","Noto Sans KR",Arial,sans-serif';
+    ctx.textAlign = "center";
+
+    const colDate = x + 78;
+    const colDays = x + 184;
+    const colReason = x + 323;
+    const colStatus = x + panelW - 48;
+
+    ctx.fillText(
+      isCreate ? "발생일" : "사용일",
+      colDate,
+      headY + 34
+    );
+    ctx.fillText("일수", colDays, headY + 34);
+    ctx.fillText("사유", colReason, headY + 34);
+    ctx.fillText("상태", colStatus, headY + 34);
+    ctx.textAlign = "left";
+
+    let rowY = headY + tableHeaderH;
+
+    if (!rows.length) {
+      ctx.fillStyle = "#7c8796";
+      ctx.font = '600 18px "Pretendard","Noto Sans KR",Arial,sans-serif';
+      ctx.textAlign = "center";
+      ctx.fillText(
+        isCreate ? "미휴무 발생내역이 없습니다." : "미휴무 사용내역이 없습니다.",
+        x + panelW / 2,
+        rowY + 54
+      );
+      ctx.textAlign = "left";
+      return;
+    }
+
+    rows.forEach(function(row, index) {
+      const h = rowHeights[index];
+
+      ctx.fillStyle =
+        index % 2 === 0
+          ? "#ffffff"
+          : "#f8fafc";
+      ctx.fillRect(x, rowY, panelW, h);
+
+      ctx.strokeStyle = "#e6ebf1";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(x, rowY + h);
+      ctx.lineTo(x + panelW, rowY + h);
+      ctx.stroke();
+
+      /* 날짜 */
+      ctx.fillStyle = "#172033";
+      ctx.font = '700 16px "Pretendard","Noto Sans KR",Arial,sans-serif';
+      ctx.textAlign = "center";
+
+      const dateLines = wrapCanvasText_(
+        ctx,
+        row.date,
+        126
+      ).slice(0, 2);
+
+      dateLines.forEach(function(line, i) {
+        ctx.fillText(
+          line,
+          colDate,
+          rowY + 31 + i * 22
+        );
+      });
+
+      /* 일수 */
+      ctx.font = '900 17px "Pretendard","Noto Sans KR",Arial,sans-serif';
+      ctx.fillText(
+        row.days,
+        colDays,
+        rowY + 35
+      );
+
+      /* 사유 */
+      ctx.textAlign = "left";
+      ctx.fillStyle = "#25344a";
+      ctx.font = '600 16px "Pretendard","Noto Sans KR",Arial,sans-serif';
+
+      const reasonLines = wrapCanvasText_(
+        ctx,
+        row.reason,
+        190
+      ).slice(0, 3);
+
+      reasonLines.forEach(function(line, i) {
+        ctx.fillText(
+          line,
+          x + 222,
+          rowY + 31 + i * 23
+        );
+      });
+
+      /* 상태 */
+      const statusText = row.status || "-";
+      const approved = statusText.includes("승인");
+
+      ctx.fillStyle =
+        approved
+          ? "#e2f5ea"
+          : statusText.includes("반려")
+            ? "#fde7e5"
+            : "#fff0c9";
+
+      roundRectCanvas_(
+        ctx,
+        x + panelW - 88,
+        rowY + 20,
+        72,
+        32,
+        16
+      );
+      ctx.fill();
+
+      ctx.fillStyle =
+        approved
+          ? "#16734b"
+          : statusText.includes("반려")
+            ? "#aa2d27"
+            : "#8a5a00";
+
+      ctx.font = '800 15px "Pretendard","Noto Sans KR",Arial,sans-serif';
+      ctx.textAlign = "center";
+      ctx.fillText(
+        statusText,
+        x + panelW - 52,
+        rowY + 42
+      );
+      ctx.textAlign = "left";
+
+      rowY += h;
+    });
+  }
+
+  const panelY = y;
+
+  drawPanel_(
+    side,
+    panelY,
+    columnWidth,
+    "미휴무 발생내역",
+    createApproved,
+    createRows.length,
+    createRows,
+    createHeights,
+    "create"
+  );
+
+  drawPanel_(
+    side + columnWidth + columnGap,
+    panelY,
+    columnWidth,
+    "미휴무 사용내역",
+    useApproved,
+    useRows.length,
+    useRows,
+    useHeights,
+    "use"
+  );
+
+  /* 하단 */
+  ctx.fillStyle = "#8793a2";
+  ctx.font = '500 18px "Pretendard","Noto Sans KR",Arial,sans-serif';
+  ctx.fillText(
+    "더큰코리아 인사관리 · 조회 시점 기준",
+    side,
+    canvas.height - 58
+  );
+
+  ledgerKakaoCanvasCache.comp = canvas;
+
+  const image = $("compKakaoPreviewImg");
+  const wrap = $("compKakaoPreviewWrap");
+
+  if (image) {
+    image.src = canvas.toDataURL("image/png");
+  }
+
+  if (wrap) {
+    wrap.classList.remove("hidden");
+  }
+
+  /* 생성 후 바로 클립보드 복사 시도 */
+  copyLedgerKakaoImage("comp", true);
+}
+
+
 function makeLedgerKakaoImage(type) {
   const data =
     getLedgerKakaoData_(type);
@@ -2481,6 +2908,12 @@ function makeLedgerKakaoImage(type) {
 
   const isLeave =
     type === "leave";
+
+  /* 미휴무는 관리자 화면과 동일하게 발생/사용 2열 이미지로 생성 */
+  if (!isLeave) {
+    makeCompLedgerKakaoImageSplit_(data);
+    return;
+  }
 
   const canvas =
     document.createElement("canvas");
