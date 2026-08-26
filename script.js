@@ -3801,16 +3801,202 @@ function refreshLeaveGrantEmployeeOptions_() {
   });
 }
 
+let currentCompLedgerDetailRows = [];
+let currentCompLedgerDetailView = 'split';
+
+
+function getCompLedgerDisplayRow_(r) {
+  const type =
+    String(
+      r['구분'] ||
+      r.type ||
+      '-'
+    );
+
+  const rawDate =
+    type === '발생'
+      ? (r['발생일'] || r.workDate || '-')
+      : (r['사용일'] || r.useDate || '-');
+
+  const date =
+    type === '사용'
+      ? getCompUsePeriod(
+          rawDate,
+          r['일수'] || r.days
+        )
+      : formatRequestDate(
+          rawDate,
+          false
+        );
+
+  return {
+    type: type,
+    date: date,
+    days: Number(r['일수'] || r.days || 0),
+    reason: String(r['사유'] || r.reason || '-'),
+    status: String(r['상태'] || r.status || '대기'),
+    registered:
+      r['등록일시'] ||
+      r.registeredAt ||
+      '-'
+  };
+}
+
+
+function renderCompLedgerDetailRows_() {
+  const allBody = $('compLedgerDetailBody');
+  const createBody = $('compLedgerCreateBody');
+  const useBody = $('compLedgerUseBody');
+
+  const rows = currentCompLedgerDetailRows || [];
+  const displayRows = rows.map(getCompLedgerDisplayRow_);
+
+  const createRows = displayRows.filter(function(row) {
+    return row.type === '발생';
+  });
+
+  const useRows = displayRows.filter(function(row) {
+    return row.type === '사용';
+  });
+
+  const createApprovedDays = createRows.reduce(function(sum, row) {
+    return sum + (row.status === '승인' ? Number(row.days || 0) : 0);
+  }, 0);
+
+  const useApprovedDays = useRows.reduce(function(sum, row) {
+    return sum + (row.status === '승인' ? Number(row.days || 0) : 0);
+  }, 0);
+
+  if ($('compLedgerCreateTotal')) {
+    $('compLedgerCreateTotal').textContent =
+      '승인 ' + createApprovedDays + '일 · ' + createRows.length + '건';
+  }
+
+  if ($('compLedgerUseTotal')) {
+    $('compLedgerUseTotal').textContent =
+      '승인 ' + useApprovedDays + '일 · ' + useRows.length + '건';
+  }
+
+  if (createBody) {
+    createBody.innerHTML = createRows.length
+      ? createRows.map(function(row) {
+          return (
+            '<tr>' +
+              '<td>' + escapeHtml(row.date) + '</td>' +
+              '<td><strong>' + row.days + '일</strong></td>' +
+              '<td>' + escapeHtml(row.reason) + '</td>' +
+              '<td>' + getStatusBadge(row.status) + '</td>' +
+            '</tr>'
+          );
+        }).join('')
+      : '<tr><td colspan="4" class="empty">미휴무 발생내역이 없습니다.</td></tr>';
+  }
+
+  if (useBody) {
+    useBody.innerHTML = useRows.length
+      ? useRows.map(function(row) {
+          return (
+            '<tr>' +
+              '<td>' + escapeHtml(row.date) + '</td>' +
+              '<td><strong>' + row.days + '일</strong></td>' +
+              '<td>' + escapeHtml(row.reason) + '</td>' +
+              '<td>' + getStatusBadge(row.status) + '</td>' +
+            '</tr>'
+          );
+        }).join('')
+      : '<tr><td colspan="4" class="empty">미휴무 사용내역이 없습니다.</td></tr>';
+  }
+
+  /*
+   * 전체 원장 tbody는 숨겨져 있어도 항상 채워 둡니다.
+   * 기존 카톡 이미지 만들기 기능이 이 tbody를 읽기 때문에
+   * 기능을 깨지 않고 그대로 사용할 수 있습니다.
+   */
+  if (allBody) {
+    allBody.innerHTML = displayRows.length
+      ? displayRows.map(function(row) {
+          return (
+            '<tr>' +
+              '<td>' +
+                escapeHtml(formatRequestDate(row.registered, true)) +
+              '</td>' +
+              '<td>' + escapeHtml(row.type) + '</td>' +
+              '<td>' + escapeHtml(row.date) + '</td>' +
+              '<td>' + row.days + '일</td>' +
+              '<td>' + escapeHtml(row.reason) + '</td>' +
+              '<td>' + getStatusBadge(row.status) + '</td>' +
+            '</tr>'
+          );
+        }).join('')
+      : '<tr><td colspan="6" class="empty">등록된 미휴무 발생·사용내역이 없습니다.</td></tr>';
+  }
+}
+
+
+function setCompLedgerDetailView(view) {
+  const splitView = $('compLedgerSplitView');
+  const allView = $('compLedgerAllView');
+  const createPanel = $('compLedgerCreatePanel');
+  const usePanel = $('compLedgerUsePanel');
+
+  currentCompLedgerDetailView =
+    ['split', 'create', 'use', 'all'].includes(view)
+      ? view
+      : 'split';
+
+  document
+    .querySelectorAll('[data-comp-view]')
+    .forEach(function(button) {
+      button.classList.toggle(
+        'active',
+        button.getAttribute('data-comp-view') === currentCompLedgerDetailView
+      );
+    });
+
+  if (currentCompLedgerDetailView === 'all') {
+    if (splitView) splitView.classList.add('hidden');
+    if (allView) allView.classList.remove('hidden');
+    return;
+  }
+
+  if (allView) allView.classList.add('hidden');
+
+  if (splitView) {
+    splitView.classList.remove('hidden');
+    splitView.classList.toggle(
+      'single',
+      currentCompLedgerDetailView !== 'split'
+    );
+  }
+
+  if (createPanel) {
+    createPanel.classList.toggle(
+      'hidden',
+      currentCompLedgerDetailView === 'use'
+    );
+  }
+
+  if (usePanel) {
+    usePanel.classList.toggle(
+      'hidden',
+      currentCompLedgerDetailView === 'create'
+    );
+  }
+}
+
+
 async function openCompLedgerDetail(summaryRow) {
   const modal = $('compLedgerDetailModal');
   const title = $('compLedgerDetailTitle');
   const summary = $('compLedgerDetailSummary');
   const body = $('compLedgerDetailBody');
+  const createBody = $('compLedgerCreateBody');
+  const useBody = $('compLedgerUseBody');
 
   if (!modal || !body) return;
 
   title.textContent =
-    (summaryRow.name || '') + ' 미휴무 사용내역';
+    (summaryRow.name || '') + ' 미휴무 상세내역';
 
   summary.innerHTML =
     '<strong>' +
@@ -3818,20 +4004,33 @@ async function openCompLedgerDetail(summaryRow) {
     ' · ' +
     escapeHtml(summaryRow.name || '') +
     '</strong>' +
-    ' &nbsp; 승인발생 ' +
+    ' &nbsp; 승인발생 <strong>' +
     Number(summaryRow.approvedCreate || 0) +
-    '일 / 승인사용 ' +
+    '일</strong> / 승인사용 <strong>' +
     Number(summaryRow.approvedUse || 0) +
-    '일 / 잔여 <strong>' +
+    '일</strong> / 현재 잔여 <strong>' +
     Number(summaryRow.remain || 0) +
     '일</strong>';
 
   body.innerHTML =
-    '<tr><td colspan="6" class="empty">사용내역을 불러오는 중입니다.</td></tr>';
+    '<tr><td colspan="6" class="empty">내역을 불러오는 중입니다.</td></tr>';
+
+  if (createBody) {
+    createBody.innerHTML =
+      '<tr><td colspan="4" class="empty">발생내역을 불러오는 중입니다.</td></tr>';
+  }
+
+  if (useBody) {
+    useBody.innerHTML =
+      '<tr><td colspan="4" class="empty">사용내역을 불러오는 중입니다.</td></tr>';
+  }
 
   const previewWrap = $("compKakaoPreviewWrap");
   if (previewWrap) previewWrap.classList.add("hidden");
   ledgerKakaoCanvasCache.comp = null;
+
+  currentCompLedgerDetailRows = [];
+  setCompLedgerDetailView('split');
 
   modal.classList.add('show');
 
@@ -3850,7 +4049,7 @@ async function openCompLedgerDetail(summaryRow) {
       String(summaryRow.phone || '')
         .replace(/[^0-9]/g, '');
 
-    const rows =
+    currentCompLedgerDetailRows =
       (compRequests || [])
         .filter(function (r) {
           const rowStore =
@@ -3899,94 +4098,30 @@ async function openCompLedgerDetail(summaryRow) {
           return getDateTimeNumber(aDate) - getDateTimeNumber(bDate);
         });
 
-    if (!rows.length) {
-      body.innerHTML =
-        '<tr><td colspan="6" class="empty">' +
-        '등록된 미휴무 발생·사용내역이 없습니다.' +
-        '</td></tr>';
-      return;
-    }
-
-    body.innerHTML =
-      rows.map(function (r) {
-        const type =
-          String(
-            r['구분'] ||
-            r.type ||
-            '-'
-          );
-
-        const rawDate =
-          type === '발생'
-            ? (r['발생일'] || r.workDate || '-')
-            : (r['사용일'] || r.useDate || '-');
-
-        const date =
-          type === '사용'
-            ? getCompUsePeriod(
-                rawDate,
-                r['일수'] || r.days
-              )
-            : formatRequestDate(
-                rawDate,
-                false
-              );
-
-        const days =
-          Number(
-            r['일수'] ||
-            r.days ||
-            0
-          );
-
-        const reason =
-          String(
-            r['사유'] ||
-            r.reason ||
-            '-'
-          );
-
-        const status =
-          String(
-            r['상태'] ||
-            r.status ||
-            '대기'
-          );
-
-        const registered =
-          r['등록일시'] ||
-          r.registeredAt ||
-          '-';
-
-        return (
-          '<tr>' +
-            '<td>' +
-              escapeHtml(
-                formatRequestDate(
-                  registered,
-                  true
-                )
-              ) +
-            '</td>' +
-            '<td>' + escapeHtml(type) + '</td>' +
-            '<td>' + escapeHtml(date) + '</td>' +
-            '<td>' + days + '일</td>' +
-            '<td>' + escapeHtml(reason) + '</td>' +
-            '<td>' + getStatusBadge(status) + '</td>' +
-          '</tr>'
-        );
-      }).join('');
+    renderCompLedgerDetailRows_();
 
   } catch (e) {
-    body.innerHTML =
-      '<tr><td colspan="6" class="empty">' +
-      escapeHtml(
-        e.message ||
-        '조회 중 오류가 발생했습니다.'
-      ) +
-      '</td></tr>';
+    currentCompLedgerDetailRows = [];
+
+    if (body) {
+      body.innerHTML =
+        '<tr><td colspan="6" class="empty">' +
+        escapeHtml(e.message || '조회 중 오류가 발생했습니다.') +
+        '</td></tr>';
+    }
+
+    if (createBody) {
+      createBody.innerHTML =
+        '<tr><td colspan="4" class="empty">발생내역 조회 중 오류가 발생했습니다.</td></tr>';
+    }
+
+    if (useBody) {
+      useBody.innerHTML =
+        '<tr><td colspan="4" class="empty">사용내역 조회 중 오류가 발생했습니다.</td></tr>';
+    }
   }
 }
+
 
 function closeCompLedgerDetail() {
   const modal = $('compLedgerDetailModal');

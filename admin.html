@@ -1141,6 +1141,122 @@ tbody tr:hover td {
       }
     }
 
+
+    /* ==================================================
+       미휴무 상세: 발생 / 사용 분리 보기
+    ================================================== */
+    .comp-ledger-view-tabs {
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin:14px 0 12px;
+    }
+
+    .comp-ledger-view-btn {
+      min-height:38px;
+      padding:0 15px;
+      border:1px solid #cfd9e6;
+      border-radius:10px;
+      color:#496078;
+      background:#fff;
+      font-weight:900;
+      cursor:pointer;
+    }
+
+    .comp-ledger-view-btn:hover {
+      background:#f4f8fc;
+    }
+
+    .comp-ledger-view-btn.active {
+      color:#fff;
+      border-color:#2f5f9e;
+      background:#2f5f9e;
+      box-shadow:0 5px 14px rgba(47,95,158,.18);
+    }
+
+    .comp-ledger-split-view {
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:14px;
+      margin-top:4px;
+    }
+
+    .comp-ledger-split-view.single {
+      grid-template-columns:1fr;
+    }
+
+    .comp-ledger-panel {
+      min-width:0;
+      overflow:hidden;
+      border:1px solid #dfe7f0;
+      border-radius:16px;
+      background:#fff;
+    }
+
+    .comp-ledger-panel.hidden,
+    .comp-ledger-all-view.hidden {
+      display:none !important;
+    }
+
+    .comp-ledger-panel-head {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      padding:13px 16px;
+      font-weight:950;
+      border-bottom:1px solid #e5ebf2;
+    }
+
+    .comp-ledger-panel.create .comp-ledger-panel-head {
+      color:#24588f;
+      background:#eef5fd;
+    }
+
+    .comp-ledger-panel.use .comp-ledger-panel-head {
+      color:#a6463e;
+      background:#fff2f0;
+    }
+
+    .comp-ledger-panel-total {
+      padding:3px 9px;
+      border-radius:999px;
+      font-size:12px;
+      background:rgba(255,255,255,.78);
+    }
+
+    .comp-ledger-panel .table-wrap {
+      border:0;
+      border-radius:0;
+      max-height:52vh !important;
+    }
+
+    .comp-ledger-panel table {
+      min-width:540px !important;
+    }
+
+    .comp-ledger-panel th {
+      top:0 !important;
+    }
+
+    #compLedgerDetailModal .comp-ledger-panel.create th {
+      background:#3f73aa !important;
+    }
+
+    #compLedgerDetailModal .comp-ledger-panel.use th {
+      background:#a95b55 !important;
+    }
+
+    .comp-ledger-all-view {
+      margin-top:4px;
+    }
+
+    @media (max-width:900px) {
+      .comp-ledger-split-view {
+        grid-template-columns:1fr;
+      }
+    }
+
   </style>
 </head>
 
@@ -1651,11 +1767,48 @@ tbody tr:hover td {
         <button class="modal-close" onclick="closeCompLedgerDetail()">×</button>
       </div>
     </div>
-    <div class="table-wrap" style="overflow:auto;max-height:62vh;">
-      <table style="min-width:760px;">
-        <thead><tr><th>등록일시</th><th>구분</th><th>발생/사용일</th><th>일수</th><th>사유</th><th>상태</th></tr></thead>
-        <tbody id="compLedgerDetailBody"><tr><td colspan="6" class="empty">직원을 선택하세요.</td></tr></tbody>
-      </table>
+    <div class="comp-ledger-view-tabs">
+      <button type="button" class="comp-ledger-view-btn active" data-comp-view="split" onclick="setCompLedgerDetailView('split')">한눈에 보기</button>
+      <button type="button" class="comp-ledger-view-btn" data-comp-view="create" onclick="setCompLedgerDetailView('create')">발생내역</button>
+      <button type="button" class="comp-ledger-view-btn" data-comp-view="use" onclick="setCompLedgerDetailView('use')">사용내역</button>
+      <button type="button" class="comp-ledger-view-btn" data-comp-view="all" onclick="setCompLedgerDetailView('all')">전체 원장</button>
+    </div>
+
+    <div id="compLedgerSplitView" class="comp-ledger-split-view">
+      <section id="compLedgerCreatePanel" class="comp-ledger-panel create">
+        <div class="comp-ledger-panel-head">
+          <span>🟦 미휴무 발생내역</span>
+          <span id="compLedgerCreateTotal" class="comp-ledger-panel-total">0일</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>발생일</th><th>일수</th><th>사유</th><th>상태</th></tr></thead>
+            <tbody id="compLedgerCreateBody"><tr><td colspan="4" class="empty">직원을 선택하세요.</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="compLedgerUsePanel" class="comp-ledger-panel use">
+        <div class="comp-ledger-panel-head">
+          <span>🟥 미휴무 사용내역</span>
+          <span id="compLedgerUseTotal" class="comp-ledger-panel-total">0일</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>사용일</th><th>일수</th><th>사유</th><th>상태</th></tr></thead>
+            <tbody id="compLedgerUseBody"><tr><td colspan="4" class="empty">직원을 선택하세요.</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <div id="compLedgerAllView" class="comp-ledger-all-view hidden">
+      <div class="table-wrap" style="overflow:auto;max-height:62vh;">
+        <table style="min-width:760px;">
+          <thead><tr><th>등록일시</th><th>구분</th><th>발생/사용일</th><th>일수</th><th>사유</th><th>상태</th></tr></thead>
+          <tbody id="compLedgerDetailBody"><tr><td colspan="6" class="empty">직원을 선택하세요.</td></tr></tbody>
+        </table>
+      </div>
     </div>
 
     <div id="compKakaoPreviewWrap" class="kakao-preview-wrap hidden">
@@ -1674,6 +1827,6 @@ tbody tr:hover td {
   </div>
 </div>
 
-<script src="script.js?v=20260825-kakaoimage5"></script>
+<script src="script.js?v=20260826-comp-split1"></script>
 </body>
 </html>
