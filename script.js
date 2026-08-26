@@ -4236,6 +4236,8 @@ function refreshLeaveGrantEmployeeOptions_() {
 
 let currentCompLedgerDetailRows = [];
 let currentCompLedgerDetailView = 'split';
+let currentCompLedgerSummaryRow = null;
+let currentCompLedgerPeriodMode = 'year';
 
 
 function getCompLedgerDisplayRow_(r) {
@@ -4271,7 +4273,12 @@ function getCompLedgerDisplayRow_(r) {
     registered:
       r['등록일시'] ||
       r.registeredAt ||
-      '-'
+      '-',
+    rawStart: formatRequestDate(rawDate, false),
+    rawEnd:
+      type === '사용'
+        ? getCompUsePeriod(rawDate, r['일수'] || r.days).split(' ~ ').slice(-1)[0]
+        : formatRequestDate(rawDate, false)
   };
 }
 
@@ -4282,7 +4289,24 @@ function renderCompLedgerDetailRows_() {
   const useBody = $('compLedgerUseBody');
 
   const rows = currentCompLedgerDetailRows || [];
-  const displayRows = rows.map(getCompLedgerDisplayRow_);
+  const allDisplayRows = rows.map(getCompLedgerDisplayRow_);
+
+  const startDate = $('compLedgerStartDate')
+    ? $('compLedgerStartDate').value
+    : '';
+  const endDate = $('compLedgerEndDate')
+    ? $('compLedgerEndDate').value
+    : '';
+
+  const displayRows = allDisplayRows.filter(function(row) {
+    if (row.rawStart === '-' || row.rawEnd === '-') return true;
+
+    /* 사용기간이 조회기간과 하루라도 겹치면 표시 */
+    if (startDate && row.rawEnd < startDate) return false;
+    if (endDate && row.rawStart > endDate) return false;
+
+    return true;
+  });
 
   const createRows = displayRows.filter(function(row) {
     return row.type === '발생';
@@ -4299,6 +4323,42 @@ function renderCompLedgerDetailRows_() {
   const useApprovedDays = useRows.reduce(function(sum, row) {
     return sum + (row.status === '승인' ? Number(row.days || 0) : 0);
   }, 0);
+
+
+  const summary = $('compLedgerDetailSummary');
+  const periodInfo = $('compLedgerPeriodInfo');
+  const summaryRow = currentCompLedgerSummaryRow || {};
+
+  const periodText =
+    currentCompLedgerPeriodMode === 'all'
+      ? '전체기간'
+      : ((startDate || '-') + ' ~ ' + (endDate || '-'));
+
+  if (summary) {
+    summary.innerHTML =
+      '<strong>' +
+      escapeHtml(summaryRow.store || '') +
+      ' · ' +
+      escapeHtml(summaryRow.name || '') +
+      '</strong>' +
+      ' &nbsp; 조회기간 발생 <strong>' +
+      createApprovedDays +
+      '일</strong> / 사용 <strong>' +
+      useApprovedDays +
+      '일</strong> / 현재 잔여 <strong>' +
+      Number(summaryRow.remain || 0) +
+      '일</strong>' +
+      '<br><span style="font-size:12px;color:#7a8797;">조회기간: ' +
+      escapeHtml(periodText) +
+      '</span>';
+  }
+
+  if (periodInfo) {
+    periodInfo.textContent =
+      '현재 표시: ' + periodText +
+      ' · 발생 ' + createRows.length + '건 / 사용 ' + useRows.length + '건' +
+      ' · 현재 잔여는 전체 누적 기준입니다.';
+  }
 
   if ($('compLedgerCreateTotal')) {
     $('compLedgerCreateTotal').textContent =
@@ -4366,6 +4426,90 @@ function renderCompLedgerDetailRows_() {
 }
 
 
+
+function getKoreaTodayText_() {
+  const parts = new Intl.DateTimeFormat('ko-KR', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).formatToParts(new Date());
+
+  const map = {};
+  parts.forEach(function(part) {
+    map[part.type] = part.value;
+  });
+
+  return map.year + '-' + map.month + '-' + map.day;
+}
+
+
+function setCompLedgerPeriodThisYear() {
+  const today = getKoreaTodayText_();
+  const year = today.substring(0, 4);
+
+  if ($('compLedgerStartDate')) {
+    $('compLedgerStartDate').value = year + '-01-01';
+  }
+
+  if ($('compLedgerEndDate')) {
+    $('compLedgerEndDate').value = today;
+  }
+
+  currentCompLedgerPeriodMode = 'year';
+  renderCompLedgerDetailRows_();
+
+  const previewWrap = $('compKakaoPreviewWrap');
+  if (previewWrap) previewWrap.classList.add('hidden');
+  ledgerKakaoCanvasCache.comp = null;
+}
+
+
+function setCompLedgerPeriodAll() {
+  if ($('compLedgerStartDate')) {
+    $('compLedgerStartDate').value = '';
+  }
+
+  if ($('compLedgerEndDate')) {
+    $('compLedgerEndDate').value = '';
+  }
+
+  currentCompLedgerPeriodMode = 'all';
+  renderCompLedgerDetailRows_();
+
+  const previewWrap = $('compKakaoPreviewWrap');
+  if (previewWrap) previewWrap.classList.add('hidden');
+  ledgerKakaoCanvasCache.comp = null;
+}
+
+
+function applyCompLedgerPeriod() {
+  const startDate = $('compLedgerStartDate')
+    ? $('compLedgerStartDate').value
+    : '';
+
+  const endDate = $('compLedgerEndDate')
+    ? $('compLedgerEndDate').value
+    : '';
+
+  if (startDate && endDate && startDate > endDate) {
+    alert('조회 시작일은 종료일보다 늦을 수 없습니다.');
+    return;
+  }
+
+  currentCompLedgerPeriodMode =
+    (!startDate && !endDate)
+      ? 'all'
+      : 'custom';
+
+  renderCompLedgerDetailRows_();
+
+  const previewWrap = $('compKakaoPreviewWrap');
+  if (previewWrap) previewWrap.classList.add('hidden');
+  ledgerKakaoCanvasCache.comp = null;
+}
+
+
 function setCompLedgerDetailView(view) {
   const splitView = $('compLedgerSplitView');
   const allView = $('compLedgerAllView');
@@ -4428,6 +4572,8 @@ async function openCompLedgerDetail(summaryRow) {
 
   if (!modal || !body) return;
 
+  currentCompLedgerSummaryRow = summaryRow;
+
   title.textContent =
     (summaryRow.name || '') + ' 미휴무 상세내역';
 
@@ -4463,6 +4609,19 @@ async function openCompLedgerDetail(summaryRow) {
   ledgerKakaoCanvasCache.comp = null;
 
   currentCompLedgerDetailRows = [];
+
+  const todayText = getKoreaTodayText_();
+  const thisYear = todayText.substring(0, 4);
+
+  if ($('compLedgerStartDate')) {
+    $('compLedgerStartDate').value = thisYear + '-01-01';
+  }
+
+  if ($('compLedgerEndDate')) {
+    $('compLedgerEndDate').value = todayText;
+  }
+
+  currentCompLedgerPeriodMode = 'year';
   setCompLedgerDetailView('split');
 
   modal.classList.add('show');
