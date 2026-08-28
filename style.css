@@ -1014,3 +1014,226 @@ button:hover {
         display: block;
     }
 }
+
+/* ==================================================
+   2026-08 세련된 직원용 신청 화면
+================================================== */
+body.employee-apply-only {
+    --main: #245b9f;
+    --main-dark: #173d70;
+    --main-soft: #edf5ff;
+    --ink: #15233a;
+    --muted: #69778b;
+    --line: #dbe4ef;
+    background:
+        radial-gradient(circle at 12% 0%, rgba(62, 124, 201, .12), transparent 28rem),
+        linear-gradient(180deg, #f7faff 0%, #eef3f9 100%);
+}
+
+body.employee-apply-only .app {
+    width: min(1160px, calc(100% - 48px));
+    padding: 30px 0 72px;
+}
+
+body.employee-apply-only .hero {
+    min-height: 210px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 38px 44px;
+    border: 1px solid rgba(255,255,255,.14);
+    border-radius: 30px;
+    background:
+        radial-gradient(circle at 88% 18%, rgba(255,255,255,.12) 0 92px, transparent 93px),
+        radial-gradient(circle at 78% 115%, rgba(255,255,255,.08) 0 125px, transparent 126px),
+        linear-gradient(125deg, #3976bd 0%, #25558f 52%, #173965 100%);
+    box-shadow: 0 22px 48px rgba(31, 65, 110, .18);
+}
+
+body.employee-apply-only .hero::before,
+body.employee-apply-only .hero::after { display: none; }
+
+body.employee-apply-only .brand {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    margin-bottom: 12px;
+    padding: 6px 11px;
+    border: 1px solid rgba(255,255,255,.22);
+    border-radius: 999px;
+    background: rgba(255,255,255,.1);
+    color: #edf6ff;
+    font-size: 13px;
+    letter-spacing: .04em;
+}
+
+body.employee-apply-only h1 {
+    font-size: clamp(34px, 4vw, 48px);
+    letter-spacing: -.055em;
+}
+
+body.employee-apply-only .hero p {
+    margin-top: 12px;
+    color: rgba(255,255,255,.8);
+    font-size: 16px;
+}
+
+body.employee-apply-only .tabs {
+    position: relative;
+    margin: -18px 22px 22px;
+    padding: 8px;
+    border: 1px solid rgba(214,225,238,.95);
+    border-radius: 19px;
+    background: rgba(255,255,255,.96);
+    box-shadow: 0 14px 34px rgba(30,52,82,.12);
+    backdrop-filter: blur(12px);
+}
+
+body.employee-apply-only .tab {
+    min-height: 54px;
+    border-radius: 13px;
+    color: #647186;
+    font-size: 15px;
+    font-weight: 800;
+}
+
+body.employee-apply-only .tab.active {
+    background: linear-gradient(135deg, #326db2, #214c83);
+    box-shadow: 0 8px 18px rgba(37,87,145,.24);
+}
+
+body.employee-apply-only .card {
+    padding: 34px 38px 38px;
+    border: 1px solid #dfe7f0;
+    border-radius: 26px;
+    background: rgba(255,255,255,.98);
+    box-shadow: 0 18px 45px rgba(33,52,79,.08);
+}
+
+body.employee-apply-only #applyTab {
+    column-gap: 22px;
+}
+
+body.employee-apply-only .form-intro,
+body.employee-apply-only .section-heading {
+    grid-column: 1 / -1;
+}
+
+body.employee-apply-only .form-intro {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    margin-bottom: 24px;
+    padding: 15px 17px;
+    border: 1px solid #d9e7f7;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #f3f8ff, #f8fbff);
+}
+
+body.employee-apply-only .form-intro-icon {
+    flex: 0 0 34px;
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    border-radius: 11px;
+    background: #dcecff;
+    color: #205895;
+    font-weight: 900;
+}
+
+body.employee-apply-only .form-intro strong,
+body.employee-apply-only .form-intro span { display: block; }
+body.employee-apply-only .form-intro strong { color: #1c3657; font-size: 15px; }
+body.employee-apply-only .form-intro span { margin-top: 3px; color: #738197; font-size: 13px; }
+
+body.employee-apply-only .section-heading {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 5px 0 4px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #edf1f5;
+}
+
+body.employee-apply-only .leave-heading { margin-top: 28px; }
+body.employee-apply-only .step-number {
+    width: 28px;
+    height: 28px;
+    display: grid;
+    place-items: center;
+    border-radius: 9px;
+    background: #245b9f;
+    color: white;
+    font-size: 13px;
+    font-weight: 900;
+}
+
+body.employee-apply-only .section-heading strong,
+body.employee-apply-only .section-heading small { display: block; }
+body.employee-apply-only .section-heading strong { color: var(--ink); font-size: 16px; }
+body.employee-apply-only .section-heading small { margin-top: 2px; color: #8994a5; font-size: 12px; }
+
+body.employee-apply-only label {
+    margin: 17px 0 8px;
+    color: #2a3a50;
+    font-size: 14px;
+    font-weight: 800;
+}
+
+body.employee-apply-only input,
+body.employee-apply-only select,
+body.employee-apply-only textarea {
+    min-height: 56px;
+    border-color: #d8e1eb;
+    border-radius: 13px;
+    background: #fafcff;
+    color: #1c2b40;
+    font-size: 16px;
+}
+
+body.employee-apply-only input:focus,
+body.employee-apply-only select:focus,
+body.employee-apply-only textarea:focus {
+    border-color: #3976bd;
+    box-shadow: 0 0 0 4px rgba(57,118,189,.11);
+}
+
+body.employee-apply-only #applyTab > .secondary {
+    margin-top: 22px;
+    border: 1px solid #cbdced;
+    background: #eef5fc;
+    color: #244f7f;
+}
+
+body.employee-apply-only #applyTab > .primary {
+    min-height: 60px;
+    margin-top: 26px;
+    border-radius: 15px;
+    background: linear-gradient(135deg, #3374bd, #1e4b83);
+    box-shadow: 0 12px 24px rgba(34,83,139,.22);
+    font-size: 18px;
+}
+
+body.employee-apply-only .balance-box.show {
+    border-color: #cfe0f2;
+    background: #f0f7ff;
+    color: #234a75;
+}
+
+@media (max-width: 800px) {
+    body.employee-apply-only .app { width: min(100% - 24px, 680px); padding-top: 12px; }
+    body.employee-apply-only .hero { min-height: 178px; padding: 28px 24px 42px; border-radius: 24px; }
+    body.employee-apply-only .hero p { font-size: 14px; }
+    body.employee-apply-only .tabs { margin: -24px 10px 16px; overflow-x: auto; grid-template-columns: repeat(5, minmax(128px, 1fr)) !important; }
+    body.employee-apply-only .card { padding: 24px 18px 28px; border-radius: 21px; }
+    body.employee-apply-only #applyTab { grid-template-columns: 1fr; }
+    body.employee-apply-only #applyTab > * { grid-column: 1 / -1; }
+    body.employee-apply-only .form-intro span { line-height: 1.45; }
+}
+
+@media (max-width: 430px) {
+    body.employee-apply-only .app { width: calc(100% - 16px); }
+    body.employee-apply-only h1 { font-size: 32px; }
+    body.employee-apply-only .tabs { margin-left: 5px; margin-right: 5px; }
+}

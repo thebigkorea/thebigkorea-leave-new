@@ -7,8 +7,8 @@
   <title>더큰코리아 임직원 연월차 신청</title>
 
   <link rel="manifest" href="manifest.json"/>
-  <link rel="stylesheet" href="style.css?v=20260806-pin1"/>
-  <meta name="theme-color" content="#7b1e1e"/>
+  <link rel="stylesheet" href="style.css?v=20260828-modern1"/>
+  <meta name="theme-color" content="#173d70"/>
 
   <style>
     /* 직원용 화면에서도 PIN 등록·변경 탭을 항상 사용할 수 있게 복구 */
@@ -212,6 +212,19 @@
     ========================== -->
     <section id="applyTab" class="card">
 
+  <div class="form-intro">
+    <div class="form-intro-icon">✓</div>
+    <div>
+      <strong>본인 확인 후 신청해 주세요</strong>
+      <span>근무지·이름·연락처·PIN을 입력하면 잔여 휴가를 확인할 수 있습니다.</span>
+    </div>
+  </div>
+
+  <div class="section-heading identity-heading">
+    <span class="step-number">1</span>
+    <div><strong>본인 정보</strong><small>신청자 확인을 위한 정보입니다</small></div>
+  </div>
+
   <div class="field">
     <label>근무지</label>
 
@@ -282,6 +295,11 @@
     class="balance-box">
   </div>
 
+  <div class="section-heading leave-heading">
+    <span class="step-number">2</span>
+    <div><strong>휴가 내용</strong><small>휴가 종류와 사용할 날짜를 선택해 주세요</small></div>
+  </div>
+
 
   <div class="field">
     <label>휴가 종류</label>
@@ -346,7 +364,7 @@
   <button
     class="primary"
     onclick="submitLeave()">
-    신청하기
+    연월차 신청하기
   </button>
 
 
