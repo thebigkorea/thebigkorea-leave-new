@@ -1982,7 +1982,18 @@ function renderEmployees() {
           </td>
 
           <td>
-            ${escapeHtml(name)}
+            <button
+              type="button"
+              title="${escapeHtml(name)} 휴가·미휴무 잔여 보기"
+              onclick="showEmployeeBalanceSummary(
+                '${encodeURIComponent(store).replace(/'/g, "%27")}',
+                '${encodeURIComponent(name).replace(/'/g, "%27")}',
+                '${encodeURIComponent(phone).replace(/'/g, "%27")}'
+              )"
+              style="border:0;background:none;color:#285f9e;font:inherit;font-weight:900;text-decoration:underline;text-underline-offset:4px;cursor:pointer;padding:6px 2px;"
+            >
+              ${escapeHtml(name)}
+            </button>
           </td>
 
           <td>
@@ -3778,7 +3789,30 @@ function renderCompLedger(){
   }).join("");
 
 }
-async function renderEmployeeBalanceSummary() {
+function showEmployeeBalanceSummary(store, name, phone) {
+  const decodedStore = decodeURIComponent(store || "");
+  const decodedName = decodeURIComponent(name || "");
+  const decodedPhone = decodeURIComponent(phone || "");
+
+  const employee = employeeRows.find(function(row) {
+    const rowStore = String(row.store || row["근무지"] || row["매장"] || row["소속"] || "");
+    const rowName = String(row.name || row["이름"] || row["직원명"] || row["성명"] || "");
+    const rowPhone = String(row.phone || row["연락처"] || row["휴대폰"] || row["전화번호"] || "");
+    return rowStore === decodedStore && rowName === decodedName && rowPhone === decodedPhone;
+  });
+
+  if (employee) renderEmployeeBalanceSummary(employee);
+}
+
+function closeEmployeeBalanceSummary() {
+  employeeBalanceRequestId++;
+  const box = document.getElementById("employeeBalanceSummary");
+  if (!box) return;
+  box.style.display = "none";
+  box.innerHTML = "";
+}
+
+async function renderEmployeeBalanceSummary(selectedEmployee) {
 
   const box =
     document.getElementById("employeeBalanceSummary");
@@ -3796,14 +3830,16 @@ async function renderEmployeeBalanceSummary() {
   const requestId =
     ++employeeBalanceRequestId;
 
-  if (!keyword) {
+  if (!selectedEmployee && !keyword) {
     box.style.display = "none";
     box.innerHTML = "";
     return;
   }
 
-  const matches =
-    employeeRows.filter(function(row) {
+  let employee = selectedEmployee || null;
+
+  if (!employee) {
+    const matches = employeeRows.filter(function(row) {
 
       const store =
         String(
@@ -3840,13 +3876,14 @@ async function renderEmployeeBalanceSummary() {
       );
     });
 
-  if (matches.length !== 1) {
-    box.style.display = "none";
-    box.innerHTML = "";
-    return;
-  }
+    if (matches.length !== 1) {
+      box.style.display = "none";
+      box.innerHTML = "";
+      return;
+    }
 
-  const employee = matches[0];
+    employee = matches[0];
+  }
 
   const store =
     String(
@@ -3943,6 +3980,29 @@ async function renderEmployeeBalanceSummary() {
     const leave =
       leaveResult.balance || {};
 
+    const special = leave.special || leave.specialLeave || {};
+    const spouse = leave.spouse || leave.spouseLeave || {};
+
+    function firstNumber() {
+      for (let i = 0; i < arguments.length; i++) {
+        const value = arguments[i];
+        if (value !== undefined && value !== null && value !== "" && isFinite(Number(value))) {
+          return Number(value);
+        }
+      }
+      return 0;
+    }
+
+    const specialGranted = firstNumber(leave.specialGranted, leave.specialBase, special.granted, special.base);
+    const specialUsed = firstNumber(leave.specialUsed, special.used);
+    const specialPending = firstNumber(leave.specialPending, special.pending);
+    const specialRemain = firstNumber(leave.specialRemain, leave.specialBalance, leave.specialLeaveRemain, special.remain, special.balance, Math.max(0, specialGranted - specialUsed - specialPending));
+
+    const spouseGranted = firstNumber(leave.spouseGranted, leave.spouseBase, spouse.granted, spouse.base);
+    const spouseUsed = firstNumber(leave.spouseUsed, spouse.used);
+    const spousePending = firstNumber(leave.spousePending, spouse.pending);
+    const spouseRemain = firstNumber(leave.spouseRemain, leave.spouseBalance, leave.spouseLeaveRemain, spouse.remain, spouse.balance, Math.max(0, spouseGranted - spouseUsed - spousePending));
+
     box.innerHTML = `
       <div style="
         font-size:20px;
@@ -4035,12 +4095,12 @@ ${
           margin-bottom:4px;
         ">
           ${escapeHtml(
-            "특별휴가"
+            "이월 연월차"
           )}
         </div>
 
         <div>
-          특별휴가 잔여
+          이월 잔여
           <strong>
             ${Number(
               leave.carryoverRemain || 0
@@ -4069,6 +4129,30 @@ ${
     : ""
 }
 
+        </div>
+
+        <div style="padding:18px;border:1px solid #dce3eb;border-radius:16px;background:#fff;line-height:1.8;">
+          <div style="font-size:17px;font-weight:900;color:#9a6416;margin-bottom:12px;">
+            특별휴가
+          </div>
+          부여 <strong>${specialGranted}일</strong><br>
+          승인 사용 <strong>${specialUsed}일</strong><br>
+          승인 대기 <strong>${specialPending}일</strong>
+          <div style="margin-top:14px;padding-top:12px;border-top:1px solid #e7ebf0;font-size:19px;color:#178b59;font-weight:900;">
+            현재 잔여 ${specialRemain}일
+          </div>
+        </div>
+
+        <div style="padding:18px;border:1px solid #dce3eb;border-radius:16px;background:#fff;line-height:1.8;">
+          <div style="font-size:17px;font-weight:900;color:#7b4a9e;margin-bottom:12px;">
+            배우자 출산휴가
+          </div>
+          발생 <strong>${spouseGranted}일</strong><br>
+          승인 사용 <strong>${spouseUsed}일</strong><br>
+          승인 대기 <strong>${spousePending}일</strong>
+          <div style="margin-top:14px;padding-top:12px;border-top:1px solid #e7ebf0;font-size:19px;color:#178b59;font-weight:900;">
+            현재 잔여 ${spouseRemain}일
+          </div>
         </div>
 
         <div style="
