@@ -3998,10 +3998,42 @@ async function renderEmployeeBalanceSummary(selectedEmployee) {
     const specialPending = firstNumber(leave.specialPending, special.pending);
     const specialRemain = firstNumber(leave.specialRemain, leave.specialBalance, leave.specialLeaveRemain, special.remain, special.balance, Math.max(0, specialGranted - specialUsed - specialPending));
 
-    const spouseGranted = firstNumber(leave.spouseGranted, leave.spouseBase, spouse.granted, spouse.base);
-    const spouseUsed = firstNumber(leave.spouseUsed, spouse.used);
-    const spousePending = firstNumber(leave.spousePending, spouse.pending);
-    const spouseRemain = firstNumber(leave.spouseRemain, leave.spouseBalance, leave.spouseLeaveRemain, spouse.remain, spouse.balance, Math.max(0, spouseGranted - spouseUsed - spousePending));
+    const employeePhoneDigits = String(phone || "").replace(/\D/g, "");
+    const spouseRequestStats = (adminRequests || []).reduce(function(total, row) {
+      const rowStore = String(getRequestValue(row, ["매장", "소속", "store"]) || "").trim();
+      const rowName = String(getRequestValue(row, ["이름", "직원명", "성명", "name"]) || "").trim();
+      const rowPhone = String(getRequestValue(row, ["연락처", "휴대폰", "전화번호", "phone"]) || "").replace(/\D/g, "");
+      const leaveType = String(getRequestValue(row, ["휴가종류", "휴가구분", "연차구분", "leaveType"]) || "").replace(/\s+/g, "");
+
+      const sameEmployee = rowStore === store && rowName === name &&
+        (!employeePhoneDigits || !rowPhone || rowPhone === employeePhoneDigits);
+
+      if (!sameEmployee || !(leaveType.includes("배우자") && leaveType.includes("출산"))) {
+        return total;
+      }
+
+      total.hasRequest = true;
+      const days = firstNumber(getRequestValue(row, ["사용일수", "일수", "days"]));
+      const status = String(getRequestValue(row, ["상태", "처리상태", "status"]) || "").trim();
+
+      if (status === "승인") total.used += days;
+      if (status === "대기") total.pending += days;
+      return total;
+    }, { hasRequest:false, used:0, pending:0 });
+
+    const spouseServerGranted = firstNumber(leave.spouseGranted, leave.spouseBase, spouse.granted, spouse.base);
+    const spouseServerUsed = firstNumber(leave.spouseUsed, spouse.used);
+    const spouseServerPending = firstNumber(leave.spousePending, spouse.pending);
+    const spouseServerRemain = firstNumber(leave.spouseRemain, leave.spouseBalance, leave.spouseLeaveRemain, spouse.remain, spouse.balance);
+
+    const spouseGranted = spouseServerGranted > 0
+      ? spouseServerGranted
+      : (spouseRequestStats.hasRequest ? 20 : 0);
+    const spouseUsed = spouseServerUsed > 0 ? spouseServerUsed : spouseRequestStats.used;
+    const spousePending = spouseServerPending > 0 ? spouseServerPending : spouseRequestStats.pending;
+    const spouseRemain = spouseServerRemain > 0
+      ? spouseServerRemain
+      : Math.max(0, spouseGranted - spouseUsed - spousePending);
 
     box.innerHTML = `
       <div style="
