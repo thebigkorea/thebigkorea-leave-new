@@ -3810,6 +3810,7 @@ function closeEmployeeBalanceSummary() {
   if (!box) return;
   box.style.display = "none";
   box.innerHTML = "";
+  document.body.style.overflow = "";
 }
 
 async function renderEmployeeBalanceSummary(selectedEmployee) {
@@ -3912,15 +3913,31 @@ async function renderEmployeeBalanceSummary(selectedEmployee) {
       ""
     );
 
-  box.style.display = "block";
+  Object.assign(box.style, {
+    display:"flex",
+    position:"fixed",
+    inset:"0",
+    zIndex:"20000",
+    margin:"0",
+    padding:"32px 18px",
+    border:"0",
+    borderRadius:"0",
+    background:"rgba(15,23,42,.62)",
+    alignItems:"center",
+    justifyContent:"center",
+    overflowY:"auto"
+  });
+  document.body.style.overflow = "hidden";
+  box.onclick = function(event) {
+    if (event.target === box) closeEmployeeBalanceSummary();
+  };
 
   box.innerHTML = `
-    <div style="
-      padding:20px;
+    <div style="width:min(1120px,96vw);padding:28px;background:#fff;border-radius:22px;box-shadow:0 24px 70px rgba(0,0,0,.28);
       text-align:center;
       color:#6f7785;
     ">
-      연월차와 미휴무 현황을 조회 중입니다.
+      연월차·특별휴가·배우자 출산휴가·미휴무 현황을 조회 중입니다.
     </div>
   `;
 
@@ -3944,11 +3961,18 @@ async function renderEmployeeBalanceSummary(selectedEmployee) {
           name: name,
           phone: phone,
           t: Date.now()
+        }),
+
+        jsonp({
+          action: "list",
+          password: adminPassword,
+          t: Date.now()
         })
       ]);
 
     const leaveResult = results[0];
     const compResult = results[1];
+    const requestResult = results[2];
 
     /* 검색어가 바뀐 뒤 도착한 이전 직원 응답은 표시하지 않습니다. */
     const currentKeyword =
@@ -3999,7 +4023,11 @@ async function renderEmployeeBalanceSummary(selectedEmployee) {
     const specialRemain = firstNumber(leave.specialRemain, leave.specialBalance, leave.specialLeaveRemain, special.remain, special.balance, Math.max(0, specialGranted - specialUsed - specialPending));
 
     const employeePhoneDigits = String(phone || "").replace(/\D/g, "");
-    const spouseRequestStats = (adminRequests || []).reduce(function(total, row) {
+    const requestRows = requestResult && requestResult.ok
+      ? (requestResult.rows || [])
+      : (adminRequests || []);
+
+    const spouseRequestStats = requestRows.reduce(function(total, row) {
       const rowStore = String(getRequestValue(row, ["매장", "소속", "store"]) || "").trim();
       const rowName = String(getRequestValue(row, ["이름", "직원명", "성명", "name"]) || "").trim();
       const rowPhone = String(getRequestValue(row, ["연락처", "휴대폰", "전화번호", "phone"]) || "").replace(/\D/g, "");
@@ -4036,10 +4064,12 @@ async function renderEmployeeBalanceSummary(selectedEmployee) {
       : Math.max(0, spouseGranted - spouseUsed - spousePending);
 
     box.innerHTML = `
+      <div style="position:relative;width:min(1180px,96vw);max-height:90vh;overflow:auto;padding:28px;background:#f8fafc;border-radius:22px;box-shadow:0 24px 70px rgba(0,0,0,.28);">
+      <button type="button" onclick="closeEmployeeBalanceSummary()" aria-label="닫기" style="position:absolute;right:18px;top:16px;width:42px;height:42px;border:0;border-radius:12px;background:#e8eef5;color:#173b72;font-size:25px;font-weight:900;cursor:pointer;">×</button>
       <div style="
         font-size:20px;
         font-weight:900;
-        margin-bottom:5px;
+        margin:0 52px 5px 0;
       ">
         ${escapeHtml(name)}
       </div>
@@ -4230,6 +4260,7 @@ ${
 
         </div>
 
+      </div>
       </div>
     `;
 
