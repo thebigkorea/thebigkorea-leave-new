@@ -1237,3 +1237,111 @@ body.employee-apply-only .balance-box.show {
     body.employee-apply-only h1 { font-size: 32px; }
     body.employee-apply-only .tabs { margin-left: 5px; margin-right: 5px; }
 }
+
+/* ==================================================
+   딥그린 + 베이지 컬러 테마
+================================================== */
+body.employee-apply-only {
+    --main: #2f6656;
+    --main-dark: #183f35;
+    --main-soft: #edf5f1;
+    --ink: #1e302b;
+    --muted: #73817c;
+    --line: #dce5e0;
+    background:
+        radial-gradient(circle at 12% 0%, rgba(74, 122, 105, .11), transparent 28rem),
+        linear-gradient(180deg, #faf9f5 0%, #f1f3ee 100%);
+}
+
+body.employee-apply-only .hero {
+    border-color: rgba(255,255,255,.13);
+    background:
+        radial-gradient(circle at 88% 18%, rgba(235,222,190,.13) 0 92px, transparent 93px),
+        radial-gradient(circle at 78% 115%, rgba(235,222,190,.09) 0 125px, transparent 126px),
+        linear-gradient(125deg, #477d6d 0%, #28594b 52%, #173b32 100%);
+    box-shadow: 0 22px 48px rgba(31, 72, 58, .18);
+}
+
+body.employee-apply-only .brand {
+    border-color: rgba(244,232,203,.26);
+    background: rgba(244,232,203,.11);
+    color: #fff9eb;
+}
+
+body.employee-apply-only .tabs {
+    border-color: #dedfd7;
+    background: rgba(255,254,250,.97);
+    box-shadow: 0 14px 34px rgba(40,66,57,.11);
+}
+
+body.employee-apply-only .tab { color: #66736e; }
+body.employee-apply-only .tab:hover {
+    color: #28594b;
+    background: #eef5f1;
+}
+
+body.employee-apply-only .tab.active {
+    color: #fffdf7;
+    background: linear-gradient(135deg, #477c6b, #245044);
+    box-shadow: 0 8px 18px rgba(41,91,74,.24);
+}
+
+body.employee-apply-only .card {
+    border-color: #e2e4dd;
+    background: rgba(255,254,250,.98);
+    box-shadow: 0 18px 45px rgba(43,65,57,.075);
+}
+
+body.employee-apply-only .form-intro {
+    border-color: #dbe5dd;
+    background: linear-gradient(135deg, #f2f7f3, #fbfaf5);
+}
+
+body.employee-apply-only .form-intro-icon {
+    background: #dfece5;
+    color: #285d4d;
+}
+
+body.employee-apply-only .form-intro strong { color: #24493e; }
+body.employee-apply-only .form-intro span { color: #78847f; }
+
+body.employee-apply-only .step-number {
+    background: linear-gradient(135deg, #477c6b, #28594b);
+    color: #fffdf7;
+}
+
+body.employee-apply-only input,
+body.employee-apply-only select,
+body.employee-apply-only textarea {
+    border-color: #dce2dc;
+    background: #fcfcf8;
+    color: #24342f;
+}
+
+body.employee-apply-only input:focus,
+body.employee-apply-only select:focus,
+body.employee-apply-only textarea:focus {
+    border-color: #4a7c6c;
+    box-shadow: 0 0 0 4px rgba(65,117,99,.11);
+}
+
+body.employee-apply-only #applyTab > .secondary {
+    border-color: #d4dfd8;
+    background: #edf4ef;
+    color: #315e50;
+}
+
+body.employee-apply-only #applyTab > .secondary:hover { background: #e4efe8; }
+
+body.employee-apply-only #applyTab > .primary,
+body.employee-apply-only .primary {
+    color: #fffdf7;
+    background: linear-gradient(135deg, #477c6b, #214c40);
+    box-shadow: 0 12px 24px rgba(38,85,70,.22);
+}
+
+body.employee-apply-only .balance-box.show {
+    border-color: #d5e2da;
+    background: #f0f6f2;
+    color: #315b4e;
+}
