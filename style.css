@@ -1288,6 +1288,13 @@ body.employee-apply-only #compHistoryTabButton {
     word-break: keep-all;
 }
 
+/* 기존 nth-child(4) 숨김 규칙보다 우선하여 미휴무 사용내역 탭 표시 */
+html body.employee-apply-only #employeeApplyTabs #compHistoryTabButton {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
 /* 미휴무 사용내역 탭에서는 조회에 필요한 항목만 표시 */
 body.employee-apply-only.comp-history-mode #compTab .comp-balance-button,
 body.employee-apply-only.comp-history-mode #compTab #compBalanceBox,
