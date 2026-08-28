@@ -1321,6 +1321,43 @@ body.employee-apply-only #registerTab:not(.hidden) + #pinResetTab:not(.hidden)::
     color: #66766f;
     font-size: 13px;
 }
+
+/* 발생내역과 사용내역 분리 표시 */
+body.employee-apply-only .history-group {
+    margin-top: 22px;
+}
+
+body.employee-apply-only .history-group-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+    padding: 0 2px 10px;
+    border-bottom: 2px solid #dfe9e3;
+}
+
+body.employee-apply-only .history-group-title strong {
+    color: #244c40;
+    font-size: 18px;
+}
+
+body.employee-apply-only .history-group-title span {
+    color: #7a8882;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+body.employee-apply-only .history-occurrence-item {
+    border-left: 4px solid #6d9a88;
+    background: #f8fbf8;
+}
+
+body.employee-apply-only .history-empty {
+    color: #87928d;
+    text-align: center;
+    font-weight: 700;
+}
 body.employee-apply-only .tab:hover {
     color: #28594b;
     background: #eef5f1;

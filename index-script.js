@@ -692,8 +692,8 @@ async function loadMyRequests(selectedYear) {
         return startDate.substring(0, 4) === String(year);
       })
       .sort(function (a, b) {
-        return String(a["시작일"] || "").localeCompare(
-          String(b["시작일"] || "")
+        return String(b["시작일"] || "").localeCompare(
+          String(a["시작일"] || "")
         );
       });
 
@@ -755,19 +755,67 @@ async function loadMyRequests(selectedYear) {
       summary.classList.add("show");
     }
 
-    if (!rows.length) {
-      list.innerHTML =
-        '<div class="item">' +
-        year +
-        '년에 등록된 연월차 신청·사용내역이 없습니다.</div>';
-      return;
+    const occurrenceItems = [];
+
+    if (Number(balance.base || 0) > 0) {
+      occurrenceItems.push({
+        title: "연월차 발생",
+        days: Number(balance.base || 0)
+      });
     }
 
-    list.innerHTML =
-      '<div class="item" style="font-weight:900;font-size:17px;">' +
-      year +
-      '년 사용내역</div>' +
-      rows.map(renderLeaveHistoryItem).join("");
+    if (Number(balance.specialGenerated || 0) > 0) {
+      occurrenceItems.push({
+        title: "특별휴가 발생",
+        days: Number(balance.specialGenerated || 0)
+      });
+    }
+
+    if (
+      balance.spouseBirthRegistered &&
+      Number(balance.spouseBirthGenerated || 0) > 0
+    ) {
+      occurrenceItems.push({
+        title: "배우자 출산휴가 발생",
+        days: Number(balance.spouseBirthGenerated || 0)
+      });
+    }
+
+    list.innerHTML = `
+      <div class="history-group">
+        <div class="history-group-title">
+          <strong>발생내역</strong>
+          <span>${occurrenceItems.length}건</span>
+        </div>
+        ${
+          occurrenceItems.length
+            ? occurrenceItems.map(function (item) {
+                return `
+                  <div class="item history-occurrence-item">
+                    <div class="item-title">${item.title}</div>
+                    <div class="item-meta">
+                      기준연도: ${year}년<br>
+                      발생일수: <strong>${item.days}일</strong>
+                    </div>
+                  </div>
+                `;
+              }).join("")
+            : '<div class="item history-empty">발생내역이 없습니다.</div>'
+        }
+      </div>
+
+      <div class="history-group">
+        <div class="history-group-title">
+          <strong>사용내역</strong>
+          <span>${rows.length}건 · 최근 사용일순</span>
+        </div>
+        ${
+          rows.length
+            ? rows.map(renderLeaveHistoryItem).join("")
+            : '<div class="item history-empty">사용내역이 없습니다.</div>'
+        }
+      </div>
+    `;
 
   } catch (error) {
     if (summary) {
@@ -1057,7 +1105,7 @@ async function loadMyCompHistory() {
       );
     }
 
-    const rows = result.rows || [];
+    const rows = (result.rows || []).slice();
 
     if (!rows.length) {
       list.innerHTML =
@@ -1067,8 +1115,24 @@ async function loadMyCompHistory() {
       return;
     }
 
-    list.innerHTML = rows
-      .map(function (row) {
+    const sortedRows = rows.sort(function (a, b) {
+      return String(b.date || "").localeCompare(String(a.date || ""));
+    });
+
+    const occurrenceRows = sortedRows.filter(function (row) {
+      return String(row.type || "").indexOf("발생") !== -1;
+    });
+
+    const usageRows = sortedRows.filter(function (row) {
+      return String(row.type || "").indexOf("발생") === -1;
+    });
+
+    function renderCompHistoryRows_(items, emptyText) {
+      if (!items.length) {
+        return '<div class="item history-empty">' + emptyText + '</div>';
+      }
+
+      return items.map(function (row) {
         return `
           <div class="item">
             <div class="item-title">
@@ -1092,6 +1156,25 @@ async function loadMyCompHistory() {
         `;
       })
       .join("");
+    }
+
+    list.innerHTML = `
+      <div class="history-group">
+        <div class="history-group-title">
+          <strong>발생내역</strong>
+          <span>${occurrenceRows.length}건 · 최근 발생일순</span>
+        </div>
+        ${renderCompHistoryRows_(occurrenceRows, "발생내역이 없습니다.")}
+      </div>
+
+      <div class="history-group">
+        <div class="history-group-title">
+          <strong>사용내역</strong>
+          <span>${usageRows.length}건 · 최근 사용일순</span>
+        </div>
+        ${renderCompHistoryRows_(usageRows, "사용내역이 없습니다.")}
+      </div>
+    `;
 
   } catch (error) {
     list.innerHTML =
