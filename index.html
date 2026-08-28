@@ -55,7 +55,20 @@
   <script>
     /* 탭 순서를 바꿔도 실제 선택한 버튼만 활성화합니다. */
     function showEmployeeTab_(tabName, buttonId) {
-      showTab(tabName);
+      document.body.classList.toggle("comp-history-mode", tabName === "compHistory");
+
+      const pinResetTab = document.getElementById("pinResetTab");
+
+      if (tabName === "account") {
+        showTab("register");
+        if (pinResetTab) pinResetTab.classList.remove("hidden");
+      } else if (tabName === "compHistory") {
+        showTab("comp");
+        if (pinResetTab) pinResetTab.classList.add("hidden");
+      } else {
+        showTab(tabName);
+        if (pinResetTab) pinResetTab.classList.add("hidden");
+      }
 
       const pageTexts = {
         apply: {
@@ -63,16 +76,16 @@
           description: "본인의 연월차 잔여일수를 확인하고 연월차를 신청합니다."
         },
         comp: {
-          title: "미휴무 신청",
-          description: "미휴무 발생 및 사용을 신청합니다."
+          title: "미휴무 사용신청 및 발생등록",
+          description: "휴일근무로 발생한 미휴무를 등록하거나, 보유한 미휴무의 사용을 신청합니다."
         },
-        register: {
-          title: "직원등록",
-          description: "직원정보를 등록하고 연월차 관리를 시작합니다."
+        compHistory: {
+          title: "미휴무 사용내역",
+          description: "미휴무 발생·승인·사용내역과 현재 잔여일수를 확인합니다."
         },
-        pinReset: {
-          title: "PIN 등록·변경",
-          description: "본인 확인에 사용할 PIN 번호를 등록하거나 변경합니다."
+        account: {
+          title: "직원등록 및 PIN 등록·변경",
+          description: "직원정보를 등록하고 본인 확인에 사용할 PIN을 등록하거나 변경합니다."
         },
         history: {
           title: "연월차 사용내역 조회",
@@ -86,6 +99,16 @@
 
       if (heroTitle) heroTitle.textContent = pageText.title;
       if (heroDescription) heroDescription.textContent = pageText.description;
+
+      const compPageTitle = document.getElementById("compPageTitle");
+      const compPageNotice = document.getElementById("compPageNotice");
+      if (tabName === "compHistory") {
+        if (compPageTitle) compPageTitle.textContent = "미휴무 사용내역";
+        if (compPageNotice) compPageNotice.textContent = "본인정보를 입력하면 미휴무 발생·승인·사용내역을 확인할 수 있습니다.";
+      } else if (tabName === "comp") {
+        if (compPageTitle) compPageTitle.textContent = "미휴무 사용신청 및 발생등록";
+        if (compPageNotice) compPageNotice.textContent = "추가근무로 발생한 미휴무를 등록하고, 승인된 잔여 미휴무에서 사용할 날짜를 신청합니다.";
+      }
 
       document
         .querySelectorAll("#employeeApplyTabs .tab")
@@ -176,32 +199,31 @@
       </button>
 
       <button
-        id="compTabButton"
-        class="tab"
-        onclick="showEmployeeTab_('comp','compTabButton')">
-        미휴무 신청
-      </button>
-
-      <button
-        id="registerTabButton"
-        class="tab"
-        onclick="showEmployeeTab_('register','registerTabButton')">
-        직원등록
-      </button>
-
-      <button
-        id="pinResetTabButton"
-        class="tab pin-reset-tab-button"
-        style="display:block !important; visibility:visible !important;"
-        onclick="showEmployeeTab_('pinReset','pinResetTabButton')">
-       PIN 등록·변경
-      </button>
-
-      <button
         id="historyTabButton"
         class="tab"
         onclick="showEmployeeTab_('history','historyTabButton')">
-        연월차 사용내역 조회
+        연월차 사용내역
+      </button>
+
+      <button
+        id="compTabButton"
+        class="tab"
+        onclick="showEmployeeTab_('comp','compTabButton')">
+        미휴무 사용신청 및 발생등록
+      </button>
+
+      <button
+        id="compHistoryTabButton"
+        class="tab"
+        onclick="showEmployeeTab_('compHistory','compHistoryTabButton')">
+        미휴무 사용내역
+      </button>
+
+      <button
+        id="accountTabButton"
+        class="tab"
+        onclick="showEmployeeTab_('account','accountTabButton')">
+        직원등록 및 PIN 등록·변경
       </button>
 
     </section>
@@ -608,9 +630,9 @@
       id="compTab"
       class="card hidden">
 
-      <h2>미휴무 관리</h2>
+      <h2 id="compPageTitle">미휴무 사용신청 및 발생등록</h2>
 
-      <p class="notice">
+      <p id="compPageNotice" class="notice">
         추가근무로 발생한 미휴무를 등록하고,
         승인된 잔여 미휴무에서 사용할 날짜를 신청합니다.
       </p>
@@ -646,7 +668,7 @@
       <div class="grid2">
 
         <button
-          class="secondary"
+          class="secondary comp-balance-button"
           onclick="checkCompBalance()">
           잔여 미휴무 확인
         </button>
@@ -669,6 +691,8 @@
         class="list">
       </div>
 
+
+      <div class="comp-application-only">
 
       <hr
         style="
@@ -761,6 +785,8 @@
       <div
         id="compUseResult"
         class="result">
+      </div>
+
       </div>
 
     </section>

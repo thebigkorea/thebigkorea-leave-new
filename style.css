@@ -1275,6 +1275,45 @@ body.employee-apply-only .tabs {
 }
 
 body.employee-apply-only .tab { color: #66736e; }
+body.employee-apply-only #compTabButton {
+    font-size: 14px;
+    line-height: 1.3;
+    word-break: keep-all;
+}
+
+body.employee-apply-only #accountTabButton,
+body.employee-apply-only #compHistoryTabButton {
+    font-size: 14px;
+    line-height: 1.3;
+    word-break: keep-all;
+}
+
+/* 미휴무 사용내역 탭에서는 조회에 필요한 항목만 표시 */
+body.employee-apply-only.comp-history-mode #compTab .comp-balance-button,
+body.employee-apply-only.comp-history-mode #compTab #compBalanceBox,
+body.employee-apply-only.comp-history-mode #compTab .comp-application-only {
+    display: none !important;
+}
+
+body.employee-apply-only.comp-history-mode #compTab .grid2 {
+    grid-template-columns: 1fr;
+}
+
+/* 직원등록과 PIN 등록·변경을 하나의 메뉴 화면으로 연결 */
+body.employee-apply-only #registerTab:not(.hidden) + #pinResetTab:not(.hidden) {
+    margin-top: -2px;
+}
+
+body.employee-apply-only #registerTab:not(.hidden) + #pinResetTab:not(.hidden)::before {
+    content: "등록한 직원의 PIN을 새로 설정하거나 변경할 수 있습니다.";
+    display: block;
+    margin: -4px 0 20px;
+    padding: 13px 15px;
+    border-radius: 13px;
+    background: #f2f6f2;
+    color: #66766f;
+    font-size: 13px;
+}
 body.employee-apply-only .tab:hover {
     color: #28594b;
     background: #eef5f1;
